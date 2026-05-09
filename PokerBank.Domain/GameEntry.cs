@@ -2,7 +2,7 @@ namespace PokerBank.Domain;
 
 public sealed class GameEntry
 {
-    public GameEntry(Guid playerId, Money amount, GameEntryType type)
+    internal GameEntry(Guid playerId, Money amount, GameEntryType type)
         : this(Guid.NewGuid(), playerId, amount, type, DateTimeOffset.UtcNow)
     {
     }
@@ -22,6 +22,11 @@ public sealed class GameEntry
         if (!amount.IsPositive)
         {
             throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
+        }
+
+        if (!Enum.IsDefined(type))
+        {
+            throw new ArgumentOutOfRangeException(nameof(type), "Game entry type is invalid.");
         }
 
         Id = id;
