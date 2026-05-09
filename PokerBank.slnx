@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="PokerBank.Api/PokerBank.Api.csproj" />
+  <Project Path="PokerBank.Domain/PokerBank.Domain.csproj" />
+  <Project Path="PokerBank.Infrastructure/PokerBank.Infrastructure.csproj" />
+  <Project Path="PokerBank.Tests/PokerBank.Tests.csproj" />
+</Solution>
