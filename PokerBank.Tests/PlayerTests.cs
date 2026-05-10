@@ -23,11 +23,12 @@ public sealed class PlayerTests
     }
 
     [Theory]
+    [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
-    public void NewPlayer_RequiresName(string name)
+    public void NewPlayer_RequiresName(string? name)
     {
-        Assert.Throws<ArgumentException>(() => new Player(name));
+        Assert.Throws<ArgumentException>(() => new Player(name!));
     }
 
     [Fact]
@@ -59,13 +60,14 @@ public sealed class PlayerTests
     }
 
     [Theory]
+    [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
-    public void Rename_RequiresName(string name)
+    public void Rename_RequiresName(string? name)
     {
         var player = new Player("Lorenzo");
 
-        Assert.Throws<ArgumentException>(() => player.Rename(name));
+        Assert.Throws<ArgumentException>(() => player.Rename(name!));
     }
 
     [Fact]

@@ -39,12 +39,12 @@ public sealed class Player
 
     private static string NormalizeName(string name)
     {
-        var normalizedName = name.Trim();
-
-        if (string.IsNullOrWhiteSpace(normalizedName))
+        if (string.IsNullOrWhiteSpace(name))
         {
             throw new ArgumentException("Player name is required.", nameof(name));
         }
+
+        var normalizedName = name.Trim();
 
         if (normalizedName.Length > MaxNameLength)
         {

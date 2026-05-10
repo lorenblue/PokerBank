@@ -1,6 +1,0 @@
-@PokerBank.Api_HostAddress = http://localhost:5186
-
-GET {{PokerBank.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
