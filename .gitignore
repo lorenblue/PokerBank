@@ -17,3 +17,8 @@ TestResults/
 
 *.nupkg
 *.snupkg
+
+.containers/
+*.db
+*.db-shm
+*.db-wal

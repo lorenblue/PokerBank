@@ -1,0 +1,25 @@
+services:
+  pokerbank.api:
+    image: ${DOCKER_REGISTRY-}pokerbankapi
+    build:
+      context: .
+      dockerfile: PokerBank.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__PokerBank: Data Source=/data/pokerbank.db
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://pokerbank.aspire-dashboard:18889
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+    volumes:
+      - ./.containers/api_data:/data
+    ports:
+      - 5186:8080
+    depends_on:
+      - pokerbank.aspire-dashboard
+
+  pokerbank.aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.0
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - 18888:18888

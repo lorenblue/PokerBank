@@ -1,16 +1,14 @@
-using Microsoft.EntityFrameworkCore;
+using PokerBank.Api;
 using PokerBank.Api.Data;
 using PokerBank.Api.Features.Players;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-builder.Services.AddDbContext<PokerBankDbContext>(options =>
-    options.UseSqlite(
-        builder.Configuration.GetConnectionString("PokerBank")
-            ?? throw new InvalidOperationException("Connection string 'PokerBank' is required.")));
+builder
+    .AddApiServices()
+    .AddDatabase()
+    .AddObservability();
 
 var app = builder.Build();
 
@@ -24,6 +22,9 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options => options
+        .WithTitle("PokerBank API")
+        .DisableAgent());
 }
 
 app.UseHttpsRedirection();
