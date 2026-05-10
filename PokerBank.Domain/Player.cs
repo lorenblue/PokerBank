@@ -16,6 +16,29 @@ public sealed class Player
             throw new ArgumentException("Player id is required.", nameof(id));
         }
 
+        Id = id;
+        Name = NormalizeName(name);
+        IsActive = true;
+    }
+
+    public Guid Id { get; }
+
+    public string Name { get; private set; }
+
+    public bool IsActive { get; private set; }
+
+    public void Rename(string name)
+    {
+        Name = NormalizeName(name);
+    }
+
+    public void Archive()
+    {
+        IsActive = false;
+    }
+
+    private static string NormalizeName(string name)
+    {
         var normalizedName = name.Trim();
 
         if (string.IsNullOrWhiteSpace(normalizedName))
@@ -28,11 +51,6 @@ public sealed class Player
             throw new ArgumentException($"Player name cannot exceed {MaxNameLength} characters.", nameof(name));
         }
 
-        Id = id;
-        Name = normalizedName;
+        return normalizedName;
     }
-
-    public Guid Id { get; }
-
-    public string Name { get; }
 }
