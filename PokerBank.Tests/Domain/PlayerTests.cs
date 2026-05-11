@@ -1,6 +1,6 @@
 using PokerBank.Domain;
 
-namespace PokerBank.Tests;
+namespace PokerBank.Tests.Domain;
 
 public sealed class PlayerTests
 {
