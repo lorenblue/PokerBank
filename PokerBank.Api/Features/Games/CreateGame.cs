@@ -9,6 +9,7 @@ public static class CreateGame
     {
         app.MapPost("/games", Handle)
             .WithName("CreateGame")
+            .WithTags("Games")
             .WithSummary("Create a game.");
 
         return app;

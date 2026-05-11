@@ -9,6 +9,7 @@ public static class RenamePlayer
     {
         app.MapPut("/players/{id:guid}/name", Handle)
             .WithName("RenamePlayer")
+            .WithTags("Players")
             .WithSummary("Rename a player.");
 
         return app;

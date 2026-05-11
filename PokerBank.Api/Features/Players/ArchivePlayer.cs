@@ -9,6 +9,7 @@ public static class ArchivePlayer
     {
         app.MapPost("/players/{id:guid}/archive", Handle)
             .WithName("ArchivePlayer")
+            .WithTags("Players")
             .WithSummary("Archive a player.");
 
         return app;

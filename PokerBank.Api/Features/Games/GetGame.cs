@@ -9,6 +9,7 @@ public static class GetGame
     {
         app.MapGet("/games/{id:guid}", Handle)
             .WithName("GetGame")
+            .WithTags("Games")
             .WithSummary("Get a game.");
 
         return app;

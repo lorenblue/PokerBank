@@ -9,6 +9,7 @@ public static class ListPlayers
     {
         app.MapGet("/players", Handle)
             .WithName("ListPlayers")
+            .WithTags("Players")
             .WithSummary("List players.");
 
         return app;

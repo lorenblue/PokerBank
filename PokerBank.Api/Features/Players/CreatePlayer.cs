@@ -10,6 +10,7 @@ public static class CreatePlayer
     {
         app.MapPost("/players", Handle)
             .WithName("CreatePlayer")
+            .WithTags("Players")
             .WithSummary("Create a player.");
 
         return app;
