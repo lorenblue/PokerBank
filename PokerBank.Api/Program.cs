@@ -30,5 +30,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapCreatePlayer();
+app.MapListPlayers();
+app.MapGetPlayer();
+app.MapRenamePlayer();
+app.MapArchivePlayer();
 
 app.Run();
