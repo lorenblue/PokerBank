@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using PokerBank.Api.Data;
@@ -9,6 +10,10 @@ namespace PokerBank.Tests.TestSupport;
 
 internal sealed class PokerBankApiFactory : WebApplicationFactory<Program>
 {
+    private readonly ServiceProvider _sqliteServiceProvider = new ServiceCollection()
+        .AddEntityFrameworkSqlite()
+        .BuildServiceProvider();
+
     private readonly string _databasePath = Path.Combine(
         Path.GetTempPath(),
         $"pokerbank-tests-{Guid.NewGuid():N}.db");
@@ -28,14 +33,19 @@ internal sealed class PokerBankApiFactory : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<DbContextOptions<PokerBankDbContext>>();
+            services.RemoveAll<IDbContextOptionsConfiguration<PokerBankDbContext>>();
             services.AddDbContext<PokerBankDbContext>(options =>
-                options.UseSqlite($"Data Source={_databasePath}"));
+                options
+                    .UseSqlite($"Data Source={_databasePath}")
+                    .UseInternalServiceProvider(_sqliteServiceProvider));
         });
     }
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
+
+        _sqliteServiceProvider.Dispose();
 
         TryDelete(_databasePath);
         TryDelete($"{_databasePath}-shm");
