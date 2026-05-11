@@ -7,6 +7,8 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 {
     public DbSet<Player> Players => Set<Player>();
 
+    public DbSet<PokerGame> Games => Set<PokerGame>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Player>(player =>
@@ -19,6 +21,22 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 
             player.Property(p => p.IsActive)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<PokerGame>(game =>
+        {
+            game.HasKey(g => g.Id);
+
+            game.Property(g => g.CreatedAtUtc)
+                .IsRequired();
+
+            game.Property(g => g.Status)
+                .HasConversion<string>()
+                .IsRequired();
+
+            game.Ignore(g => g.Entries);
+            game.Ignore(g => g.TotalBuyIns);
+            game.Ignore(g => g.TotalCashOuts);
         });
     }
 }

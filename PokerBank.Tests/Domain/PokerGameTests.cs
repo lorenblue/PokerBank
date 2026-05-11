@@ -13,6 +13,15 @@ public sealed class PokerGameTests
     }
 
     [Fact]
+    public void NewGame_RecordsGameDetails()
+    {
+        var game = new PokerGame();
+
+        Assert.NotEqual(Guid.Empty, game.Id);
+        Assert.NotEqual(default, game.CreatedAtUtc);
+    }
+
+    [Fact]
     public void AddBuyIn_RecordsBuyInEntry()
     {
         var game = new PokerGame();

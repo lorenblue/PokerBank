@@ -5,22 +5,30 @@ public sealed class PokerGame
     private readonly List<GameEntry> _entries = [];
 
     public PokerGame()
-        : this(Guid.NewGuid())
+        : this(Guid.NewGuid(), DateTime.UtcNow, GameStatus.Open)
     {
     }
 
-    public PokerGame(Guid id)
+    internal PokerGame(Guid id, DateTime createdAtUtc, GameStatus status)
     {
         if (id == Guid.Empty)
         {
             throw new ArgumentException("Game id is required.", nameof(id));
         }
 
+        if (!Enum.IsDefined(status))
+        {
+            throw new ArgumentOutOfRangeException(nameof(status), status, "Game status is invalid.");
+        }
+
         Id = id;
-        Status = GameStatus.Open;
+        CreatedAtUtc = createdAtUtc;
+        Status = status;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
+
+    public DateTime CreatedAtUtc { get; private set; }
 
     public GameStatus Status { get; private set; }
 

@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using PokerBank.Api;
 using PokerBank.Api.Data;
+using PokerBank.Api.Features.Games;
 using PokerBank.Api.Features.Players;
 using Scalar.AspNetCore;
 
@@ -15,7 +17,15 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<PokerBankDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
+
+    if (app.Environment.IsEnvironment("Testing"))
+    {
+        await dbContext.Database.EnsureCreatedAsync();
+    }
+    else
+    {
+        await dbContext.Database.MigrateAsync();
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -29,6 +39,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.MapCreateGame();
+app.MapListGames();
+app.MapGetGame();
 app.MapCreatePlayer();
 app.MapListPlayers();
 app.MapGetPlayer();
