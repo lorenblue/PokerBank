@@ -1,22 +1,21 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using PokerBank.Api.Data;
+using Testcontainers.PostgreSql;
 
 namespace PokerBank.Tests.TestSupport;
 
 internal sealed class PokerBankApiFactory : WebApplicationFactory<Program>
 {
-    private readonly ServiceProvider _sqliteServiceProvider = new ServiceCollection()
-        .AddEntityFrameworkSqlite()
-        .BuildServiceProvider();
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18-alpine")
+        .WithDatabase("pokerbank")
+        .WithUsername("pokerbank")
+        .WithPassword("pokerbank")
+        .Build();
 
-    private readonly string _databasePath = Path.Combine(
-        Path.GetTempPath(),
-        $"pokerbank-tests-{Guid.NewGuid():N}.db");
+    public PokerBankApiFactory()
+    {
+        _postgres.StartAsync().GetAwaiter().GetResult();
+    }
 
     public HttpClient CreateHttpsClient()
     {
@@ -29,40 +28,12 @@ internal sealed class PokerBankApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-
-        builder.ConfigureServices(services =>
-        {
-            services.RemoveAll<DbContextOptions<PokerBankDbContext>>();
-            services.RemoveAll<IDbContextOptionsConfiguration<PokerBankDbContext>>();
-            services.AddDbContext<PokerBankDbContext>(options =>
-                options
-                    .UseSqlite($"Data Source={_databasePath}")
-                    .UseInternalServiceProvider(_sqliteServiceProvider));
-        });
+        builder.UseSetting("ConnectionStrings:PokerBank", _postgres.GetConnectionString());
     }
 
-    protected override void Dispose(bool disposing)
+    public override async ValueTask DisposeAsync()
     {
-        base.Dispose(disposing);
-
-        _sqliteServiceProvider.Dispose();
-
-        TryDelete(_databasePath);
-        TryDelete($"{_databasePath}-shm");
-        TryDelete($"{_databasePath}-wal");
-    }
-
-    private static void TryDelete(string path)
-    {
-        try
-        {
-            File.Delete(path);
-        }
-        catch (IOException)
-        {
-        }
-        catch (UnauthorizedAccessException)
-        {
-        }
+        await base.DisposeAsync();
+        await _postgres.DisposeAsync();
     }
 }
