@@ -34,6 +34,7 @@ app.UseHttpsRedirection();
 app.MapCreateGame();
 app.MapListGames();
 app.MapGetGame();
+app.MapAddBuyIn();
 app.MapCreatePlayer();
 app.MapListPlayers();
 app.MapGetPlayer();

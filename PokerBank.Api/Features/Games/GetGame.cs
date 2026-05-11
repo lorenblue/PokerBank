@@ -22,16 +22,35 @@ public static class GetGame
     {
         var game = await dbContext.Games
             .AsNoTracking()
+            .Include(game => game.Entries)
             .Where(game => game.Id == id)
-            .Select(game => new Response(game.Id, game.Status.ToString(), game.CreatedAtUtc))
             .SingleOrDefaultAsync(cancellationToken);
 
         return game is null
             ? Results.NotFound(new ErrorResponse("Game was not found."))
-            : Results.Ok(game);
+            : Results.Ok(new Response(
+                game.Id,
+                game.Status.ToString(),
+                game.CreatedAtUtc,
+                game.Entries
+                    .OrderBy(entry => entry.RecordedAtUtc)
+                    .Select(entry => new EntryResponse(
+                        entry.Id,
+                        entry.PlayerId,
+                        entry.Amount.Amount,
+                        entry.Type.ToString(),
+                        entry.RecordedAtUtc))
+                    .ToArray()));
     }
 
-    private sealed record Response(Guid Id, string Status, DateTime CreatedAtUtc);
+    private sealed record Response(Guid Id, string Status, DateTime CreatedAtUtc, EntryResponse[] Entries);
+
+    private sealed record EntryResponse(
+        Guid Id,
+        Guid PlayerId,
+        decimal Amount,
+        string Type,
+        DateTimeOffset RecordedAtUtc);
 
     private sealed record ErrorResponse(string Error);
 }

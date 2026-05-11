@@ -34,7 +34,39 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
                 .HasConversion<string>()
                 .IsRequired();
 
-            game.Ignore(g => g.Entries);
+            game.OwnsMany(g => g.Entries, entry =>
+            {
+                entry.ToTable("GameEntries");
+
+                entry.WithOwner()
+                    .HasForeignKey("GameId");
+
+                entry.HasKey("GameId", nameof(GameEntry.Id));
+
+                entry.Property(e => e.Id)
+                    .ValueGeneratedNever();
+
+                entry.Property(e => e.PlayerId)
+                    .IsRequired();
+
+                entry.Property(e => e.Amount)
+                    .HasConversion(
+                        money => money.Amount,
+                        amount => new Money(amount))
+                    .HasColumnType("numeric(18,2)")
+                    .IsRequired();
+
+                entry.Property(e => e.Type)
+                    .HasConversion<string>()
+                    .IsRequired();
+
+                entry.Property(e => e.RecordedAtUtc)
+                    .IsRequired();
+            });
+
+            game.Navigation(g => g.Entries)
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
+
             game.Ignore(g => g.TotalBuyIns);
             game.Ignore(g => g.TotalCashOuts);
         });
