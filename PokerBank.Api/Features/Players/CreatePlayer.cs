@@ -47,9 +47,9 @@ public static class CreatePlayer
         }
     }
 
-    public sealed record Request(string? Name);
+    private sealed record Request(string? Name);
 
-    public sealed record Response(Guid Id, string Name, bool IsActive);
+    private sealed record Response(Guid Id, string Name, bool IsActive);
 
-    public sealed record ErrorResponse(string Error);
+    private sealed record ErrorResponse(string Error);
 }

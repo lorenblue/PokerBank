@@ -33,7 +33,7 @@ public static class ArchivePlayer
         return Results.Ok(new Response(player.Id, player.Name, player.IsActive));
     }
 
-    public sealed record Response(Guid Id, string Name, bool IsActive);
+    private sealed record Response(Guid Id, string Name, bool IsActive);
 
-    public sealed record ErrorResponse(string Error);
+    private sealed record ErrorResponse(string Error);
 }

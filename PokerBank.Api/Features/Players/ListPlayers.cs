@@ -34,5 +34,5 @@ public static class ListPlayers
         return Results.Ok(players);
     }
 
-    public sealed record Response(Guid Id, string Name, bool IsActive);
+    private sealed record Response(Guid Id, string Name, bool IsActive);
 }

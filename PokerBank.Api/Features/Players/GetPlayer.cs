@@ -30,7 +30,7 @@ public static class GetPlayer
             : Results.Ok(player);
     }
 
-    public sealed record Response(Guid Id, string Name, bool IsActive);
+    private sealed record Response(Guid Id, string Name, bool IsActive);
 
-    public sealed record ErrorResponse(string Error);
+    private sealed record ErrorResponse(string Error);
 }
