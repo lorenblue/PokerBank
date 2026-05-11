@@ -19,7 +19,7 @@ public static class DependencyInjection
     public static WebApplicationBuilder AddDatabase(this WebApplicationBuilder builder)
     {
         builder.Services.AddDbContext<PokerBankDbContext>(options =>
-            options.UseSqlite(
+            options.UseNpgsql(
                 builder.Configuration.GetConnectionString("PokerBank")
                     ?? throw new InvalidOperationException("Connection string 'PokerBank' is required.")));
 
