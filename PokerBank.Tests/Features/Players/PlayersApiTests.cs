@@ -4,12 +4,16 @@ using PokerBank.Tests.TestSupport;
 
 namespace PokerBank.Tests.Features.Players;
 
-public sealed class PlayersApiTests
+[Collection(ApiTestCollection.Name)]
+public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetime
 {
+    public Task InitializeAsync() => factory.ResetDatabaseAsync();
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
     [Fact]
     public async Task CreatePlayer_ReturnsCreatedPlayer()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var response = await client.PostAsJsonAsync("/players", new { Name = "Lorenzo" });
@@ -28,7 +32,6 @@ public sealed class PlayersApiTests
     [Fact]
     public async Task CreatePlayer_ReturnsConflict_WhenActivePlayerNameAlreadyExists()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         await client.PostAsJsonAsync("/players", new { Name = "Lorenzo" });
@@ -45,7 +48,6 @@ public sealed class PlayersApiTests
     [Fact]
     public async Task ListPlayers_ReturnsActivePlayersOrderedByName()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var charlie = await CreatePlayer(client, "Charlie");
@@ -68,7 +70,6 @@ public sealed class PlayersApiTests
     [Fact]
     public async Task ListPlayers_IncludesArchivedPlayers_WhenRequested()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var archivedPlayer = await CreatePlayer(client, "Charlie");
@@ -99,7 +100,6 @@ public sealed class PlayersApiTests
     [Fact]
     public async Task GetPlayer_ReturnsPlayer_WhenPlayerExists()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var createdPlayer = await CreatePlayer(client, "Lorenzo");
@@ -116,7 +116,6 @@ public sealed class PlayersApiTests
     [Fact]
     public async Task GetPlayer_ReturnsNotFound_WhenPlayerDoesNotExist()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var response = await client.GetAsync($"/players/{Guid.NewGuid()}");
@@ -127,7 +126,6 @@ public sealed class PlayersApiTests
     [Fact]
     public async Task RenamePlayer_UpdatesPlayerName()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var createdPlayer = await CreatePlayer(client, "Lorenzo");
@@ -147,7 +145,6 @@ public sealed class PlayersApiTests
     [Fact]
     public async Task RenamePlayer_ReturnsConflict_WhenActivePlayerNameAlreadyExists()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var lorenzo = await CreatePlayer(client, "Lorenzo");
@@ -161,7 +158,6 @@ public sealed class PlayersApiTests
     [Fact]
     public async Task ArchivePlayer_MarksPlayerInactive()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var createdPlayer = await CreatePlayer(client, "Lorenzo");

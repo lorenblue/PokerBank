@@ -4,12 +4,16 @@ using PokerBank.Tests.TestSupport;
 
 namespace PokerBank.Tests.Features.Games;
 
-public sealed class GamesApiTests
+[Collection(ApiTestCollection.Name)]
+public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
 {
+    public Task InitializeAsync() => factory.ResetDatabaseAsync();
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
     [Fact]
     public async Task CreateGame_ReturnsCreatedGame()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var response = await client.PostAsync("/games", content: null);
@@ -28,7 +32,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task ListGames_ReturnsGamesNewestFirst()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var olderGame = await CreateGame(client);
@@ -51,7 +54,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task GetGame_ReturnsGame_WhenGameExists()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var createdGame = await CreateGame(client);
@@ -72,7 +74,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task GetGame_ReturnsNotFound_WhenGameDoesNotExist()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var response = await client.GetAsync($"/games/{Guid.NewGuid()}");
@@ -83,7 +84,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task GetGame_ReturnsEntries_WhenGameHasBuyIns()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
@@ -108,7 +108,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task GetGame_ReturnsEntries_WhenGameHasCashOuts()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
@@ -134,7 +133,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task AddBuyIn_ReturnsCreatedEntry()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
@@ -161,7 +159,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task AddBuyIn_ReturnsNotFound_WhenGameDoesNotExist()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var player = await CreatePlayer(client, "Lorenzo");
@@ -176,7 +173,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task AddBuyIn_ReturnsNotFound_WhenPlayerDoesNotExist()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
@@ -193,7 +189,6 @@ public sealed class GamesApiTests
     [InlineData(-10)]
     public async Task AddBuyIn_ReturnsBadRequest_WhenAmountIsNotPositive(decimal amount)
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
@@ -209,7 +204,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task AddCashOut_ReturnsCreatedEntry()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
@@ -237,7 +231,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task AddCashOut_ReturnsNotFound_WhenGameDoesNotExist()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var player = await CreatePlayer(client, "Lorenzo");
@@ -252,7 +245,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task AddCashOut_ReturnsNotFound_WhenPlayerDoesNotExist()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
@@ -269,7 +261,6 @@ public sealed class GamesApiTests
     [InlineData(-10)]
     public async Task AddCashOut_ReturnsBadRequest_WhenAmountIsNotPositive(decimal amount)
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
@@ -286,7 +277,6 @@ public sealed class GamesApiTests
     [Fact]
     public async Task AddCashOut_ReturnsConflict_WhenCashOutsWouldExceedBuyIns()
     {
-        await using var factory = new PokerBankApiFactory();
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
