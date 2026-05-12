@@ -128,38 +128,4 @@ public sealed class PokerGameTests
         Assert.Equal(GameStatus.Closed, game.Status);
     }
 
-    [Fact]
-    public void GetNetForPlayer_ReturnsCashOutsMinusBuyIns()
-    {
-        var game = new PokerGame();
-        var playerId = Guid.NewGuid();
-
-        game.AddBuyIn(playerId, new Money(100m));
-        game.AddBuyIn(playerId, new Money(50m));
-        game.AddCashOut(playerId, new Money(120m));
-
-        Assert.Equal(new Money(-30m), game.GetNetForPlayer(playerId));
-    }
-
-    [Fact]
-    public void ClosedGame_PlayerNetsSumToZero()
-    {
-        var game = new PokerGame();
-        var playerA = Guid.NewGuid();
-        var playerB = Guid.NewGuid();
-        var playerC = Guid.NewGuid();
-
-        game.AddBuyIn(playerA, new Money(100m));
-        game.AddBuyIn(playerB, new Money(100m));
-        game.AddBuyIn(playerC, new Money(100m));
-        game.AddBuyIn(playerC, new Money(0.01m));
-        game.AddCashOut(playerB, new Money(50m));
-        game.AddCashOut(playerC, new Money(0.01m));
-        game.AddCashOut(playerA, new Money(250m));
-
-        game.Close();
-
-        var totalNet = game.GetPlayerNets().Values.Aggregate(Money.Zero, (total, net) => total + net);
-        Assert.Equal(Money.Zero, totalNet);
-    }
 }

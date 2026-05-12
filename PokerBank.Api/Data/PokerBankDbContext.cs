@@ -49,6 +49,11 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
                 entry.Property(e => e.PlayerId)
                     .IsRequired();
 
+                entry.HasOne<Player>()
+                    .WithMany()
+                    .HasForeignKey(e => e.PlayerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entry.Property(e => e.Amount)
                     .HasConversion(
                         money => money.Amount,

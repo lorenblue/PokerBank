@@ -52,32 +52,6 @@ public sealed class PokerGame
         }
 
         Status = GameStatus.Closed;
-
-        if (GetPlayerNets().Values.Aggregate(Money.Zero, (total, net) => total + net) != Money.Zero)
-        {
-            throw new InvalidOperationException("Closed game player nets must sum to zero.");
-        }
-    }
-
-    public Money GetNetForPlayer(Guid playerId)
-    {
-        if (playerId == Guid.Empty)
-        {
-            throw new ArgumentException("Player id is required.", nameof(playerId));
-        }
-
-        var buyIns = SumEntries(GameEntryType.BuyIn, playerId);
-        var cashOuts = SumEntries(GameEntryType.CashOut, playerId);
-
-        return cashOuts - buyIns;
-    }
-
-    public IReadOnlyDictionary<Guid, Money> GetPlayerNets()
-    {
-        return _entries
-            .Select(entry => entry.PlayerId)
-            .Distinct()
-            .ToDictionary(playerId => playerId, GetNetForPlayer);
     }
 
     private GameEntry AddEntry(Guid playerId, Money amount, GameEntryType type)
@@ -107,14 +81,6 @@ public sealed class PokerGame
     {
         return _entries
             .Where(entry => entry.Type == type)
-            .Select(entry => entry.Amount)
-            .Aggregate(Money.Zero, (total, amount) => total + amount);
-    }
-
-    private Money SumEntries(GameEntryType type, Guid playerId)
-    {
-        return _entries
-            .Where(entry => entry.Type == type && entry.PlayerId == playerId)
             .Select(entry => entry.Amount)
             .Aggregate(Money.Zero, (total, amount) => total + amount);
     }
