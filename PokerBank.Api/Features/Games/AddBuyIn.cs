@@ -60,6 +60,10 @@ public static class AddBuyIn
         {
             return Results.BadRequest(new ErrorResponse(exception.Message));
         }
+        catch (InvalidOperationException exception)
+        {
+            return Results.Conflict(new ErrorResponse(exception.Message));
+        }
         catch (ArgumentException exception)
         {
             return Results.BadRequest(new ErrorResponse(exception.Message));

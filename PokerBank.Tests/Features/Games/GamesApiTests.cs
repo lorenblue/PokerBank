@@ -201,6 +201,24 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AddBuyIn_ReturnsConflict_WhenGameIsClosed()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 50m);
+        await AddCashOut(client, game.Id, player.Id, 50m);
+        await CloseGame(client, game.Id);
+
+        var response = await client.PostAsJsonAsync(
+            $"/games/{game.Id}/buy-ins",
+            new { PlayerId = player.Id, Amount = 50m });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
     public async Task AddCashOut_ReturnsCreatedEntry()
     {
         using var client = factory.CreateHttpsClient();
@@ -289,6 +307,94 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
+    [Fact]
+    public async Task AddCashOut_ReturnsConflict_WhenGameIsClosed()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 50m);
+        await AddCashOut(client, game.Id, player.Id, 50m);
+        await CloseGame(client, game.Id);
+
+        var response = await client.PostAsJsonAsync(
+            $"/games/{game.Id}/cash-outs",
+            new { PlayerId = player.Id, Amount = 1m });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CloseGame_ReturnsOk_WhenGameIsBalanced()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 50m);
+        await AddCashOut(client, game.Id, player.Id, 50m);
+
+        var response = await client.PostAsync($"/games/{game.Id}/close", content: null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var closedGame = await response.Content.ReadFromJsonAsync<GameResponse>();
+
+        Assert.NotNull(closedGame);
+        Assert.Equal(game.Id, closedGame.Id);
+        Assert.Equal("Closed", closedGame.Status);
+        AssertCloseTo(game.CreatedAtUtc, closedGame.CreatedAtUtc);
+
+        var getResponse = await client.GetAsync($"/games/{game.Id}");
+        getResponse.EnsureSuccessStatusCode();
+
+        var gameDetails = await getResponse.Content.ReadFromJsonAsync<GameDetailsResponse>();
+
+        Assert.NotNull(gameDetails);
+        Assert.Equal("Closed", gameDetails.Status);
+    }
+
+    [Fact]
+    public async Task CloseGame_ReturnsNotFound_WhenGameDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.PostAsync($"/games/{Guid.NewGuid()}/close", content: null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CloseGame_ReturnsConflict_WhenGameIsNotBalanced()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 50m);
+
+        var response = await client.PostAsync($"/games/{game.Id}/close", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CloseGame_ReturnsConflict_WhenGameIsAlreadyClosed()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 50m);
+        await AddCashOut(client, game.Id, player.Id, 50m);
+        await CloseGame(client, game.Id);
+
+        var response = await client.PostAsync($"/games/{game.Id}/close", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
     private static async Task<GameResponse> CreateGame(HttpClient client)
     {
         var response = await client.PostAsync("/games", content: null);
@@ -339,6 +445,16 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         var entry = await response.Content.ReadFromJsonAsync<GameEntryResponse>();
 
         return entry ?? throw new InvalidOperationException("Add cash-out response was empty.");
+    }
+
+    private static async Task<GameResponse> CloseGame(HttpClient client, Guid gameId)
+    {
+        var response = await client.PostAsync($"/games/{gameId}/close", content: null);
+        response.EnsureSuccessStatusCode();
+
+        var game = await response.Content.ReadFromJsonAsync<GameResponse>();
+
+        return game ?? throw new InvalidOperationException("Close game response was empty.");
     }
 
     private static void AssertCloseTo(DateTime expected, DateTime actual)

@@ -36,6 +36,7 @@ app.MapListGames();
 app.MapGetGame();
 app.MapAddBuyIn();
 app.MapAddCashOut();
+app.MapCloseGame();
 app.MapCreatePlayer();
 app.MapListPlayers();
 app.MapGetPlayer();
