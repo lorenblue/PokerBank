@@ -29,18 +29,16 @@ public static class CloseGame
             return Results.NotFound(new ErrorResponse("Game was not found."));
         }
 
-        try
-        {
-            game.Close();
+        var result = game.Close();
 
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            return Results.Ok(new Response(game.Id, game.Status.ToString(), game.CreatedAtUtc));
-        }
-        catch (InvalidOperationException exception)
+        if (result.IsFailed)
         {
-            return Results.Conflict(new ErrorResponse(exception.Message));
+            return result.ToApiError();
         }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Results.Ok(new Response(game.Id, game.Status.ToString(), game.CreatedAtUtc));
     }
 
     private sealed record Response(Guid Id, string Status, DateTime CreatedAtUtc);

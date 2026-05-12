@@ -27,8 +27,10 @@ public sealed class PokerGameTests
         var game = new PokerGame();
         var playerId = Guid.NewGuid();
 
-        var entry = game.AddBuyIn(playerId, new Money(50m));
+        var result = game.AddBuyIn(playerId, new Money(50m));
 
+        Assert.True(result.IsSuccess);
+        var entry = result.Value;
         Assert.Equal(playerId, entry.PlayerId);
         Assert.Equal(new Money(50m), entry.Amount);
         Assert.Equal(GameEntryType.BuyIn, entry.Type);
@@ -41,10 +43,12 @@ public sealed class PokerGameTests
     {
         var game = new PokerGame();
         var playerId = Guid.NewGuid();
-        game.AddBuyIn(playerId, new Money(75m));
+        Assert.True(game.AddBuyIn(playerId, new Money(75m)).IsSuccess);
 
-        var entry = game.AddCashOut(playerId, new Money(75m));
+        var result = game.AddCashOut(playerId, new Money(75m));
 
+        Assert.True(result.IsSuccess);
+        var entry = result.Value;
         Assert.Equal(playerId, entry.PlayerId);
         Assert.Equal(new Money(75m), entry.Amount);
         Assert.Equal(GameEntryType.CashOut, entry.Type);
@@ -59,7 +63,11 @@ public sealed class PokerGameTests
     {
         var game = new PokerGame();
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => game.AddBuyIn(Guid.NewGuid(), new Money(amount)));
+        var result = game.AddBuyIn(Guid.NewGuid(), new Money(amount));
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.InvalidAmount, error.Code);
     }
 
     [Theory]
@@ -69,7 +77,11 @@ public sealed class PokerGameTests
     {
         var game = new PokerGame();
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => game.AddCashOut(Guid.NewGuid(), new Money(amount)));
+        var result = game.AddCashOut(Guid.NewGuid(), new Money(amount));
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.InvalidAmount, error.Code);
     }
 
     [Fact]
@@ -78,9 +90,13 @@ public sealed class PokerGameTests
         var game = new PokerGame();
         var playerId = Guid.NewGuid();
 
-        game.AddBuyIn(playerId, new Money(100m));
+        Assert.True(game.AddBuyIn(playerId, new Money(100m)).IsSuccess);
 
-        Assert.Throws<InvalidOperationException>(() => game.AddCashOut(playerId, new Money(100.01m)));
+        var result = game.AddCashOut(playerId, new Money(100.01m));
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.CashOutsExceedBuyIns, error.Code);
         Assert.DoesNotContain(game.Entries, entry => entry.Type == GameEntryType.CashOut);
     }
 
@@ -90,12 +106,17 @@ public sealed class PokerGameTests
         var game = new PokerGame();
         var playerId = Guid.NewGuid();
 
-        game.AddBuyIn(playerId, new Money(25m));
-        game.AddCashOut(playerId, new Money(25m));
-        game.Close();
+        Assert.True(game.AddBuyIn(playerId, new Money(25m)).IsSuccess);
+        Assert.True(game.AddCashOut(playerId, new Money(25m)).IsSuccess);
+        Assert.True(game.Close().IsSuccess);
 
-        Assert.Throws<InvalidOperationException>(() => game.AddBuyIn(playerId, new Money(10m)));
-        Assert.Throws<InvalidOperationException>(() => game.AddCashOut(playerId, new Money(10m)));
+        var buyInResult = game.AddBuyIn(playerId, new Money(10m));
+        var cashOutResult = game.AddCashOut(playerId, new Money(10m));
+
+        Assert.True(buyInResult.IsFailed);
+        Assert.Equal(PokerGameErrorCode.GameClosed, Assert.Single(buyInResult.Errors.OfType<PokerGameError>()).Code);
+        Assert.True(cashOutResult.IsFailed);
+        Assert.Equal(PokerGameErrorCode.GameClosed, Assert.Single(cashOutResult.Errors.OfType<PokerGameError>()).Code);
     }
 
     [Fact]
@@ -104,10 +125,14 @@ public sealed class PokerGameTests
         var game = new PokerGame();
         var playerId = Guid.NewGuid();
 
-        game.AddBuyIn(playerId, new Money(100m));
-        game.AddCashOut(playerId, new Money(80m));
+        Assert.True(game.AddBuyIn(playerId, new Money(100m)).IsSuccess);
+        Assert.True(game.AddCashOut(playerId, new Money(80m)).IsSuccess);
 
-        Assert.Throws<InvalidOperationException>(game.Close);
+        var result = game.Close();
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.BuyInsMustEqualCashOuts, error.Code);
         Assert.Equal(GameStatus.Open, game.Status);
     }
 
@@ -118,13 +143,14 @@ public sealed class PokerGameTests
         var playerA = Guid.NewGuid();
         var playerB = Guid.NewGuid();
 
-        game.AddBuyIn(playerA, new Money(100m));
-        game.AddBuyIn(playerB, new Money(50m));
-        game.AddCashOut(playerA, new Money(25m));
-        game.AddCashOut(playerB, new Money(125m));
+        Assert.True(game.AddBuyIn(playerA, new Money(100m)).IsSuccess);
+        Assert.True(game.AddBuyIn(playerB, new Money(50m)).IsSuccess);
+        Assert.True(game.AddCashOut(playerA, new Money(25m)).IsSuccess);
+        Assert.True(game.AddCashOut(playerB, new Money(125m)).IsSuccess);
 
-        game.Close();
+        var result = game.Close();
 
+        Assert.True(result.IsSuccess);
         Assert.Equal(GameStatus.Closed, game.Status);
     }
 

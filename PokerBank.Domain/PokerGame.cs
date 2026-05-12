@@ -1,3 +1,5 @@
+using FluentResults;
+
 namespace PokerBank.Domain;
 
 public sealed class PokerGame
@@ -38,44 +40,56 @@ public sealed class PokerGame
 
     public Money TotalCashOuts => SumEntries(GameEntryType.CashOut);
 
-    public GameEntry AddBuyIn(Guid playerId, Money amount) => AddEntry(playerId, amount, GameEntryType.BuyIn);
+    public Result<GameEntry> AddBuyIn(Guid playerId, Money amount) => AddEntry(playerId, amount, GameEntryType.BuyIn);
 
-    public GameEntry AddCashOut(Guid playerId, Money amount) => AddEntry(playerId, amount, GameEntryType.CashOut);
+    public Result<GameEntry> AddCashOut(Guid playerId, Money amount) => AddEntry(playerId, amount, GameEntryType.CashOut);
 
-    public void Close()
+    public Result Close()
     {
-        EnsureOpen();
+        if (IsClosed())
+        {
+            return Result.Fail(PokerGameErrors.GameClosed());
+        }
 
         if (TotalBuyIns != TotalCashOuts)
         {
-            throw new InvalidOperationException("Cannot close a game until total buy-ins equal total cash-outs.");
+            return Result.Fail(PokerGameErrors.BuyInsMustEqualCashOuts());
         }
 
         Status = GameStatus.Closed;
+
+        return Result.Ok();
     }
 
-    private GameEntry AddEntry(Guid playerId, Money amount, GameEntryType type)
+    private Result<GameEntry> AddEntry(Guid playerId, Money amount, GameEntryType type)
     {
-        EnsureOpen();
+        if (IsClosed())
+        {
+            return Result.Fail<GameEntry>(PokerGameErrors.GameClosed());
+        }
+
+        if (playerId == Guid.Empty)
+        {
+            return Result.Fail<GameEntry>(PokerGameErrors.InvalidPlayerId());
+        }
+
+        if (!amount.IsPositive)
+        {
+            return Result.Fail<GameEntry>(PokerGameErrors.InvalidAmount());
+        }
 
         if (type == GameEntryType.CashOut && TotalCashOuts + amount > TotalBuyIns)
         {
-            throw new InvalidOperationException("Cash-outs cannot exceed total buy-ins.");
+            return Result.Fail<GameEntry>(PokerGameErrors.CashOutsExceedBuyIns());
         }
 
         var entry = new GameEntry(playerId, amount, type);
         _entries.Add(entry);
 
-        return entry;
+        return Result.Ok(entry);
     }
 
-    private void EnsureOpen()
-    {
-        if (Status == GameStatus.Closed)
-        {
-            throw new InvalidOperationException("Closed games cannot be modified.");
-        }
-    }
+    private bool IsClosed() => Status == GameStatus.Closed;
 
     private Money SumEntries(GameEntryType type)
     {
