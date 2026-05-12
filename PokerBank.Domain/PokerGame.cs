@@ -84,6 +84,11 @@ public sealed class PokerGame
     {
         EnsureOpen();
 
+        if (type == GameEntryType.CashOut && TotalCashOuts + amount > TotalBuyIns)
+        {
+            throw new InvalidOperationException("Cash-outs cannot exceed total buy-ins.");
+        }
+
         var entry = new GameEntry(playerId, amount, type);
         _entries.Add(entry);
 

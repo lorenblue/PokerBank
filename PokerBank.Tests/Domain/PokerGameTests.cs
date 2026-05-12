@@ -41,6 +41,7 @@ public sealed class PokerGameTests
     {
         var game = new PokerGame();
         var playerId = Guid.NewGuid();
+        game.AddBuyIn(playerId, new Money(75m));
 
         var entry = game.AddCashOut(playerId, new Money(75m));
 
@@ -69,6 +70,18 @@ public sealed class PokerGameTests
         var game = new PokerGame();
 
         Assert.Throws<ArgumentOutOfRangeException>(() => game.AddCashOut(Guid.NewGuid(), new Money(amount)));
+    }
+
+    [Fact]
+    public void AddCashOut_Fails_WhenTotalCashOutsWouldExceedTotalBuyIns()
+    {
+        var game = new PokerGame();
+        var playerId = Guid.NewGuid();
+
+        game.AddBuyIn(playerId, new Money(100m));
+
+        Assert.Throws<InvalidOperationException>(() => game.AddCashOut(playerId, new Money(100.01m)));
+        Assert.DoesNotContain(game.Entries, entry => entry.Type == GameEntryType.CashOut);
     }
 
     [Fact]
@@ -139,10 +152,10 @@ public sealed class PokerGameTests
         game.AddBuyIn(playerA, new Money(100m));
         game.AddBuyIn(playerB, new Money(100m));
         game.AddBuyIn(playerC, new Money(100m));
-        game.AddCashOut(playerA, new Money(250m));
+        game.AddBuyIn(playerC, new Money(0.01m));
         game.AddCashOut(playerB, new Money(50m));
         game.AddCashOut(playerC, new Money(0.01m));
-        game.AddBuyIn(playerC, new Money(0.01m));
+        game.AddCashOut(playerA, new Money(250m));
 
         game.Close();
 

@@ -106,6 +106,32 @@ public sealed class GamesApiTests
     }
 
     [Fact]
+    public async Task GetGame_ReturnsEntries_WhenGameHasCashOuts()
+    {
+        await using var factory = new PokerBankApiFactory();
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 75m);
+        var cashOut = await AddCashOut(client, game.Id, player.Id, 50m);
+
+        var response = await client.GetAsync($"/games/{game.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var gameDetails = await response.Content.ReadFromJsonAsync<GameDetailsResponse>();
+
+        Assert.NotNull(gameDetails);
+        Assert.Contains(gameDetails.Entries, entry =>
+            entry.Id == cashOut.Id &&
+            entry.PlayerId == player.Id &&
+            entry.Amount == 50m &&
+            entry.Type == "CashOut" &&
+            entry.RecordedAtUtc == cashOut.RecordedAtUtc);
+    }
+
+    [Fact]
     public async Task AddBuyIn_ReturnsCreatedEntry()
     {
         await using var factory = new PokerBankApiFactory();
@@ -180,6 +206,100 @@ public sealed class GamesApiTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task AddCashOut_ReturnsCreatedEntry()
+    {
+        await using var factory = new PokerBankApiFactory();
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 75m);
+
+        var response = await client.PostAsJsonAsync(
+            $"/games/{game.Id}/cash-outs",
+            new { PlayerId = player.Id, Amount = 50m });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var entry = await response.Content.ReadFromJsonAsync<GameEntryResponse>();
+
+        Assert.NotNull(entry);
+        Assert.NotEqual(Guid.Empty, entry.Id);
+        Assert.Equal(game.Id, entry.GameId);
+        Assert.Equal(player.Id, entry.PlayerId);
+        Assert.Equal(50m, entry.Amount);
+        Assert.Equal("CashOut", entry.Type);
+        Assert.NotEqual(default, entry.RecordedAtUtc);
+        Assert.Equal($"/games/{game.Id}/entries/{entry.Id}", response.Headers.Location?.OriginalString);
+    }
+
+    [Fact]
+    public async Task AddCashOut_ReturnsNotFound_WhenGameDoesNotExist()
+    {
+        await using var factory = new PokerBankApiFactory();
+        using var client = factory.CreateHttpsClient();
+
+        var player = await CreatePlayer(client, "Lorenzo");
+
+        var response = await client.PostAsJsonAsync(
+            $"/games/{Guid.NewGuid()}/cash-outs",
+            new { PlayerId = player.Id, Amount = 50m });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AddCashOut_ReturnsNotFound_WhenPlayerDoesNotExist()
+    {
+        await using var factory = new PokerBankApiFactory();
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+
+        var response = await client.PostAsJsonAsync(
+            $"/games/{game.Id}/cash-outs",
+            new { PlayerId = Guid.NewGuid(), Amount = 50m });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-10)]
+    public async Task AddCashOut_ReturnsBadRequest_WhenAmountIsNotPositive(decimal amount)
+    {
+        await using var factory = new PokerBankApiFactory();
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 50m);
+
+        var response = await client.PostAsJsonAsync(
+            $"/games/{game.Id}/cash-outs",
+            new { PlayerId = player.Id, Amount = amount });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AddCashOut_ReturnsConflict_WhenCashOutsWouldExceedBuyIns()
+    {
+        await using var factory = new PokerBankApiFactory();
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 50m);
+
+        var response = await client.PostAsJsonAsync(
+            $"/games/{game.Id}/cash-outs",
+            new { PlayerId = player.Id, Amount = 50.01m });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
     private static async Task<GameResponse> CreateGame(HttpClient client)
     {
         var response = await client.PostAsync("/games", content: null);
@@ -214,6 +334,22 @@ public sealed class GamesApiTests
         var entry = await response.Content.ReadFromJsonAsync<GameEntryResponse>();
 
         return entry ?? throw new InvalidOperationException("Add buy-in response was empty.");
+    }
+
+    private static async Task<GameEntryResponse> AddCashOut(
+        HttpClient client,
+        Guid gameId,
+        Guid playerId,
+        decimal amount)
+    {
+        var response = await client.PostAsJsonAsync(
+            $"/games/{gameId}/cash-outs",
+            new { PlayerId = playerId, Amount = amount });
+        response.EnsureSuccessStatusCode();
+
+        var entry = await response.Content.ReadFromJsonAsync<GameEntryResponse>();
+
+        return entry ?? throw new InvalidOperationException("Add cash-out response was empty.");
     }
 
     private sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
