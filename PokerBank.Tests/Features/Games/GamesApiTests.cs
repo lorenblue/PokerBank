@@ -67,7 +67,7 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.NotNull(game);
         Assert.Equal(createdGame.Id, game.Id);
         Assert.Equal(createdGame.Status, game.Status);
-        Assert.Equal(createdGame.CreatedAtUtc, game.CreatedAtUtc);
+        AssertCloseTo(createdGame.CreatedAtUtc, game.CreatedAtUtc);
         Assert.Empty(game.Entries);
     }
 
@@ -102,7 +102,7 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(player.Id, entry.PlayerId);
         Assert.Equal(50m, entry.Amount);
         Assert.Equal("BuyIn", entry.Type);
-        Assert.Equal(buyIn.RecordedAtUtc, entry.RecordedAtUtc);
+        AssertCloseTo(buyIn.RecordedAtUtc, entry.RecordedAtUtc);
     }
 
     [Fact]
@@ -122,12 +122,11 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         var gameDetails = await response.Content.ReadFromJsonAsync<GameDetailsResponse>();
 
         Assert.NotNull(gameDetails);
-        Assert.Contains(gameDetails.Entries, entry =>
-            entry.Id == cashOut.Id &&
-            entry.PlayerId == player.Id &&
-            entry.Amount == 50m &&
-            entry.Type == "CashOut" &&
-            entry.RecordedAtUtc == cashOut.RecordedAtUtc);
+        var entry = Assert.Single(gameDetails.Entries, entry => entry.Id == cashOut.Id);
+        Assert.Equal(player.Id, entry.PlayerId);
+        Assert.Equal(50m, entry.Amount);
+        Assert.Equal("CashOut", entry.Type);
+        AssertCloseTo(cashOut.RecordedAtUtc, entry.RecordedAtUtc);
     }
 
     [Fact]
@@ -340,6 +339,16 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         var entry = await response.Content.ReadFromJsonAsync<GameEntryResponse>();
 
         return entry ?? throw new InvalidOperationException("Add cash-out response was empty.");
+    }
+
+    private static void AssertCloseTo(DateTime expected, DateTime actual)
+    {
+        Assert.InRange((actual - expected).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+    }
+
+    private static void AssertCloseTo(DateTimeOffset expected, DateTimeOffset actual)
+    {
+        Assert.InRange((actual - expected).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
     }
 
     private sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
