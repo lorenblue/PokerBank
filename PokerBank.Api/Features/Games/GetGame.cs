@@ -32,6 +32,9 @@ public static class GetGame
                 game.Id,
                 game.Status.ToString(),
                 game.CreatedAtUtc,
+                game.TotalBuyIns.Amount,
+                game.TotalCashOuts.Amount,
+                (game.TotalBuyIns - game.TotalCashOuts).Amount,
                 game.Entries
                     .OrderBy(entry => entry.RecordedAtUtc)
                     .Select(entry => new EntryResponse(
@@ -43,7 +46,14 @@ public static class GetGame
                     .ToArray()));
     }
 
-    private sealed record Response(Guid Id, string Status, DateTime CreatedAtUtc, EntryResponse[] Entries);
+    private sealed record Response(
+        Guid Id,
+        string Status,
+        DateTime CreatedAtUtc,
+        decimal TotalBuyInAmount,
+        decimal TotalCashOutAmount,
+        decimal RemainingCashOutAmount,
+        EntryResponse[] Entries);
 
     private sealed record EntryResponse(
         Guid Id,

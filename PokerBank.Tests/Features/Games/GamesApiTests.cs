@@ -68,6 +68,9 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(createdGame.Id, game.Id);
         Assert.Equal(createdGame.Status, game.Status);
         AssertCloseTo(createdGame.CreatedAtUtc, game.CreatedAtUtc);
+        Assert.Equal(0m, game.TotalBuyInAmount);
+        Assert.Equal(0m, game.TotalCashOutAmount);
+        Assert.Equal(0m, game.RemainingCashOutAmount);
         Assert.Empty(game.Entries);
     }
 
@@ -97,6 +100,9 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         var gameDetails = await response.Content.ReadFromJsonAsync<GameDetailsResponse>();
 
         Assert.NotNull(gameDetails);
+        Assert.Equal(50m, gameDetails.TotalBuyInAmount);
+        Assert.Equal(0m, gameDetails.TotalCashOutAmount);
+        Assert.Equal(50m, gameDetails.RemainingCashOutAmount);
         var entry = Assert.Single(gameDetails.Entries);
         Assert.Equal(buyIn.Id, entry.Id);
         Assert.Equal(player.Id, entry.PlayerId);
@@ -122,6 +128,9 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         var gameDetails = await response.Content.ReadFromJsonAsync<GameDetailsResponse>();
 
         Assert.NotNull(gameDetails);
+        Assert.Equal(75m, gameDetails.TotalBuyInAmount);
+        Assert.Equal(50m, gameDetails.TotalCashOutAmount);
+        Assert.Equal(25m, gameDetails.RemainingCashOutAmount);
         var entry = Assert.Single(gameDetails.Entries, entry => entry.Id == cashOut.Id);
         Assert.Equal(player.Id, entry.PlayerId);
         Assert.Equal(50m, entry.Amount);
@@ -473,6 +482,9 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Guid Id,
         string Status,
         DateTime CreatedAtUtc,
+        decimal TotalBuyInAmount,
+        decimal TotalCashOutAmount,
+        decimal RemainingCashOutAmount,
         GameEntryDetailsResponse[] Entries);
 
     private sealed record PlayerResponse(Guid Id, string Name, bool IsActive);
