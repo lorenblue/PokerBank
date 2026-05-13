@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -11,7 +12,20 @@ public static class DependencyInjection
 {
     public static WebApplicationBuilder AddApiServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddOpenApi();
+        builder.Services.AddOpenApi(options =>
+        {
+            options.CreateSchemaReferenceId = jsonTypeInfo =>
+            {
+                var type = jsonTypeInfo.Type;
+
+                if (type.DeclaringType is not null && type.Namespace?.StartsWith("PokerBank.Api.Features") is true)
+                {
+                    return $"{type.DeclaringType.Name}{type.Name}";
+                }
+
+                return OpenApiOptions.CreateDefaultSchemaReferenceId(jsonTypeInfo);
+            };
+        });
 
         return builder;
     }

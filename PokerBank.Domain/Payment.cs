@@ -1,7 +1,29 @@
+using FluentResults;
+
 namespace PokerBank.Domain;
 
 public sealed class Payment
 {
+    public static Result<Payment> Record(Guid playerId, Money amount, PaymentType type)
+    {
+        if (playerId == Guid.Empty)
+        {
+            return Result.Fail<Payment>(PaymentErrors.InvalidPlayerId());
+        }
+
+        if (!amount.IsPositive)
+        {
+            return Result.Fail<Payment>(PaymentErrors.InvalidAmount());
+        }
+
+        if (!Enum.IsDefined(type))
+        {
+            return Result.Fail<Payment>(PaymentErrors.InvalidPaymentType());
+        }
+
+        return Result.Ok(new Payment(playerId, amount, type));
+    }
+
     public Payment(Guid playerId, Money amount, PaymentType type)
         : this(Guid.NewGuid(), playerId, amount, type, DateTimeOffset.UtcNow)
     {

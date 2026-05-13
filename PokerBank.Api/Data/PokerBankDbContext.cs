@@ -9,6 +9,8 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 
     public DbSet<PokerGame> Games => Set<PokerGame>();
 
+    public DbSet<Payment> Payments => Set<Payment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Player>(player =>
@@ -74,6 +76,33 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 
             game.Ignore(g => g.TotalBuyIns);
             game.Ignore(g => g.TotalCashOuts);
+        });
+
+        modelBuilder.Entity<Payment>(payment =>
+        {
+            payment.HasKey(p => p.Id);
+
+            payment.Property(p => p.PlayerId)
+                .IsRequired();
+
+            payment.HasOne<Player>()
+                .WithMany()
+                .HasForeignKey(p => p.PlayerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            payment.Property(p => p.Amount)
+                .HasConversion(
+                    money => money.Amount,
+                    amount => new Money(amount))
+                .HasColumnType("numeric(18,2)")
+                .IsRequired();
+
+            payment.Property(p => p.Type)
+                .HasConversion<string>()
+                .IsRequired();
+
+            payment.Property(p => p.RecordedAtUtc)
+                .IsRequired();
         });
     }
 }

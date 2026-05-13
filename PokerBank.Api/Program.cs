@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PokerBank.Api;
 using PokerBank.Api.Data;
 using PokerBank.Api.Features.Games;
+using PokerBank.Api.Features.Payments;
 using PokerBank.Api.Features.Players;
 using Scalar.AspNetCore;
 
@@ -37,6 +38,9 @@ app.MapGetGame();
 app.MapAddBuyIn();
 app.MapAddCashOut();
 app.MapCloseGame();
+app.MapCreatePayment();
+app.MapListPayments();
+app.MapGetPayment();
 app.MapCreatePlayer();
 app.MapListPlayers();
 app.MapGetPlayer();

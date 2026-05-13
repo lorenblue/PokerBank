@@ -23,6 +23,16 @@ internal static class ResultExtensions
             };
         }
 
+        var paymentError = result.Errors.OfType<PaymentError>().FirstOrDefault();
+
+        if (paymentError is not null)
+        {
+            return paymentError.Code switch
+            {
+                _ => Results.BadRequest(new ErrorResponse(paymentError.Message))
+            };
+        }
+
         return Results.BadRequest(new ErrorResponse(result.Errors[0].Message));
     }
 
