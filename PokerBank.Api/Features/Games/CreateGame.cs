@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using PokerBank.Api.Data;
 using PokerBank.Domain;
 
@@ -15,7 +16,7 @@ public static class CreateGame
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Created<Response>> Handle(
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -24,7 +25,7 @@ public static class CreateGame
         dbContext.Games.Add(game);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Created(
+        return TypedResults.Created(
             $"/games/{game.Id}",
             new Response(game.Id, game.Status.ToString(), game.CreatedAtUtc));
     }

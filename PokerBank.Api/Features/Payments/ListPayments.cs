@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
 
@@ -15,7 +16,7 @@ public static class ListPayments
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Ok<Response[]>> Handle(
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -30,7 +31,7 @@ public static class ListPayments
                 payment.RecordedAtUtc))
             .ToArrayAsync(cancellationToken);
 
-        return Results.Ok(payments);
+        return TypedResults.Ok(payments);
     }
 
     private sealed record Response(

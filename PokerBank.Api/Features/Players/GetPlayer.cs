@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
 
@@ -15,7 +16,7 @@ public static class GetPlayer
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
         Guid id,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
@@ -27,8 +28,8 @@ public static class GetPlayer
             .SingleOrDefaultAsync(cancellationToken);
 
         return player is null
-            ? Results.NotFound(new ErrorResponse("Player was not found."))
-            : Results.Ok(player);
+            ? TypedResults.NotFound(new ErrorResponse("Player was not found."))
+            : TypedResults.Ok(player);
     }
 
     private sealed record Response(Guid Id, string Name, bool IsActive);

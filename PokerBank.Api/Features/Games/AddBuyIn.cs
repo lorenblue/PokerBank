@@ -1,3 +1,5 @@
+using FluentResults;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
 using PokerBank.Domain;
@@ -16,7 +18,7 @@ public static class AddBuyIn
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Guid gameId,
         Request request,
         PokerBankDbContext dbContext,
@@ -28,7 +30,7 @@ public static class AddBuyIn
 
         if (game is null)
         {
-            return Results.NotFound(new ErrorResponse("Game was not found."));
+            return TypedResults.NotFound(new ErrorResponse("Game was not found."));
         }
 
         var playerExists = await dbContext.Players.AnyAsync(
@@ -37,21 +39,21 @@ public static class AddBuyIn
 
         if (!playerExists)
         {
-            return Results.NotFound(new ErrorResponse("Player was not found."));
+            return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
         var result = game.AddBuyIn(request.PlayerId, new Money(request.Amount));
 
         if (result.IsFailed)
         {
-            return result.ToApiError();
+            return Failure(result);
         }
 
         var entry = result.Value;
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Created(
+        return TypedResults.Created(
             $"/games/{game.Id}/entries/{entry.Id}",
             new Response(
                 entry.Id,
@@ -60,6 +62,19 @@ public static class AddBuyIn
                 entry.Amount.Amount,
                 entry.Type.ToString(),
                 entry.RecordedAtUtc));
+    }
+
+    private static Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>, Conflict<ErrorResponse>> Failure(ResultBase result)
+    {
+        var error = result.Errors.OfType<PokerGameError>().FirstOrDefault();
+        var message = error?.Message ?? result.Errors[0].Message;
+
+        if (error?.Code is PokerGameErrorCode.InvalidAmount or PokerGameErrorCode.InvalidPlayerId)
+        {
+            return TypedResults.BadRequest(new ErrorResponse(message));
+        }
+
+        return TypedResults.Conflict(new ErrorResponse(message));
     }
 
     private sealed record Request(Guid PlayerId, decimal Amount);

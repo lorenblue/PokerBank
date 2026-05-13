@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
 
@@ -15,7 +16,7 @@ public static class ListPlayers
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Ok<Response[]>> Handle(
         bool? includeArchived,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
@@ -32,7 +33,7 @@ public static class ListPlayers
             .Select(player => new Response(player.Id, player.Name, player.IsActive))
             .ToArrayAsync(cancellationToken);
 
-        return Results.Ok(players);
+        return TypedResults.Ok(players);
     }
 
     private sealed record Response(Guid Id, string Name, bool IsActive);

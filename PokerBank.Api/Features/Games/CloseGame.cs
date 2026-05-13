@@ -1,5 +1,8 @@
+using FluentResults;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
+using PokerBank.Domain;
 
 namespace PokerBank.Api.Features.Games;
 
@@ -15,7 +18,7 @@ public static class CloseGame
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Guid gameId,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
@@ -26,19 +29,27 @@ public static class CloseGame
 
         if (game is null)
         {
-            return Results.NotFound(new ErrorResponse("Game was not found."));
+            return TypedResults.NotFound(new ErrorResponse("Game was not found."));
         }
 
         var result = game.Close();
 
         if (result.IsFailed)
         {
-            return result.ToApiError();
+            return Failure(result);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(new Response(game.Id, game.Status.ToString(), game.CreatedAtUtc));
+        return TypedResults.Ok(new Response(game.Id, game.Status.ToString(), game.CreatedAtUtc));
+    }
+
+    private static Results<Ok<Response>, NotFound<ErrorResponse>, Conflict<ErrorResponse>> Failure(ResultBase result)
+    {
+        var error = result.Errors.OfType<PokerGameError>().FirstOrDefault();
+        var message = error?.Message ?? result.Errors[0].Message;
+
+        return TypedResults.Conflict(new ErrorResponse(message));
     }
 
     private sealed record Response(Guid Id, string Status, DateTime CreatedAtUtc);

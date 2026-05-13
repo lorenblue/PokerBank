@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
 using PokerBank.Domain;
@@ -16,14 +17,14 @@ public static class CreatePlayer
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Request request,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
         {
-            return Results.BadRequest(new ErrorResponse("Player name is required."));
+            return TypedResults.BadRequest(new ErrorResponse("Player name is required."));
         }
 
         try
@@ -34,17 +35,17 @@ public static class CreatePlayer
                     existingPlayer => existingPlayer.IsActive && existingPlayer.Name == player.Name,
                     cancellationToken))
             {
-                return Results.Conflict(new ErrorResponse("An active player with this name already exists."));
+                return TypedResults.Conflict(new ErrorResponse("An active player with this name already exists."));
             }
 
             dbContext.Players.Add(player);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return Results.Created($"/players/{player.Id}", new Response(player.Id, player.Name, player.IsActive));
+            return TypedResults.Created($"/players/{player.Id}", new Response(player.Id, player.Name, player.IsActive));
         }
         catch (ArgumentException exception)
         {
-            return Results.BadRequest(new ErrorResponse(exception.Message));
+            return TypedResults.BadRequest(new ErrorResponse(exception.Message));
         }
     }
 

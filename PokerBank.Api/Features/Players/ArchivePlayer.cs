@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
 
@@ -15,7 +16,7 @@ public static class ArchivePlayer
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
         Guid id,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
@@ -25,13 +26,13 @@ public static class ArchivePlayer
 
         if (player is null)
         {
-            return Results.NotFound(new ErrorResponse("Player was not found."));
+            return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
         player.Archive();
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(new Response(player.Id, player.Name, player.IsActive));
+        return TypedResults.Ok(new Response(player.Id, player.Name, player.IsActive));
     }
 
     private sealed record Response(Guid Id, string Name, bool IsActive);

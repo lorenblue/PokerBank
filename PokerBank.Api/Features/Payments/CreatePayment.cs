@@ -1,3 +1,5 @@
+using FluentResults;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
 using PokerBank.Domain;
@@ -16,7 +18,7 @@ public static class CreatePayment
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> Handle(
         Request request,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
@@ -27,20 +29,20 @@ public static class CreatePayment
 
         if (!playerExists)
         {
-            return Results.NotFound(new ErrorResponse("Player was not found."));
+            return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
         if (string.IsNullOrWhiteSpace(request.Type) ||
             !Enum.TryParse<PaymentType>(request.Type, ignoreCase: true, out var type))
         {
-            return Results.BadRequest(new ErrorResponse("Payment type is invalid."));
+            return TypedResults.BadRequest(new ErrorResponse("Payment type is invalid."));
         }
 
         var result = Payment.Record(request.PlayerId, new Money(request.Amount), type);
 
         if (result.IsFailed)
         {
-            return result.ToApiError();
+            return Failure(result);
         }
 
         var payment = result.Value;
@@ -48,7 +50,7 @@ public static class CreatePayment
         dbContext.Payments.Add(payment);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Created(
+        return TypedResults.Created(
             $"/payments/{payment.Id}",
             new Response(
                 payment.Id,
@@ -56,6 +58,14 @@ public static class CreatePayment
                 payment.Amount.Amount,
                 payment.Type.ToString(),
                 payment.RecordedAtUtc));
+    }
+
+    private static Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>> Failure(ResultBase result)
+    {
+        var error = result.Errors.OfType<PaymentError>().FirstOrDefault();
+        var message = error?.Message ?? result.Errors[0].Message;
+
+        return TypedResults.BadRequest(new ErrorResponse(message));
     }
 
     private sealed record Request(Guid PlayerId, decimal Amount, string Type);

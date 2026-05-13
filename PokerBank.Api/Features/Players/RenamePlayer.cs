@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
 
@@ -15,7 +16,7 @@ public static class RenamePlayer
         return app;
     }
 
-    private static async Task<IResult> Handle(
+    private static async Task<Results<Ok<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Guid id,
         Request request,
         PokerBankDbContext dbContext,
@@ -23,7 +24,7 @@ public static class RenamePlayer
     {
         if (string.IsNullOrWhiteSpace(request.Name))
         {
-            return Results.BadRequest(new ErrorResponse("Player name is required."));
+            return TypedResults.BadRequest(new ErrorResponse("Player name is required."));
         }
 
         var player = await dbContext.Players
@@ -31,7 +32,7 @@ public static class RenamePlayer
 
         if (player is null)
         {
-            return Results.NotFound(new ErrorResponse("Player was not found."));
+            return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
         var normalizedName = request.Name.Trim();
@@ -43,7 +44,7 @@ public static class RenamePlayer
                     existingPlayer.Name == normalizedName,
                 cancellationToken))
         {
-            return Results.Conflict(new ErrorResponse("An active player with this name already exists."));
+            return TypedResults.Conflict(new ErrorResponse("An active player with this name already exists."));
         }
 
         try
@@ -51,11 +52,11 @@ public static class RenamePlayer
             player.Rename(request.Name);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return Results.Ok(new Response(player.Id, player.Name, player.IsActive));
+            return TypedResults.Ok(new Response(player.Id, player.Name, player.IsActive));
         }
         catch (ArgumentException exception)
         {
-            return Results.BadRequest(new ErrorResponse(exception.Message));
+            return TypedResults.BadRequest(new ErrorResponse(exception.Message));
         }
     }
 
