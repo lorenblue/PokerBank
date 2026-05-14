@@ -6,10 +6,11 @@ public sealed class PokerGame
 {
     private readonly List<GameEntry> _entries = [];
 
-    public PokerGame()
-        : this(Guid.NewGuid(), DateTime.UtcNow, GameStatus.Open)
+    private PokerGame()
     {
     }
+
+    public static PokerGame Create() => new(Guid.NewGuid(), DateTime.UtcNow, GameStatus.Open);
 
     internal PokerGame(Guid id, DateTime createdAtUtc, GameStatus status)
     {

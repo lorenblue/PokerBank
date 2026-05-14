@@ -38,7 +38,7 @@ public static class CreatePayment
             return TypedResults.BadRequest(new ErrorResponse("Payment type is invalid."));
         }
 
-        var result = Payment.Record(request.PlayerId, new Money(request.Amount), type);
+        var result = Payment.Create(request.PlayerId, new Money(request.Amount), type);
 
         if (result.IsFailed)
         {

@@ -20,7 +20,7 @@ public static class CreateGame
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var game = new PokerGame();
+        var game = PokerGame.Create();
 
         dbContext.Games.Add(game);
         await dbContext.SaveChangesAsync(cancellationToken);

@@ -8,7 +8,7 @@ public sealed class Payment
     {
     }
 
-    public static Result<Payment> Record(Guid playerId, Money amount, PaymentType type)
+    public static Result<Payment> Create(Guid playerId, Money amount, PaymentType type)
     {
         if (playerId == Guid.Empty)
         {
@@ -25,15 +25,10 @@ public sealed class Payment
             return Result.Fail<Payment>(PaymentErrors.InvalidPaymentType());
         }
 
-        return Result.Ok(new Payment(playerId, amount, type));
+        return Result.Ok(new Payment(Guid.NewGuid(), playerId, amount, type, DateTimeOffset.UtcNow));
     }
 
-    public Payment(Guid playerId, Money amount, PaymentType type)
-        : this(Guid.NewGuid(), playerId, amount, type, DateTimeOffset.UtcNow)
-    {
-    }
-
-    internal Payment(Guid id, Guid playerId, Money amount, PaymentType type, DateTimeOffset recordedAtUtc)
+    private Payment(Guid id, Guid playerId, Money amount, PaymentType type, DateTimeOffset recordedAtUtc)
     {
         if (id == Guid.Empty)
         {
