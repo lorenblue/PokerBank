@@ -36,46 +36,51 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
                 .HasConversion<string>()
                 .IsRequired();
 
-            game.OwnsMany(g => g.Entries, entry =>
-            {
-                entry.ToTable("GameEntries");
-
-                entry.WithOwner()
-                    .HasForeignKey("GameId");
-
-                entry.HasKey("GameId", nameof(GameEntry.Id));
-
-                entry.Property(e => e.Id)
-                    .ValueGeneratedNever();
-
-                entry.Property(e => e.PlayerId)
-                    .IsRequired();
-
-                entry.HasOne<Player>()
-                    .WithMany()
-                    .HasForeignKey(e => e.PlayerId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entry.Property(e => e.Amount)
-                    .HasConversion(
-                        money => money.Amount,
-                        amount => new Money(amount))
-                    .HasColumnType("numeric(18,2)")
-                    .IsRequired();
-
-                entry.Property(e => e.Type)
-                    .HasConversion<string>()
-                    .IsRequired();
-
-                entry.Property(e => e.RecordedAtUtc)
-                    .IsRequired();
-            });
+            game.HasMany(g => g.Entries)
+                .WithOne()
+                .HasForeignKey("GameId")
+                .OnDelete(DeleteBehavior.Cascade);
 
             game.Navigation(g => g.Entries)
                 .UsePropertyAccessMode(PropertyAccessMode.Field);
 
             game.Ignore(g => g.TotalBuyIns);
             game.Ignore(g => g.TotalCashOuts);
+        });
+
+        modelBuilder.Entity<GameEntry>(entry =>
+        {
+            entry.ToTable("GameEntries");
+
+            entry.Property<Guid>("GameId");
+
+            entry.HasKey("GameId", nameof(GameEntry.Id));
+
+            entry.Property(e => e.Id)
+                .ValueGeneratedNever();
+
+            entry.Property(e => e.PlayerId)
+                .IsRequired();
+
+            entry.HasOne<Player>()
+                .WithMany()
+                .HasForeignKey(e => e.PlayerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entry.ComplexProperty(e => e.Amount, amount =>
+            {
+                amount.Property(money => money.Amount)
+                    .HasColumnName("Amount")
+                    .HasColumnType("numeric(18,2)")
+                    .IsRequired();
+            });
+
+            entry.Property(e => e.Type)
+                .HasConversion<string>()
+                .IsRequired();
+
+            entry.Property(e => e.RecordedAtUtc)
+                .IsRequired();
         });
 
         modelBuilder.Entity<Payment>(payment =>
@@ -90,12 +95,13 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
                 .HasForeignKey(p => p.PlayerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            payment.Property(p => p.Amount)
-                .HasConversion(
-                    money => money.Amount,
-                    amount => new Money(amount))
-                .HasColumnType("numeric(18,2)")
-                .IsRequired();
+            payment.ComplexProperty(p => p.Amount, amount =>
+            {
+                amount.Property(money => money.Amount)
+                    .HasColumnName("Amount")
+                    .HasColumnType("numeric(18,2)")
+                    .IsRequired();
+            });
 
             payment.Property(p => p.Type)
                 .HasConversion<string>()

@@ -2,6 +2,10 @@ namespace PokerBank.Domain;
 
 public sealed class GameEntry
 {
+    private GameEntry()
+    {
+    }
+
     internal GameEntry(Guid playerId, Money amount, GameEntryType type)
         : this(Guid.NewGuid(), playerId, amount, type, DateTimeOffset.UtcNow)
     {
@@ -36,13 +40,13 @@ public sealed class GameEntry
         RecordedAtUtc = recordedAtUtc;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public Guid PlayerId { get; }
+    public Guid PlayerId { get; private set; }
 
-    public Money Amount { get; }
+    public Money Amount { get; private set; }
 
-    public GameEntryType Type { get; }
+    public GameEntryType Type { get; private set; }
 
-    public DateTimeOffset RecordedAtUtc { get; }
+    public DateTimeOffset RecordedAtUtc { get; private set; }
 }

@@ -4,6 +4,10 @@ namespace PokerBank.Domain;
 
 public sealed class Payment
 {
+    private Payment()
+    {
+    }
+
     public static Result<Payment> Record(Guid playerId, Money amount, PaymentType type)
     {
         if (playerId == Guid.Empty)
@@ -58,13 +62,13 @@ public sealed class Payment
         RecordedAtUtc = recordedAtUtc;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public Guid PlayerId { get; }
+    public Guid PlayerId { get; private set; }
 
-    public Money Amount { get; }
+    public Money Amount { get; private set; }
 
-    public PaymentType Type { get; }
+    public PaymentType Type { get; private set; }
 
-    public DateTimeOffset RecordedAtUtc { get; }
+    public DateTimeOffset RecordedAtUtc { get; private set; }
 }

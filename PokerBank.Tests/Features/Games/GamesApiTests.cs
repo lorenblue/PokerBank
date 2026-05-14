@@ -1,5 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PokerBank.Api.Data;
+using PokerBank.Domain;
 using PokerBank.Tests.TestSupport;
 
 namespace PokerBank.Tests.Features.Games;
@@ -402,6 +406,48 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         var response = await client.PostAsync($"/games/{game.Id}/close", content: null);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GameEntryAmounts_CanBeAggregatedInDatabase()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 75m);
+        await AddBuyIn(client, game.Id, player.Id, 25m);
+        await AddCashOut(client, game.Id, player.Id, 60m);
+        await AddCashOut(client, game.Id, player.Id, 40m);
+        await CloseGame(client, game.Id);
+
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<PokerBankDbContext>();
+
+        var totals = await dbContext.Games
+            .AsNoTracking()
+            .Where(game => game.Status == GameStatus.Closed)
+            .SelectMany(game => game.Entries.Select(entry => new
+                {
+                    GameId = game.Id,
+                    entry.PlayerId,
+                    entry.Type,
+                    Amount = entry.Amount.Amount
+                }))
+            .GroupBy(entry => new
+            {
+                entry.GameId,
+                entry.PlayerId
+            })
+            .Select(entries => new
+            {
+                BuyInAmount = entries.Sum(entry => entry.Type == GameEntryType.BuyIn ? entry.Amount : 0m),
+                CashOutAmount = entries.Sum(entry => entry.Type == GameEntryType.CashOut ? entry.Amount : 0m)
+            })
+            .SingleAsync();
+
+        Assert.Equal(100m, totals.BuyInAmount);
+        Assert.Equal(100m, totals.CashOutAmount);
     }
 
     private static async Task<GameResponse> CreateGame(HttpClient client)
