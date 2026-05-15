@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
+using PokerBank.Api.Features.Games;
 using PokerBank.Domain;
 
 namespace PokerBank.Api.Features.Balances;
@@ -18,26 +19,22 @@ public static class ListBalances
     }
 
     private static async Task<Ok<Response[]>> Handle(
+        Guid? playerId,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var gameNets = await dbContext.Games
             .AsNoTracking()
-            .Where(game => game.Status == GameStatus.Closed)
-            .SelectMany(game => game.Entries.Select(entry => new
-            {
-                entry.PlayerId,
-                entry.Type,
-                Amount = entry.Amount.Amount
-            }))
-            .GroupBy(entry => entry.PlayerId)
-            .Select(entries => new PlayerAmount(
-                entries.Key,
-                entries.Sum(entry => entry.Type == GameEntryType.CashOut ? entry.Amount : -entry.Amount)))
+            .ToGameResults(playerId)
+            .GroupBy(result => result.PlayerId)
+            .Select(results => new PlayerAmount(
+                results.Key,
+                results.Sum(result => result.NetAmount)))
             .ToArrayAsync(cancellationToken);
 
         var paymentNets = await dbContext.Payments
             .AsNoTracking()
+            .Where(payment => playerId == null || payment.PlayerId == playerId)
             .GroupBy(payment => payment.PlayerId)
             .Select(payments => new PlayerAmount(
                 payments.Key,
@@ -49,8 +46,14 @@ public static class ListBalances
         var gameNetsByPlayerId = gameNets.ToDictionary(amount => amount.PlayerId, amount => amount.Amount);
         var paymentNetsByPlayerId = paymentNets.ToDictionary(amount => amount.PlayerId, amount => amount.Amount);
 
-        var players = await dbContext.Players
-            .AsNoTracking()
+        var playerQuery = dbContext.Players.AsNoTracking();
+
+        if (playerId is not null)
+        {
+            playerQuery = playerQuery.Where(player => player.Id == playerId);
+        }
+
+        var players = await playerQuery
             .OrderBy(player => player.Name)
             .Select(player => new PlayerProjection(player.Id, player.Name, player.IsActive))
             .ToArrayAsync(cancellationToken);

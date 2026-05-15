@@ -17,11 +17,18 @@ public static class ListPayments
     }
 
     private static async Task<Ok<Response[]>> Handle(
+        Guid? playerId,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var payments = await dbContext.Payments
-            .AsNoTracking()
+        var query = dbContext.Payments.AsNoTracking();
+
+        if (playerId is not null)
+        {
+            query = query.Where(payment => payment.PlayerId == playerId);
+        }
+
+        var payments = await query
             .OrderByDescending(payment => payment.RecordedAtUtc)
             .Select(payment => new Response(
                 payment.Id,

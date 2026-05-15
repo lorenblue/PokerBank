@@ -104,6 +104,30 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
     }
 
     [Fact]
+    public async Task ListPayments_FiltersByPlayer()
+    {
+        using var client = factory.CreateHttpsClient();
+        var lorenzo = await CreatePlayer(client, "Lorenzo");
+        var maya = await CreatePlayer(client, "Maya");
+
+        var lorenzoPayment = await CreatePayment(client, lorenzo.Id, 40m, "PlayerPaysBank");
+        await CreatePayment(client, maya.Id, 25m, "BankPaysPlayer");
+
+        var response = await client.GetAsync($"/payments?playerId={lorenzo.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var payments = await response.Content.ReadFromJsonAsync<PaymentResponse[]>();
+
+        Assert.NotNull(payments);
+        var payment = Assert.Single(payments);
+        Assert.Equal(lorenzoPayment.Id, payment.Id);
+        Assert.Equal(lorenzo.Id, payment.PlayerId);
+        Assert.Equal(40m, payment.Amount);
+        Assert.Equal("PlayerPaysBank", payment.Type);
+    }
+
+    [Fact]
     public async Task CreatePayment_ReturnsNotFound_WhenPlayerDoesNotExist()
     {
         using var client = factory.CreateHttpsClient();

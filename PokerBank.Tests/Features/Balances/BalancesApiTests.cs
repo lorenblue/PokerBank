@@ -91,6 +91,40 @@ public sealed class BalancesApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         Assert.False(balance.IsActive);
     }
 
+    [Fact]
+    public async Task ListBalances_FiltersByPlayer()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var lorenzo = await CreatePlayer(client, "Lorenzo");
+        var maya = await CreatePlayer(client, "Maya");
+
+        var game = await CreateGame(client);
+        await AddBuyIn(client, game.Id, lorenzo.Id, 100m);
+        await AddBuyIn(client, game.Id, maya.Id, 100m);
+        await AddCashOut(client, game.Id, lorenzo.Id, 160m);
+        await AddCashOut(client, game.Id, maya.Id, 40m);
+        await CloseGame(client, game.Id);
+
+        await CreatePayment(client, lorenzo.Id, 20m, "BankPaysPlayer");
+        await CreatePayment(client, maya.Id, 10m, "PlayerPaysBank");
+
+        var response = await client.GetAsync($"/balances?playerId={lorenzo.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var balances = await response.Content.ReadFromJsonAsync<BalanceResponse[]>();
+
+        Assert.NotNull(balances);
+        var balance = Assert.Single(balances);
+        Assert.Equal(lorenzo.Id, balance.PlayerId);
+        Assert.Equal("Lorenzo", balance.PlayerName);
+        Assert.True(balance.IsActive);
+        Assert.Equal(60m, balance.GameNetAmount);
+        Assert.Equal(20m, balance.PaymentNetAmount);
+        Assert.Equal(40m, balance.BalanceAmount);
+    }
+
     private static async Task<PlayerResponse> CreatePlayer(HttpClient client, string name)
     {
         var response = await client.PostAsJsonAsync("/players", new { Name = name });
