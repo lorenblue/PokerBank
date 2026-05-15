@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PokerBank.Api;
 using PokerBank.Api.Data;
 using PokerBank.Api.Features.Balances;
+using PokerBank.Api.Features.GameResults;
 using PokerBank.Api.Features.Games;
 using PokerBank.Api.Features.Payments;
 using PokerBank.Api.Features.Players;
@@ -34,6 +35,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapListBalances();
+app.MapListGameResults();
 app.MapCreateGame();
 app.MapListGames();
 app.MapGetGame();
