@@ -5,20 +5,9 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ fetch }) => {
 	const api = pokerBankApi(fetch);
+	const games = await api.listGames();
 
-	const [balances, games, players, payments] = await Promise.all([
-		api.listBalances(),
-		api.listGames(),
-		api.listPlayers(),
-		api.listPayments()
-	]);
-
-	return {
-		balances,
-		games,
-		players,
-		payments
-	};
+	return { games };
 };
 
 export const actions: Actions = {
