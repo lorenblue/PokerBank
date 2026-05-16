@@ -28,42 +28,56 @@
 	<title>PokerBank</title>
 </svelte:head>
 
-<section class="page-header">
+<section class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 	<div>
-		<p class="eyebrow">PokerBank</p>
-		<h1>Dashboard</h1>
+		<p class="text-xs font-extrabold tracking-wider text-emerald-900 uppercase">PokerBank</p>
+		<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">Dashboard</h1>
 	</div>
 
 	{#if openGame}
-		<a href={`/games/${openGame.id}`} class="button-link">Continue open game</a>
+		<a
+			href={`/games/${openGame.id}`}
+			class="inline-flex rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950"
+		>
+			Continue open game
+		</a>
 	{:else}
 		<form method="POST" action="?/createGame">
-			<button type="submit">New game</button>
+			<button
+				type="submit"
+				class="rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950"
+			>
+				New game
+			</button>
 		</form>
 	{/if}
 </section>
 
 {#if form?.error}
-	<p class="error">{form.error}</p>
+	<p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">{form.error}</p>
 {/if}
 
-<section class="grid">
-	<div class="panel balances-panel">
-		<div class="panel-header">
-			<h2>Current balances</h2>
+<section class="grid gap-4 lg:grid-cols-2">
+	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
+		<div class="flex items-center justify-between">
+			<h2 class="mb-4 text-base font-bold">Current balances</h2>
 		</div>
 
 		{#if data.balances.length === 0}
-			<p class="empty">No players yet.</p>
+			<p class="text-sm text-slate-500">No players yet.</p>
 		{:else}
-			<div class="balance-list">
+			<div class="grid gap-3">
 				{#each data.balances as balance}
-					<article class="balance-row" class:inactive={!balance.isActive}>
+					<article
+						class={`flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3 ${balance.isActive ? '' : 'opacity-55'}`}
+					>
 						<div>
-							<h3>{balance.playerName}</h3>
-							<p>{balanceLabel(balance.balanceAmount)}</p>
+							<h3 class="text-sm font-bold">{balance.playerName}</h3>
+							<p class="mt-1 text-sm text-slate-500">{balanceLabel(balance.balanceAmount)}</p>
 						</div>
-						<strong class:positive={Number(balance.balanceAmount) > 0} class:negative={Number(balance.balanceAmount) < 0}>
+						<strong
+							class={`text-right text-lg font-bold ${Number(balance.balanceAmount) > 0 ? 'text-emerald-700' : Number(balance.balanceAmount) < 0 ? 'text-red-700' : ''}`}
+						>
 							{money(balance.balanceAmount)}
 						</strong>
 					</article>
@@ -72,20 +86,23 @@
 		{/if}
 	</div>
 
-	<div class="panel">
-		<div class="panel-header">
-			<h2>Games</h2>
+	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
+		<div class="flex items-center justify-between">
+			<h2 class="mb-4 text-base font-bold">Games</h2>
 		</div>
 
-		<div class="game-section">
-			<h3>Open</h3>
+		<div>
+			<h3 class="text-sm font-bold">Open</h3>
 			{#if openGames.length === 0}
-				<p class="empty">No open games.</p>
+				<p class="mt-1 text-sm text-slate-500">No open games.</p>
 			{:else}
-				<div class="game-list">
+				<div class="mt-3 grid gap-3">
 					{#each openGames as game}
-						<a href={`/games/${game.id}`} class="game-row">
-							<span>{new Date(game.createdAtUtc).toLocaleString()}</span>
+						<a
+							href={`/games/${game.id}`}
+							class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3 hover:bg-slate-50"
+						>
+							<span class="text-sm text-slate-500">{new Date(game.createdAtUtc).toLocaleString()}</span>
 							<strong>{game.status}</strong>
 						</a>
 					{/each}
@@ -93,15 +110,18 @@
 			{/if}
 		</div>
 
-		<div class="game-section">
-			<h3>Closed</h3>
+		<div class="mt-6">
+			<h3 class="text-sm font-bold">Closed</h3>
 			{#if closedGames.length === 0}
-				<p class="empty">No closed games.</p>
+				<p class="mt-1 text-sm text-slate-500">No closed games.</p>
 			{:else}
-				<div class="game-list">
+				<div class="mt-3 grid gap-3">
 					{#each closedGames as game}
-						<a href={`/games/${game.id}`} class="game-row">
-							<span>{new Date(game.createdAtUtc).toLocaleString()}</span>
+						<a
+							href={`/games/${game.id}`}
+							class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3 hover:bg-slate-50"
+						>
+							<span class="text-sm text-slate-500">{new Date(game.createdAtUtc).toLocaleString()}</span>
 							<strong>{game.status}</strong>
 						</a>
 					{/each}
