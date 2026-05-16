@@ -4,6 +4,7 @@ obj/
 .vs/
 .vscode/
 .idea/
+.DS_Store
 
 *.user
 *.suo
