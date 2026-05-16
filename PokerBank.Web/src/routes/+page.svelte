@@ -9,12 +9,18 @@
 	const players = $derived(data.players ?? []);
 	const activePlayers = $derived(players.filter((player) => player.isActive));
 	const archivedPlayers = $derived(players.filter((player) => !player.isActive));
+	const payments = $derived(data.payments ?? []);
+	const playerNames = $derived(new Map(players.map((player) => [player.id, player.name] as const)));
 
 	function money(value: number | string) {
 		const amount = Number(value);
 		const sign = amount > 0 ? '+' : amount < 0 ? '-' : '';
 
 		return `${sign}$${Math.abs(amount).toFixed(2)}`;
+	}
+
+	function unsignedMoney(value: number | string) {
+		return `$${Math.abs(Number(value)).toFixed(2)}`;
 	}
 
 	function balanceLabel(value: number | string) {
@@ -24,6 +30,13 @@
 		if (amount < 0) return 'owes';
 
 		return 'settled';
+	}
+
+	function paymentLabel(type: string) {
+		if (type === 'PlayerPaysBank') return 'Player paid me';
+		if (type === 'BankPaysPlayer') return 'I paid player';
+
+		return type;
 	}
 </script>
 
@@ -107,6 +120,73 @@
 			</div>
 		</div>
 	{/if}
+</section>
+
+<section class="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
+	<div class="mb-4 flex items-center justify-between">
+		<h2 class="text-base font-bold">Payments</h2>
+	</div>
+
+	<form method="POST" action="?/createPayment" class="grid gap-3 lg:grid-cols-[1fr_10rem_12rem_auto]">
+		<label class="grid gap-1 text-sm font-bold text-slate-700">
+			Player
+			<select name="playerId" required class="rounded-md border border-slate-300 px-3 py-2">
+				<option value="">Choose player</option>
+				{#each activePlayers as player}
+					<option value={player.id}>{player.name}</option>
+				{/each}
+			</select>
+		</label>
+
+		<label class="grid gap-1 text-sm font-bold text-slate-700">
+			Amount
+			<input
+				name="amount"
+				type="number"
+				min="0.01"
+				step="0.01"
+				required
+				class="rounded-md border border-slate-300 px-3 py-2"
+			/>
+		</label>
+
+		<label class="grid gap-1 text-sm font-bold text-slate-700">
+			Direction
+			<select name="type" required class="rounded-md border border-slate-300 px-3 py-2">
+				<option value="PlayerPaysBank">Player paid me</option>
+				<option value="BankPaysPlayer">I paid player</option>
+			</select>
+		</label>
+
+		<button
+			type="submit"
+			class="self-end rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950"
+		>
+			Record payment
+		</button>
+	</form>
+
+	<div class="mt-4 grid gap-3">
+		{#if payments.length === 0}
+			<p class="text-sm text-slate-500">No payments recorded yet.</p>
+		{:else}
+			{#each payments.slice(0, 5) as payment}
+				<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
+					<div>
+						<h3 class="text-sm font-bold">{playerNames.get(payment.playerId) ?? payment.playerId}</h3>
+						<p class="mt-1 text-sm text-slate-500">
+							{paymentLabel(payment.type)} on {new Date(payment.recordedAtUtc).toLocaleString()}
+						</p>
+					</div>
+					<strong
+						class={`text-right text-lg font-bold ${payment.type === 'BankPaysPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
+					>
+						{payment.type === 'BankPaysPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
+					</strong>
+				</div>
+			{/each}
+		{/if}
+	</div>
 </section>
 
 {#if form?.error}
