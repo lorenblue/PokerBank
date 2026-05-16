@@ -37,6 +37,11 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 
 		getGame: (id: string) => request<GameDetails>(apiFetch, baseUrl, `/games/${id}`),
 
+		deleteGame: (id: string) =>
+			request<void>(apiFetch, baseUrl, `/games/${id}`, {
+				method: 'DELETE'
+			}),
+
 		listGameResults: (gameId?: string, playerId?: string) =>
 			request<GameResult[]>(apiFetch, baseUrl, '/game-results', {
 				query: { gameId, playerId }
@@ -89,6 +94,10 @@ async function request<T>(
 
 	if (!response.ok) {
 		throw new ApiError(await readError(response), response.status);
+	}
+
+	if (response.status === 204) {
+		return undefined as T;
 	}
 
 	return (await response.json()) as T;

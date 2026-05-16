@@ -34,11 +34,24 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task CreateGame_ReturnsConflict_WhenOpenGameExists()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        await CreateGame(client);
+
+        var response = await client.PostAsync("/games", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
     public async Task ListGames_ReturnsGamesNewestFirst()
     {
         using var client = factory.CreateHttpsClient();
 
         var olderGame = await CreateGame(client);
+        await CloseGame(client, olderGame.Id);
         await Task.Delay(10);
         var newerGame = await CreateGame(client);
 
@@ -53,6 +66,44 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
             games,
             game => Assert.Equal(newerGame.Id, game.Id),
             game => Assert.Equal(olderGame.Id, game.Id));
+    }
+
+    [Fact]
+    public async Task DeleteGame_ReturnsNoContent_WhenGameIsOpen()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+
+        var response = await client.DeleteAsync($"/games/{game.Id}");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        var getResponse = await client.GetAsync($"/games/{game.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteGame_ReturnsNotFound_WhenGameDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.DeleteAsync($"/games/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteGame_ReturnsConflict_WhenGameIsClosed()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        await CloseGame(client, game.Id);
+
+        var response = await client.DeleteAsync($"/games/{game.Id}");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
     [Fact]

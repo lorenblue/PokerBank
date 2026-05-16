@@ -33,9 +33,15 @@
 	</div>
 
 	{#if data.game.status === 'Open'}
-		<form method="POST" action="?/closeGame">
-			<button type="submit">Close game</button>
-		</form>
+		<div class="action-group">
+			<form method="POST" action="?/deleteGame">
+				<button type="submit" class="danger-button">Delete game</button>
+			</form>
+
+			<form method="POST" action="?/closeGame">
+				<button type="submit">Close game</button>
+			</form>
+		</div>
 	{/if}
 </section>
 

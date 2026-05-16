@@ -67,7 +67,8 @@ export interface paths {
         get: operations["GetGame"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete an open game. */
+        delete: operations["DeleteGame"];
         options?: never;
         head?: never;
         patch?: never;
@@ -295,6 +296,9 @@ export interface components {
             /** Format: date-time */
             createdAtUtc: string;
         };
+        CreateGameErrorResponse: {
+            error: string;
+        };
         CreateGameResponse: {
             /** Format: uuid */
             id: string;
@@ -334,6 +338,9 @@ export interface components {
             id: string;
             name: string;
             isActive: boolean;
+        };
+        DeleteGameErrorResponse: {
+            error: string;
         };
         GetGameEntryResponse: {
             /** Format: uuid */
@@ -541,6 +548,15 @@ export interface operations {
                     "application/json": components["schemas"]["CreateGameResponse"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateGameErrorResponse"];
+                };
+            };
         };
     };
     GetGame: {
@@ -570,6 +586,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GetGameErrorResponse"];
+                };
+            };
+        };
+    };
+    DeleteGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteGameErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteGameErrorResponse"];
                 };
             };
         };

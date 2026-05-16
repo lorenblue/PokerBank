@@ -5,6 +5,7 @@
 
 	const openGames = $derived(data.games.filter((game) => game.status === 'Open'));
 	const closedGames = $derived(data.games.filter((game) => game.status !== 'Open'));
+	const openGame = $derived(openGames[0]);
 
 	function money(value: number | string) {
 		const amount = Number(value);
@@ -30,12 +31,16 @@
 <section class="page-header">
 	<div>
 		<p class="eyebrow">PokerBank</p>
-		<h1>Balances</h1>
+		<h1>Dashboard</h1>
 	</div>
 
-	<form method="POST" action="?/createGame">
-		<button type="submit">New game</button>
-	</form>
+	{#if openGame}
+		<a href={`/games/${openGame.id}`} class="button-link">Continue open game</a>
+	{:else}
+		<form method="POST" action="?/createGame">
+			<button type="submit">New game</button>
+		</form>
+	{/if}
 </section>
 
 {#if form?.error}

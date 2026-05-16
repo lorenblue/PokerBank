@@ -1,4 +1,4 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { ApiError } from '$lib/api/client';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
@@ -38,6 +38,21 @@ export const actions: Actions = {
 		try {
 			await api.closeGame(params.id);
 			return { success: true };
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return fail(error.status, { error: error.message });
+			}
+
+			throw error;
+		}
+	},
+
+	deleteGame: async ({ fetch, params }) => {
+		const api = pokerBankApi(fetch);
+
+		try {
+			await api.deleteGame(params.id);
+			redirect(303, '/');
 		} catch (error) {
 			if (error instanceof ApiError) {
 				return fail(error.status, { error: error.message });
