@@ -8,6 +8,7 @@ export type GameDetails = Schemas['GetGameResponse'];
 export type GameResult = Schemas['ListGameResultsResponse'];
 export type Player = Schemas['ListPlayersResponse'];
 export type CreateGameResponse = Schemas['CreateGameResponse'];
+export type CreatePlayerRequest = Schemas['CreatePlayerRequest'];
 export type AddBuyInRequest = Schemas['AddBuyInRequest'];
 export type AddCashOutRequest = Schemas['AddCashOutRequest'];
 
@@ -64,7 +65,13 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 				method: 'POST'
 			}),
 
-		listPlayers: () => request<Player[]>(apiFetch, baseUrl, '/players')
+		listPlayers: () => request<Player[]>(apiFetch, baseUrl, '/players'),
+
+		createPlayer: (body: CreatePlayerRequest) =>
+			request<Player>(apiFetch, baseUrl, '/players', {
+				method: 'POST',
+				body
+			})
 	};
 }
 

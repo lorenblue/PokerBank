@@ -6,6 +6,9 @@
 	const openGames = $derived(data.games.filter((game) => game.status === 'Open'));
 	const closedGames = $derived(data.games.filter((game) => game.status !== 'Open'));
 	const openGame = $derived(openGames[0]);
+	const players = $derived(data.players ?? []);
+	const activePlayers = $derived(players.filter((player) => player.isActive));
+	const archivedPlayers = $derived(players.filter((player) => !player.isActive));
 
 	function money(value: number | string) {
 		const amount = Number(value);
@@ -50,6 +53,59 @@
 				New game
 			</button>
 		</form>
+	{/if}
+</section>
+
+<section class="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
+	<div class="mb-4 flex items-center justify-between">
+		<h2 class="text-base font-bold">Players</h2>
+	</div>
+
+	<form method="POST" action="?/createPlayer" class="grid gap-3 sm:grid-cols-[1fr_auto]">
+		<label class="grid gap-1 text-sm font-bold text-slate-700">
+			Name
+			<input
+				name="name"
+				type="text"
+				autocomplete="off"
+				required
+				class="rounded-md border border-slate-300 px-3 py-2"
+			/>
+		</label>
+
+		<button
+			type="submit"
+			class="self-end rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950"
+		>
+			Add player
+		</button>
+	</form>
+
+	<div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+		{#if activePlayers.length === 0}
+			<p class="text-sm text-slate-500">No active players yet.</p>
+		{:else}
+			{#each activePlayers as player}
+				<div class="rounded-lg border border-slate-100 p-3">
+					<h3 class="text-sm font-bold">{player.name}</h3>
+					<p class="mt-1 text-sm text-slate-500">Active</p>
+				</div>
+			{/each}
+		{/if}
+	</div>
+
+	{#if archivedPlayers.length > 0}
+		<div class="mt-4">
+			<h3 class="text-sm font-bold">Archived</h3>
+			<div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+				{#each archivedPlayers as player}
+					<div class="rounded-lg border border-slate-100 p-3 opacity-55">
+						<h4 class="text-sm font-bold">{player.name}</h4>
+						<p class="mt-1 text-sm text-slate-500">Archived</p>
+					</div>
+				{/each}
+			</div>
+		</div>
 	{/if}
 </section>
 
