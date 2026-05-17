@@ -6,16 +6,14 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ fetch, params }) => {
 	const api = pokerBankApi(fetch);
 
-	const [game, players, results] = await Promise.all([
+	const [game, players] = await Promise.all([
 		api.getGame(params.id),
-		api.listPlayers(),
-		api.listGameResults(params.id)
+		api.listPlayers()
 	]);
 
 	return {
 		game,
-		players: players.filter((player) => player.isActive),
-		results
+		players: players.filter((player) => player.isActive)
 	};
 };
 

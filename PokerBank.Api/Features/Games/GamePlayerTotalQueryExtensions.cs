@@ -2,15 +2,20 @@ using PokerBank.Domain;
 
 namespace PokerBank.Api.Features.Games;
 
-internal static class GameResultQueryExtensions
+internal static class GamePlayerTotalQueryExtensions
 {
-    public static IQueryable<GameResultProjection> ToGameResults(
+    public static IQueryable<GamePlayerTotalProjection> ToGamePlayerTotals(
         this IQueryable<PokerGame> games,
         Guid? playerId = null,
-        Guid? gameId = null)
+        Guid? gameId = null,
+        bool closedOnly = false)
     {
+        if (closedOnly)
+        {
+            games = games.Where(game => game.Status == GameStatus.Closed);
+        }
+
         var entries = games
-            .Where(game => game.Status == GameStatus.Closed)
             .SelectMany(game => game.Entries.Select(entry => new
             {
                 GameId = game.Id,
@@ -37,7 +42,7 @@ internal static class GameResultQueryExtensions
                 entry.PlayedAtUtc,
                 entry.PlayerId
             })
-            .Select(entries => new GameResultProjection
+            .Select(entries => new GamePlayerTotalProjection
             {
                 PlayerId = entries.Key.PlayerId,
                 GameId = entries.Key.GameId,
@@ -49,7 +54,7 @@ internal static class GameResultQueryExtensions
     }
 }
 
-internal sealed class GameResultProjection
+internal sealed class GamePlayerTotalProjection
 {
     public Guid PlayerId { get; init; }
 

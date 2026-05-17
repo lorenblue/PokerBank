@@ -42,7 +42,6 @@
 
 <section class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 	<div>
-		<p class="text-xs font-extrabold tracking-wider text-emerald-900 uppercase">PokerBank</p>
 		<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">Dashboard</h1>
 	</div>
 

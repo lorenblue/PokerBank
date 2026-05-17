@@ -356,6 +356,17 @@ export interface components {
         GetGameErrorResponse: {
             error: string;
         };
+        GetGamePlayerTotalResponse: {
+            /** Format: uuid */
+            playerId: string;
+            playerName: string;
+            /** Format: double */
+            buyInAmount: number | string;
+            /** Format: double */
+            cashOutAmount: number | string;
+            /** Format: double */
+            netAmount: number | string;
+        };
         GetGameResponse: {
             /** Format: uuid */
             id: string;
@@ -369,6 +380,7 @@ export interface components {
             /** Format: double */
             remainingCashOutAmount: number | string;
             entries: components["schemas"]["GetGameEntryResponse"][];
+            playerTotals: components["schemas"]["GetGamePlayerTotalResponse"][];
         };
         GetPaymentErrorResponse: {
             error: string;

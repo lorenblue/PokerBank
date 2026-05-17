@@ -25,7 +25,7 @@ public static class ListBalances
     {
         var gameNets = await dbContext.Games
             .AsNoTracking()
-            .ToGameResults(playerId)
+            .ToGamePlayerTotals(playerId, closedOnly: true)
             .GroupBy(result => result.PlayerId)
             .Select(results => new PlayerAmount(
                 results.Key,

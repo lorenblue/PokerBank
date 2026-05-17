@@ -12,8 +12,7 @@
 </svelte:head>
 
 <section class="mb-6">
-	<p class="text-xs font-extrabold tracking-wider text-emerald-900 uppercase">Players</p>
-	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">Friends</h1>
+	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">Players</h1>
 </section>
 
 {#if form?.error}

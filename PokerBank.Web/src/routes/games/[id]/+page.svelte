@@ -159,24 +159,24 @@
 	</div>
 
 	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<h2 class="mb-4 text-base font-bold">Results</h2>
+		<h2 class="mb-4 text-base font-bold">Player totals</h2>
 
-		{#if data.results.length === 0}
-			<p class="text-sm text-slate-500">Results appear after the game is closed.</p>
+		{#if data.game.playerTotals.length === 0}
+			<p class="text-sm text-slate-500">Player totals appear after entries are added.</p>
 		{:else}
 			<div class="grid gap-3">
-				{#each data.results as result}
+				{#each data.game.playerTotals as total}
 					<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
 						<div>
-							<strong>{result.playerName}</strong>
+							<strong>{total.playerName}</strong>
 							<span class="mt-1 block text-sm text-slate-500">
-								{money(result.buyInAmount)} in / {money(result.cashOutAmount)} out
+								{money(total.buyInAmount)} in / {money(total.cashOutAmount)} out
 							</span>
 						</div>
 						<span
-							class={`font-bold ${Number(result.netAmount) > 0 ? 'text-emerald-700' : Number(result.netAmount) < 0 ? 'text-red-700' : ''}`}
+							class={`font-bold ${Number(total.netAmount) > 0 ? 'text-emerald-700' : Number(total.netAmount) < 0 ? 'text-red-700' : ''}`}
 						>
-							{signedMoney(result.netAmount)}
+							{signedMoney(total.netAmount)}
 						</span>
 					</div>
 				{/each}

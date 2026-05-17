@@ -127,6 +127,7 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(0m, game.TotalCashOutAmount);
         Assert.Equal(0m, game.RemainingCashOutAmount);
         Assert.Empty(game.Entries);
+        Assert.Empty(game.PlayerTotals);
     }
 
     [Fact]
@@ -164,6 +165,13 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(50m, entry.Amount);
         Assert.Equal("BuyIn", entry.Type);
         AssertCloseTo(buyIn.RecordedAtUtc, entry.RecordedAtUtc);
+
+        var playerTotal = Assert.Single(gameDetails.PlayerTotals);
+        Assert.Equal(player.Id, playerTotal.PlayerId);
+        Assert.Equal("Lorenzo", playerTotal.PlayerName);
+        Assert.Equal(50m, playerTotal.BuyInAmount);
+        Assert.Equal(0m, playerTotal.CashOutAmount);
+        Assert.Equal(-50m, playerTotal.NetAmount);
     }
 
     [Fact]
@@ -191,6 +199,47 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(50m, entry.Amount);
         Assert.Equal("CashOut", entry.Type);
         AssertCloseTo(cashOut.RecordedAtUtc, entry.RecordedAtUtc);
+    }
+
+    [Fact]
+    public async Task GetGame_ReturnsPlayerTotals_ForOpenGame()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var lorenzo = await CreatePlayer(client, "Lorenzo");
+        var maya = await CreatePlayer(client, "Maya");
+        await AddBuyIn(client, game.Id, lorenzo.Id, 75m);
+        await AddBuyIn(client, game.Id, lorenzo.Id, 25m);
+        await AddBuyIn(client, game.Id, maya.Id, 50m);
+        await AddCashOut(client, game.Id, lorenzo.Id, 60m);
+
+        var response = await client.GetAsync($"/games/{game.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var gameDetails = await response.Content.ReadFromJsonAsync<GameDetailsResponse>();
+
+        Assert.NotNull(gameDetails);
+        Assert.Equal("Open", gameDetails.Status);
+        Assert.Collection(
+            gameDetails.PlayerTotals,
+            total =>
+            {
+                Assert.Equal(lorenzo.Id, total.PlayerId);
+                Assert.Equal("Lorenzo", total.PlayerName);
+                Assert.Equal(100m, total.BuyInAmount);
+                Assert.Equal(60m, total.CashOutAmount);
+                Assert.Equal(-40m, total.NetAmount);
+            },
+            total =>
+            {
+                Assert.Equal(maya.Id, total.PlayerId);
+                Assert.Equal("Maya", total.PlayerName);
+                Assert.Equal(50m, total.BuyInAmount);
+                Assert.Equal(0m, total.CashOutAmount);
+                Assert.Equal(-50m, total.NetAmount);
+            });
     }
 
     [Fact]
@@ -582,7 +631,8 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         decimal TotalBuyInAmount,
         decimal TotalCashOutAmount,
         decimal RemainingCashOutAmount,
-        GameEntryDetailsResponse[] Entries);
+        GameEntryDetailsResponse[] Entries,
+        GamePlayerTotalResponse[] PlayerTotals);
 
     private sealed record PlayerResponse(Guid Id, string Name, bool IsActive);
 
@@ -600,4 +650,11 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         decimal Amount,
         string Type,
         DateTimeOffset RecordedAtUtc);
+
+    private sealed record GamePlayerTotalResponse(
+        Guid PlayerId,
+        string PlayerName,
+        decimal BuyInAmount,
+        decimal CashOutAmount,
+        decimal NetAmount);
 }

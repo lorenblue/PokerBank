@@ -27,9 +27,30 @@ public static class GetGame
             .Where(game => game.Id == id)
             .SingleOrDefaultAsync(cancellationToken);
 
-        return game is null
-            ? TypedResults.NotFound(new ErrorResponse("Game was not found."))
-            : TypedResults.Ok(new Response(
+        if (game is null)
+        {
+            return TypedResults.NotFound(new ErrorResponse("Game was not found."));
+        }
+
+        var playerTotals = await dbContext.Games
+            .AsNoTracking()
+            .Where(game => game.Id == id)
+            .ToGamePlayerTotals()
+            .Join(
+                dbContext.Players.AsNoTracking(),
+                total => total.PlayerId,
+                player => player.Id,
+                (total, player) => new { Total = total, PlayerName = player.Name })
+            .OrderBy(total => total.PlayerName)
+            .Select(total => new PlayerTotalResponse(
+                total.Total.PlayerId,
+                total.PlayerName,
+                total.Total.BuyInAmount,
+                total.Total.CashOutAmount,
+                total.Total.NetAmount))
+            .ToArrayAsync(cancellationToken);
+
+        return TypedResults.Ok(new Response(
                 game.Id,
                 game.Status.ToString(),
                 game.CreatedAtUtc,
@@ -44,7 +65,8 @@ public static class GetGame
                         entry.Amount.Amount,
                         entry.Type.ToString(),
                         entry.RecordedAtUtc))
-                    .ToArray()));
+                    .ToArray(),
+                playerTotals));
     }
 
     private sealed record Response(
@@ -54,7 +76,8 @@ public static class GetGame
         decimal TotalBuyInAmount,
         decimal TotalCashOutAmount,
         decimal RemainingCashOutAmount,
-        EntryResponse[] Entries);
+        EntryResponse[] Entries,
+        PlayerTotalResponse[] PlayerTotals);
 
     private sealed record EntryResponse(
         Guid Id,
@@ -62,6 +85,13 @@ public static class GetGame
         decimal Amount,
         string Type,
         DateTimeOffset RecordedAtUtc);
+
+    private sealed record PlayerTotalResponse(
+        Guid PlayerId,
+        string PlayerName,
+        decimal BuyInAmount,
+        decimal CashOutAmount,
+        decimal NetAmount);
 
     private sealed record ErrorResponse(string Error);
 }

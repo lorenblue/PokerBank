@@ -25,7 +25,7 @@ public static class ListGameResults
     {
         var results = await dbContext.Games
             .AsNoTracking()
-            .ToGameResults(playerId, gameId)
+            .ToGamePlayerTotals(playerId, gameId, closedOnly: true)
             .Join(
                 dbContext.Players.AsNoTracking(),
                 result => result.PlayerId,

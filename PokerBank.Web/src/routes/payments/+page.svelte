@@ -23,8 +23,7 @@
 </svelte:head>
 
 <section class="mb-6">
-	<p class="text-xs font-extrabold tracking-wider text-emerald-900 uppercase">Payments</p>
-	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">Settlement</h1>
+	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">Payments</h1>
 </section>
 
 {#if form?.error}
