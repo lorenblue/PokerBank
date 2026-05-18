@@ -386,6 +386,28 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task AddCashOut_ReturnsConflict_WhenPlayerHasNotBoughtIn()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var playerWithBuyIn = await CreatePlayer(client, "Lorenzo");
+        var playerWithoutBuyIn = await CreatePlayer(client, "Maya");
+        await AddBuyIn(client, game.Id, playerWithBuyIn.Id, 100m);
+
+        var response = await client.PostAsJsonAsync(
+            $"/games/{game.Id}/cash-outs",
+            new { PlayerId = playerWithoutBuyIn.Id, Amount = 50m });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.NotNull(error);
+        Assert.Equal("Player must have a buy-in before cashing out.", error.Error);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-10)]
@@ -635,6 +657,8 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         GamePlayerTotalResponse[] PlayerTotals);
 
     private sealed record PlayerResponse(Guid Id, string Name, bool IsActive);
+
+    private sealed record ErrorResponse(string Error);
 
     private sealed record GameEntryDetailsResponse(
         Guid Id,

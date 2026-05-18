@@ -101,6 +101,23 @@ public sealed class PokerGameTests
     }
 
     [Fact]
+    public void AddCashOut_Fails_WhenPlayerHasNoBuyIns()
+    {
+        var game = PokerGame.Create();
+        var playerWithBuyIn = Guid.NewGuid();
+        var playerWithoutBuyIn = Guid.NewGuid();
+
+        Assert.True(game.AddBuyIn(playerWithBuyIn, new Money(100m)).IsSuccess);
+
+        var result = game.AddCashOut(playerWithoutBuyIn, new Money(50m));
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.PlayerHasNoBuyIns, error.Code);
+        Assert.DoesNotContain(game.Entries, entry => entry.Type == GameEntryType.CashOut);
+    }
+
+    [Fact]
     public void ClosedGame_CannotBeModified()
     {
         var game = PokerGame.Create();

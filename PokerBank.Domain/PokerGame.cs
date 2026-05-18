@@ -79,6 +79,11 @@ public sealed class PokerGame
             return Result.Fail<GameEntry>(PokerGameErrors.InvalidAmount());
         }
 
+        if (type == GameEntryType.CashOut && !HasBuyIn(playerId))
+        {
+            return Result.Fail<GameEntry>(PokerGameErrors.PlayerHasNoBuyIns());
+        }
+
         if (type == GameEntryType.CashOut && TotalCashOuts + amount > TotalBuyIns)
         {
             return Result.Fail<GameEntry>(PokerGameErrors.CashOutsExceedBuyIns());
@@ -91,6 +96,11 @@ public sealed class PokerGame
     }
 
     private bool IsClosed() => Status == GameStatus.Closed;
+
+    private bool HasBuyIn(Guid playerId)
+    {
+        return _entries.Any(entry => entry.PlayerId == playerId && entry.Type == GameEntryType.BuyIn);
+    }
 
     private Money SumEntries(GameEntryType type)
     {

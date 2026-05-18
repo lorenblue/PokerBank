@@ -18,6 +18,10 @@ public static class PokerGameErrors
         PokerGameErrorCode.CashOutsExceedBuyIns,
         "Cash-outs cannot exceed total buy-ins.");
 
+    public static PokerGameError PlayerHasNoBuyIns() => new(
+        PokerGameErrorCode.PlayerHasNoBuyIns,
+        "Player must have a buy-in before cashing out.");
+
     public static PokerGameError BuyInsMustEqualCashOuts() => new(
         PokerGameErrorCode.BuyInsMustEqualCashOuts,
         "Cannot close a game until total buy-ins equal total cash-outs.");
