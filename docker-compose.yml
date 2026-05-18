@@ -1,4 +1,20 @@
 services:
+  pokerbank.web:
+    image: node:24-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    environment:
+      POKERBANK_API_BASE_URL: http://pokerbank.api:8080
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./PokerBank.Web:/app
+      - pokerbank.web.node_modules:/app/node_modules
+    ports:
+      - 5173:5173
+    depends_on:
+      pokerbank.api:
+        condition: service_started
+
   pokerbank.api:
     image: ${DOCKER_REGISTRY-}pokerbankapi
     build:
@@ -40,3 +56,6 @@ services:
       DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
     ports:
       - 18888:18888
+
+volumes:
+  pokerbank.web.node_modules:
