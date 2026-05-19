@@ -29,6 +29,7 @@ public static class GetPayment
                 payment.PlayerId,
                 payment.Amount.Amount,
                 payment.Type.ToString(),
+                payment.Method.ToString(),
                 payment.RecordedAtUtc))
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -42,6 +43,7 @@ public static class GetPayment
         Guid PlayerId,
         decimal Amount,
         string Type,
+        string Method,
         DateTimeOffset RecordedAtUtc);
 
     private sealed record ErrorResponse(string Error);

@@ -20,15 +20,16 @@ export const actions: Actions = {
 		const playerId = data.get('playerId')?.toString();
 		const amount = Number(data.get('amount'));
 		const type = data.get('type')?.toString();
+		const method = data.get('method')?.toString();
 
-		if (!playerId || !Number.isFinite(amount) || !type) {
-			return fail(400, { error: 'Player, amount, and payment direction are required.' });
+		if (!playerId || !Number.isFinite(amount) || !type || !method) {
+			return fail(400, { error: 'Player, amount, payment direction, and payment method are required.' });
 		}
 
 		const api = pokerBankApi(fetch);
 
 		try {
-			await api.createPayment({ playerId, amount, type });
+			await api.createPayment({ playerId, amount, type, method });
 			return { success: true };
 		} catch (error) {
 			if (error instanceof ApiError) {

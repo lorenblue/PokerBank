@@ -34,6 +34,13 @@
 
 		return type;
 	}
+
+	function methodLabel(method: string) {
+		if (method === 'ETransfer') return 'e-transfer';
+		if (method === 'Cash') return 'cash';
+
+		return method;
+	}
 </script>
 
 <svelte:head>
@@ -126,7 +133,9 @@
 						<div class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 p-3">
 							<div>
 								<h3 class="text-sm font-bold">{playerNames.get(payment.playerId) ?? payment.playerId}</h3>
-								<p class="mt-1 text-xs text-slate-500">{paymentLabel(payment.type)}</p>
+								<p class="mt-1 text-xs text-slate-500">
+									{paymentLabel(payment.type)} · {methodLabel(payment.method)}
+								</p>
 							</div>
 							<strong
 								class={`text-right font-bold ${payment.type === 'BankPaysPlayer' ? 'text-emerald-700' : 'text-red-700'}`}

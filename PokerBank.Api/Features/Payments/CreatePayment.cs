@@ -38,7 +38,13 @@ public static class CreatePayment
             return TypedResults.BadRequest(new ErrorResponse("Payment type is invalid."));
         }
 
-        var result = Payment.Create(request.PlayerId, new Money(request.Amount), type);
+        if (string.IsNullOrWhiteSpace(request.Method) ||
+            !Enum.TryParse<PaymentMethod>(request.Method, ignoreCase: true, out var method))
+        {
+            return TypedResults.BadRequest(new ErrorResponse("Payment method is invalid."));
+        }
+
+        var result = Payment.Create(request.PlayerId, new Money(request.Amount), type, method);
 
         if (result.IsFailed)
         {
@@ -57,6 +63,7 @@ public static class CreatePayment
                 payment.PlayerId,
                 payment.Amount.Amount,
                 payment.Type.ToString(),
+                payment.Method.ToString(),
                 payment.RecordedAtUtc));
     }
 
@@ -68,13 +75,14 @@ public static class CreatePayment
         return TypedResults.BadRequest(new ErrorResponse(message));
     }
 
-    private sealed record Request(Guid PlayerId, decimal Amount, string Type);
+    private sealed record Request(Guid PlayerId, decimal Amount, string Type, string Method);
 
     private sealed record Response(
         Guid Id,
         Guid PlayerId,
         decimal Amount,
         string Type,
+        string Method,
         DateTimeOffset RecordedAtUtc);
 
     private sealed record ErrorResponse(string Error);

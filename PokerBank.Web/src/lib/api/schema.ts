@@ -315,6 +315,7 @@ export interface components {
             /** Format: double */
             amount: number | string;
             type: string;
+            method: string;
         };
         CreatePaymentResponse: {
             /** Format: uuid */
@@ -324,6 +325,7 @@ export interface components {
             /** Format: double */
             amount: number | string;
             type: string;
+            method: string;
             /** Format: date-time */
             recordedAtUtc: string;
         };
@@ -393,6 +395,7 @@ export interface components {
             /** Format: double */
             amount: number | string;
             type: string;
+            method: string;
             /** Format: date-time */
             recordedAtUtc: string;
         };
@@ -447,6 +450,7 @@ export interface components {
             /** Format: double */
             amount: number | string;
             type: string;
+            method: string;
             /** Format: date-time */
             recordedAtUtc: string;
         };

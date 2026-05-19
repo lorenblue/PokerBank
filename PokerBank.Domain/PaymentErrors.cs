@@ -13,4 +13,8 @@ public static class PaymentErrors
     public static PaymentError InvalidPaymentType() => new(
         PaymentErrorCode.InvalidPaymentType,
         "Payment type is invalid.");
+
+    public static PaymentError InvalidPaymentMethod() => new(
+        PaymentErrorCode.InvalidPaymentMethod,
+        "Payment method is invalid.");
 }

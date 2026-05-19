@@ -18,6 +18,13 @@
 
 		return type;
 	}
+
+	function methodLabel(method: string) {
+		if (method === 'ETransfer') return 'e-transfer';
+		if (method === 'Cash') return 'cash';
+
+		return method;
+	}
 </script>
 
 <svelte:head>
@@ -64,7 +71,9 @@
 						<div>
 							<h3 class="text-sm font-bold">{playerNames.get(payment.playerId) ?? payment.playerId}</h3>
 							<p class="mt-1 text-xs text-slate-500">
-								{paymentLabel(payment.type)} · {new Date(payment.recordedAtUtc).toLocaleString()}
+								{paymentLabel(payment.type)} · {methodLabel(payment.method)} · {new Date(
+									payment.recordedAtUtc
+								).toLocaleString()}
 							</p>
 						</div>
 						<strong
@@ -123,6 +132,15 @@
 						<option value="">Choose direction</option>
 						<option value="PlayerPaysBank">Player paid me</option>
 						<option value="BankPaysPlayer">I paid player</option>
+					</select>
+				</label>
+
+				<label class="grid gap-1 text-sm font-bold text-slate-700">
+					Method
+					<select name="method" required class="rounded-md border border-slate-300 px-3 py-2">
+						<option value="">Choose method</option>
+						<option value="ETransfer">e-transfer</option>
+						<option value="Cash">cash</option>
 					</select>
 				</label>
 

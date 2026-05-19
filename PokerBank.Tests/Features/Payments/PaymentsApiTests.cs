@@ -21,7 +21,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
 
         var response = await client.PostAsJsonAsync(
             "/payments",
-            new { PlayerId = player.Id, Amount = 40m, Type = type });
+            new { PlayerId = player.Id, Amount = 40m, Type = type, Method = "ETransfer" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
@@ -32,6 +32,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         Assert.Equal(player.Id, payment.PlayerId);
         Assert.Equal(40m, payment.Amount);
         Assert.Equal(type, payment.Type);
+        Assert.Equal("ETransfer", payment.Method);
         Assert.NotEqual(default, payment.RecordedAtUtc);
         Assert.Equal($"/payments/{payment.Id}", response.Headers.Location?.OriginalString);
     }
@@ -54,6 +55,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         Assert.Equal(player.Id, payment.PlayerId);
         Assert.Equal(40m, payment.Amount);
         Assert.Equal("PlayerPaysBank", payment.Type);
+        Assert.Equal("ETransfer", payment.Method);
         AssertCloseTo(createdPayment.RecordedAtUtc, payment.RecordedAtUtc);
     }
 
@@ -93,6 +95,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
                 Assert.Equal(maya.Id, payment.PlayerId);
                 Assert.Equal(25m, payment.Amount);
                 Assert.Equal("BankPaysPlayer", payment.Type);
+                Assert.Equal("ETransfer", payment.Method);
             },
             payment =>
             {
@@ -100,6 +103,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
                 Assert.Equal(lorenzo.Id, payment.PlayerId);
                 Assert.Equal(40m, payment.Amount);
                 Assert.Equal("PlayerPaysBank", payment.Type);
+                Assert.Equal("ETransfer", payment.Method);
             });
     }
 
@@ -125,6 +129,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         Assert.Equal(lorenzo.Id, payment.PlayerId);
         Assert.Equal(40m, payment.Amount);
         Assert.Equal("PlayerPaysBank", payment.Type);
+        Assert.Equal("ETransfer", payment.Method);
     }
 
     [Fact]
@@ -134,7 +139,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
 
         var response = await client.PostAsJsonAsync(
             "/payments",
-            new { PlayerId = Guid.NewGuid(), Amount = 40m, Type = "PlayerPaysBank" });
+            new { PlayerId = Guid.NewGuid(), Amount = 40m, Type = "PlayerPaysBank", Method = "ETransfer" });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -148,7 +153,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
 
         var response = await client.PostAsJsonAsync(
             "/payments",
-            new { PlayerId = player.Id, Amount = 40m, Type = "PlayerPaysBank" });
+            new { PlayerId = player.Id, Amount = 40m, Type = "PlayerPaysBank", Method = "ETransfer" });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -163,7 +168,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
 
         var response = await client.PostAsJsonAsync(
             "/payments",
-            new { PlayerId = player.Id, Amount = amount, Type = "PlayerPaysBank" });
+            new { PlayerId = player.Id, Amount = amount, Type = "PlayerPaysBank", Method = "ETransfer" });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -179,7 +184,23 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
 
         var response = await client.PostAsJsonAsync(
             "/payments",
-            new { PlayerId = player.Id, Amount = 40m, Type = type });
+            new { PlayerId = player.Id, Amount = 40m, Type = type, Method = "ETransfer" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Nope")]
+    public async Task CreatePayment_ReturnsBadRequest_WhenPaymentMethodIsInvalid(string? method)
+    {
+        using var client = factory.CreateHttpsClient();
+        var player = await CreatePlayer(client, "Lorenzo");
+
+        var response = await client.PostAsJsonAsync(
+            "/payments",
+            new { PlayerId = player.Id, Amount = 40m, Type = "PlayerPaysBank", Method = method });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -202,7 +223,7 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
     {
         var response = await client.PostAsJsonAsync(
             "/payments",
-            new { PlayerId = playerId, Amount = amount, Type = type });
+            new { PlayerId = playerId, Amount = amount, Type = type, Method = "ETransfer" });
         response.EnsureSuccessStatusCode();
 
         var payment = await response.Content.ReadFromJsonAsync<PaymentResponse>();
@@ -228,5 +249,6 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         Guid PlayerId,
         decimal Amount,
         string Type,
+        string Method,
         DateTimeOffset RecordedAtUtc);
 }

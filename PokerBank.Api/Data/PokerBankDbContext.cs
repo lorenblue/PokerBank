@@ -107,6 +107,10 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
                 .HasConversion<string>()
                 .IsRequired();
 
+            payment.Property(p => p.Method)
+                .HasConversion<string>()
+                .IsRequired();
+
             payment.Property(p => p.RecordedAtUtc)
                 .IsRequired();
         });

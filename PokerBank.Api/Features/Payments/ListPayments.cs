@@ -35,6 +35,7 @@ public static class ListPayments
                 payment.PlayerId,
                 payment.Amount.Amount,
                 payment.Type.ToString(),
+                payment.Method.ToString(),
                 payment.RecordedAtUtc))
             .ToArrayAsync(cancellationToken);
 
@@ -46,5 +47,6 @@ public static class ListPayments
         Guid PlayerId,
         decimal Amount,
         string Type,
+        string Method,
         DateTimeOffset RecordedAtUtc);
 }

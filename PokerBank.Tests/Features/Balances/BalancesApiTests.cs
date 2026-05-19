@@ -171,7 +171,7 @@ public sealed class BalancesApiTests(PokerBankApiFactory factory) : IAsyncLifeti
     {
         var response = await client.PostAsJsonAsync(
             "/payments",
-            new { PlayerId = playerId, Amount = amount, Type = type });
+            new { PlayerId = playerId, Amount = amount, Type = type, Method = "ETransfer" });
         response.EnsureSuccessStatusCode();
     }
 
