@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
+using PokerBank.Domain;
 
 namespace PokerBank.Api.Features.Payments;
 
@@ -34,8 +35,8 @@ public static class ListPayments
                 payment.Id,
                 payment.PlayerId,
                 payment.Amount.Amount,
-                payment.Type.ToString(),
-                payment.Method.ToString(),
+                payment.Type,
+                payment.Method,
                 payment.RecordedAtUtc))
             .ToArrayAsync(cancellationToken);
 
@@ -46,7 +47,7 @@ public static class ListPayments
         Guid Id,
         Guid PlayerId,
         decimal Amount,
-        string Type,
-        string Method,
+        PaymentType Type,
+        PaymentMethod Method,
         DateTimeOffset RecordedAtUtc);
 }

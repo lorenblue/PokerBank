@@ -60,7 +60,7 @@ public static class AddCashOut
                 game.Id,
                 entry.PlayerId,
                 entry.Amount.Amount,
-                entry.Type.ToString(),
+                entry.Type,
                 entry.RecordedAtUtc));
     }
 
@@ -84,7 +84,7 @@ public static class AddCashOut
         Guid GameId,
         Guid PlayerId,
         decimal Amount,
-        string Type,
+        GameEntryType Type,
         DateTimeOffset RecordedAtUtc);
 
     private sealed record ErrorResponse(string Error);

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
+using PokerBank.Domain;
 
 namespace PokerBank.Api.Features.Games;
 
@@ -52,7 +53,7 @@ public static class GetGame
 
         return TypedResults.Ok(new Response(
                 game.Id,
-                game.Status.ToString(),
+                game.Status,
                 game.CreatedAtUtc,
                 game.TotalBuyIns.Amount,
                 game.TotalCashOuts.Amount,
@@ -63,7 +64,7 @@ public static class GetGame
                         entry.Id,
                         entry.PlayerId,
                         entry.Amount.Amount,
-                        entry.Type.ToString(),
+                        entry.Type,
                         entry.RecordedAtUtc))
                     .ToArray(),
                 playerTotals));
@@ -71,7 +72,7 @@ public static class GetGame
 
     private sealed record Response(
         Guid Id,
-        string Status,
+        GameStatus Status,
         DateTime CreatedAtUtc,
         decimal TotalBuyInAmount,
         decimal TotalCashOutAmount,
@@ -83,7 +84,7 @@ public static class GetGame
         Guid Id,
         Guid PlayerId,
         decimal Amount,
-        string Type,
+        GameEntryType Type,
         DateTimeOffset RecordedAtUtc);
 
     private sealed record PlayerTotalResponse(

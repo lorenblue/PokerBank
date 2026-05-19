@@ -32,19 +32,7 @@ public static class CreatePayment
             return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
-        if (string.IsNullOrWhiteSpace(request.Type) ||
-            !Enum.TryParse<PaymentType>(request.Type, ignoreCase: true, out var type))
-        {
-            return TypedResults.BadRequest(new ErrorResponse("Payment type is invalid."));
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Method) ||
-            !Enum.TryParse<PaymentMethod>(request.Method, ignoreCase: true, out var method))
-        {
-            return TypedResults.BadRequest(new ErrorResponse("Payment method is invalid."));
-        }
-
-        var result = Payment.Create(request.PlayerId, new Money(request.Amount), type, method);
+        var result = Payment.Create(request.PlayerId, new Money(request.Amount), request.Type, request.Method);
 
         if (result.IsFailed)
         {
@@ -62,8 +50,8 @@ public static class CreatePayment
                 payment.Id,
                 payment.PlayerId,
                 payment.Amount.Amount,
-                payment.Type.ToString(),
-                payment.Method.ToString(),
+                payment.Type,
+                payment.Method,
                 payment.RecordedAtUtc));
     }
 
@@ -75,14 +63,14 @@ public static class CreatePayment
         return TypedResults.BadRequest(new ErrorResponse(message));
     }
 
-    private sealed record Request(Guid PlayerId, decimal Amount, string Type, string Method);
+    private sealed record Request(Guid PlayerId, decimal Amount, PaymentType Type, PaymentMethod Method);
 
     private sealed record Response(
         Guid Id,
         Guid PlayerId,
         decimal Amount,
-        string Type,
-        string Method,
+        PaymentType Type,
+        PaymentMethod Method,
         DateTimeOffset RecordedAtUtc);
 
     private sealed record ErrorResponse(string Error);

@@ -41,7 +41,7 @@ public static class CloseGame
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Ok(new Response(game.Id, game.Status.ToString(), game.CreatedAtUtc));
+        return TypedResults.Ok(new Response(game.Id, game.Status, game.CreatedAtUtc));
     }
 
     private static Results<Ok<Response>, NotFound<ErrorResponse>, Conflict<ErrorResponse>> Failure(ResultBase result)
@@ -52,7 +52,7 @@ public static class CloseGame
         return TypedResults.Conflict(new ErrorResponse(message));
     }
 
-    private sealed record Response(Guid Id, string Status, DateTime CreatedAtUtc);
+    private sealed record Response(Guid Id, GameStatus Status, DateTime CreatedAtUtc);
 
     private sealed record ErrorResponse(string Error);
 }

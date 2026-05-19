@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
+using PokerBank.Domain;
 
 namespace PokerBank.Api.Features.Games;
 
@@ -23,11 +24,11 @@ public static class ListGames
         var games = await dbContext.Games
             .AsNoTracking()
             .OrderByDescending(game => game.CreatedAtUtc)
-            .Select(game => new Response(game.Id, game.Status.ToString(), game.CreatedAtUtc))
+            .Select(game => new Response(game.Id, game.Status, game.CreatedAtUtc))
             .ToArrayAsync(cancellationToken);
 
         return TypedResults.Ok(games);
     }
 
-    private sealed record Response(Guid Id, string Status, DateTime CreatedAtUtc);
+    private sealed record Response(Guid Id, GameStatus Status, DateTime CreatedAtUtc);
 }

@@ -37,10 +37,10 @@ public static class CreateGame
 
         return TypedResults.Created(
             $"/games/{game.Id}",
-            new Response(game.Id, game.Status.ToString(), game.CreatedAtUtc));
+            new Response(game.Id, game.Status, game.CreatedAtUtc));
     }
 
-    private sealed record Response(Guid Id, string Status, DateTime CreatedAtUtc);
+    private sealed record Response(Guid Id, GameStatus Status, DateTime CreatedAtUtc);
 
     private sealed record ErrorResponse(string Error);
 }
