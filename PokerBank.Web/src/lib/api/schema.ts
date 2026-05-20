@@ -108,6 +108,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/games/{gameId}/entries/{entryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a game entry. */
+        delete: operations["DeleteGameEntry"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{gameId}/close": {
         parameters: {
             query?: never;
@@ -154,7 +171,8 @@ export interface paths {
         get: operations["GetPayment"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete a payment. */
+        delete: operations["DeletePayment"];
         options?: never;
         head?: never;
         patch?: never;
@@ -233,9 +251,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        AddBuyInErrorResponse: {
-            error: string;
-        };
         AddBuyInRequest: {
             /** Format: uuid */
             playerId: string;
@@ -251,12 +266,9 @@ export interface components {
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: string;
+            type: components["schemas"]["GameEntryType"];
             /** Format: date-time */
             recordedAtUtc: string;
-        };
-        AddCashOutErrorResponse: {
-            error: string;
         };
         AddCashOutRequest: {
             /** Format: uuid */
@@ -273,12 +285,9 @@ export interface components {
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: string;
+            type: components["schemas"]["GameEntryType"];
             /** Format: date-time */
             recordedAtUtc: string;
-        };
-        ArchivePlayerErrorResponse: {
-            error: string;
         };
         ArchivePlayerResponse: {
             /** Format: uuid */
@@ -286,36 +295,27 @@ export interface components {
             name: string;
             isActive: boolean;
         };
-        CloseGameErrorResponse: {
-            error: string;
-        };
         CloseGameResponse: {
             /** Format: uuid */
             id: string;
-            status: string;
+            status: components["schemas"]["GameStatus"];
             /** Format: date-time */
             createdAtUtc: string;
-        };
-        CreateGameErrorResponse: {
-            error: string;
         };
         CreateGameResponse: {
             /** Format: uuid */
             id: string;
-            status: string;
+            status: components["schemas"]["GameStatus"];
             /** Format: date-time */
             createdAtUtc: string;
-        };
-        CreatePaymentErrorResponse: {
-            error: string;
         };
         CreatePaymentRequest: {
             /** Format: uuid */
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: string;
-            method: string;
+            type: components["schemas"]["PaymentType"];
+            method: components["schemas"]["PaymentMethod"];
         };
         CreatePaymentResponse: {
             /** Format: uuid */
@@ -324,13 +324,10 @@ export interface components {
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: string;
-            method: string;
+            type: components["schemas"]["PaymentType"];
+            method: components["schemas"]["PaymentMethod"];
             /** Format: date-time */
             recordedAtUtc: string;
-        };
-        CreatePlayerErrorResponse: {
-            error: string;
         };
         CreatePlayerRequest: {
             name: null | string;
@@ -341,9 +338,13 @@ export interface components {
             name: string;
             isActive: boolean;
         };
-        DeleteGameErrorResponse: {
+        ErrorResponse: {
             error: string;
         };
+        /** @enum {unknown} */
+        GameEntryType: "BuyIn" | "CashOut";
+        /** @enum {unknown} */
+        GameStatus: "Open" | "Closed";
         GetGameEntryResponse: {
             /** Format: uuid */
             id: string;
@@ -351,12 +352,9 @@ export interface components {
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: string;
+            type: components["schemas"]["GameEntryType"];
             /** Format: date-time */
             recordedAtUtc: string;
-        };
-        GetGameErrorResponse: {
-            error: string;
         };
         GetGamePlayerTotalResponse: {
             /** Format: uuid */
@@ -372,7 +370,7 @@ export interface components {
         GetGameResponse: {
             /** Format: uuid */
             id: string;
-            status: string;
+            status: components["schemas"]["GameStatus"];
             /** Format: date-time */
             createdAtUtc: string;
             /** Format: double */
@@ -384,9 +382,6 @@ export interface components {
             entries: components["schemas"]["GetGameEntryResponse"][];
             playerTotals: components["schemas"]["GetGamePlayerTotalResponse"][];
         };
-        GetPaymentErrorResponse: {
-            error: string;
-        };
         GetPaymentResponse: {
             /** Format: uuid */
             id: string;
@@ -394,13 +389,10 @@ export interface components {
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: string;
-            method: string;
+            type: components["schemas"]["PaymentType"];
+            method: components["schemas"]["PaymentMethod"];
             /** Format: date-time */
             recordedAtUtc: string;
-        };
-        GetPlayerErrorResponse: {
-            error: string;
         };
         GetPlayerResponse: {
             /** Format: uuid */
@@ -438,7 +430,7 @@ export interface components {
         ListGamesResponse: {
             /** Format: uuid */
             id: string;
-            status: string;
+            status: components["schemas"]["GameStatus"];
             /** Format: date-time */
             createdAtUtc: string;
         };
@@ -449,8 +441,8 @@ export interface components {
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: string;
-            method: string;
+            type: components["schemas"]["PaymentType"];
+            method: components["schemas"]["PaymentMethod"];
             /** Format: date-time */
             recordedAtUtc: string;
         };
@@ -460,9 +452,10 @@ export interface components {
             name: string;
             isActive: boolean;
         };
-        RenamePlayerErrorResponse: {
-            error: string;
-        };
+        /** @enum {unknown} */
+        PaymentMethod: "ETransfer" | "Cash";
+        /** @enum {unknown} */
+        PaymentType: "PlayerPaysBank" | "BankPaysPlayer";
         RenamePlayerRequest: {
             name: null | string;
         };
@@ -570,7 +563,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CreateGameErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -601,7 +594,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetGameErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -630,7 +623,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeleteGameErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Conflict */
@@ -639,7 +632,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeleteGameErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -674,7 +667,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AddBuyInErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not Found */
@@ -683,7 +676,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AddBuyInErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Conflict */
@@ -692,7 +685,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AddBuyInErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -727,7 +720,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AddCashOutErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not Found */
@@ -736,7 +729,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AddCashOutErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Conflict */
@@ -745,7 +738,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AddCashOutErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    DeleteGameEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -776,7 +808,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CloseGameErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Conflict */
@@ -785,7 +817,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CloseGameErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -840,7 +872,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CreatePaymentErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not Found */
@@ -849,7 +881,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CreatePaymentErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -880,7 +912,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetPaymentErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    DeletePayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -935,7 +996,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CreatePlayerErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Conflict */
@@ -944,7 +1005,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CreatePlayerErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -975,7 +1036,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetPlayerErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1010,7 +1071,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RenamePlayerErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not Found */
@@ -1019,7 +1080,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RenamePlayerErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Conflict */
@@ -1028,7 +1089,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RenamePlayerErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1059,7 +1120,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ArchivePlayerErrorResponse"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

@@ -1,4 +1,5 @@
-import type { components } from './schema';
+import createClient from 'openapi-fetch';
+import type { components, paths } from './schema';
 
 type Schemas = components['schemas'];
 
@@ -27,117 +28,125 @@ export class ApiError extends Error {
 }
 
 export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
+	const client = createClient<paths>({ baseUrl, fetch: apiFetch });
+
 	return {
 		listBalances: (playerId?: string) =>
-			request<Balance[]>(apiFetch, baseUrl, '/balances', { query: { playerId } }),
+			unwrap<Balance[]>(
+				client.GET('/balances', {
+					params: { query: { playerId } }
+				})
+			),
 
 		listPayments: (playerId?: string) =>
-			request<Payment[]>(apiFetch, baseUrl, '/payments', { query: { playerId } }),
+			unwrap<Payment[]>(
+				client.GET('/payments', {
+					params: { query: { playerId } }
+				})
+			),
 
-		listGames: () => request<GameSummary[]>(apiFetch, baseUrl, '/games'),
+		listGames: () => unwrap<GameSummary[]>(client.GET('/games')),
 
-		createGame: () =>
-			request<CreateGameResponse>(apiFetch, baseUrl, '/games', {
-				method: 'POST'
-			}),
+		createGame: () => unwrap<CreateGameResponse>(client.POST('/games')),
 
-		getGame: (id: string) => request<GameDetails>(apiFetch, baseUrl, `/games/${id}`),
+		getGame: (id: string) =>
+			unwrap<GameDetails>(
+				client.GET('/games/{id}', {
+					params: { path: { id } }
+				})
+			),
 
 		deleteGame: (id: string) =>
-			request<void>(apiFetch, baseUrl, `/games/${id}`, {
-				method: 'DELETE'
-			}),
+			unwrap<void>(
+				client.DELETE('/games/{id}', {
+					params: { path: { id } }
+				})
+			),
 
 		listGameResults: (gameId?: string, playerId?: string) =>
-			request<GameResult[]>(apiFetch, baseUrl, '/game-results', {
-				query: { gameId, playerId }
-			}),
+			unwrap<GameResult[]>(
+				client.GET('/game-results', {
+					params: { query: { gameId, playerId } }
+				})
+			),
 
 		addBuyIn: (gameId: string, body: AddBuyInRequest) =>
-			request(apiFetch, baseUrl, `/games/${gameId}/buy-ins`, {
-				method: 'POST',
-				body
-			}),
+			unwrap(
+				client.POST('/games/{gameId}/buy-ins', {
+					params: { path: { gameId } },
+					body
+				})
+			),
 
 		addCashOut: (gameId: string, body: AddCashOutRequest) =>
-			request(apiFetch, baseUrl, `/games/${gameId}/cash-outs`, {
-				method: 'POST',
-				body
-			}),
+			unwrap(
+				client.POST('/games/{gameId}/cash-outs', {
+					params: { path: { gameId } },
+					body
+				})
+			),
 
 		deleteGameEntry: (gameId: string, entryId: string) =>
-			request<void>(apiFetch, baseUrl, `/games/${gameId}/entries/${entryId}`, {
-				method: 'DELETE'
-			}),
+			unwrap<void>(
+				client.DELETE('/games/{gameId}/entries/{entryId}', {
+					params: { path: { gameId, entryId } }
+				})
+			),
 
 		closeGame: (gameId: string) =>
-			request(apiFetch, baseUrl, `/games/${gameId}/close`, {
-				method: 'POST'
-			}),
+			unwrap(
+				client.POST('/games/{gameId}/close', {
+					params: { path: { gameId } }
+				})
+			),
 
-		listPlayers: () => request<Player[]>(apiFetch, baseUrl, '/players'),
+		listPlayers: () => unwrap<Player[]>(client.GET('/players')),
 
 		createPlayer: (body: CreatePlayerRequest) =>
-			request<Player>(apiFetch, baseUrl, '/players', {
-				method: 'POST',
-				body
-			}),
+			unwrap<Player>(
+				client.POST('/players', {
+					body
+				})
+			),
 
 		createPayment: (body: CreatePaymentRequest) =>
-			request<Payment>(apiFetch, baseUrl, '/payments', {
-				method: 'POST',
-				body
-			}),
+			unwrap<Payment>(
+				client.POST('/payments', {
+					body
+				})
+			),
 
 		deletePayment: (id: string) =>
-			request<void>(apiFetch, baseUrl, `/payments/${id}`, {
-				method: 'DELETE'
-			})
+			unwrap<void>(
+				client.DELETE('/payments/{id}', {
+					params: { path: { id } }
+				})
+			)
 	};
 }
 
-async function request<T>(
-	apiFetch: ApiFetch,
-	baseUrl: string,
-	path: string,
-	options: {
-		method?: string;
-		query?: Record<string, string | undefined>;
-		body?: unknown;
-	} = {}
+async function unwrap<T>(
+	request: Promise<{ data?: T; error?: unknown; response: Response }>
 ): Promise<T> {
-	const url = new URL(path, baseUrl);
+	const { data, error, response } = await request;
 
-	for (const [key, value] of Object.entries(options.query ?? {})) {
-		if (value) {
-			url.searchParams.set(key, value);
+	if (error !== undefined) {
+		throw new ApiError(readError(error, response), response.status);
+	}
+
+	return data as T;
+}
+
+function readError(error: unknown, response: Response) {
+	const fallback = `Request failed with status ${response.status}.`;
+
+	if (typeof error === 'object' && error !== null && 'error' in error) {
+		const message = (error as { error?: unknown }).error;
+
+		if (typeof message === 'string') {
+			return message;
 		}
 	}
 
-	const response = await apiFetch(url, {
-		method: options.method ?? 'GET',
-		headers: options.body === undefined ? undefined : { 'content-type': 'application/json' },
-		body: options.body === undefined ? undefined : JSON.stringify(options.body)
-	});
-
-	if (!response.ok) {
-		throw new ApiError(await readError(response), response.status);
-	}
-
-	if (response.status === 204) {
-		return undefined as T;
-	}
-
-	return (await response.json()) as T;
-}
-
-async function readError(response: Response) {
-	const fallback = `Request failed with status ${response.status}.`;
-
-	try {
-		const body = (await response.json()) as { error?: string };
-		return body.error ?? fallback;
-	} catch {
-		return fallback;
-	}
+	return fallback;
 }

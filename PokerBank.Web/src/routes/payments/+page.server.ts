@@ -22,7 +22,7 @@ export const actions: Actions = {
 		const type = data.get('type')?.toString();
 		const method = data.get('method')?.toString();
 
-		if (!playerId || !Number.isFinite(amount) || !type || !method) {
+		if (!playerId || !Number.isFinite(amount) || !isPaymentType(type) || !isPaymentMethod(method)) {
 			return fail(400, { error: 'Player, amount, payment direction, and payment method are required.' });
 		}
 
@@ -62,3 +62,11 @@ export const actions: Actions = {
 		}
 	}
 };
+
+function isPaymentType(value: string | undefined): value is 'PlayerPaysBank' | 'BankPaysPlayer' {
+	return value === 'PlayerPaysBank' || value === 'BankPaysPlayer';
+}
+
+function isPaymentMethod(value: string | undefined): value is 'ETransfer' | 'Cash' {
+	return value === 'ETransfer' || value === 'Cash';
+}
