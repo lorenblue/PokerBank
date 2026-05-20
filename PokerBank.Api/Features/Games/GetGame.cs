@@ -94,5 +94,4 @@ public static class GetGame
         decimal CashOutAmount,
         decimal NetAmount);
 
-    private sealed record ErrorResponse(string Error);
 }

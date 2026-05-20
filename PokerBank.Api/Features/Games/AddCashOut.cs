@@ -87,5 +87,4 @@ public static class AddCashOut
         GameEntryType Type,
         DateTimeOffset RecordedAtUtc);
 
-    private sealed record ErrorResponse(string Error);
 }

@@ -87,5 +87,4 @@ public static class AddBuyIn
         GameEntryType Type,
         DateTimeOffset RecordedAtUtc);
 
-    private sealed record ErrorResponse(string Error);
 }

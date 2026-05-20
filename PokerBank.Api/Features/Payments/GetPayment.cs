@@ -47,5 +47,4 @@ public static class GetPayment
         PaymentMethod Method,
         DateTimeOffset RecordedAtUtc);
 
-    private sealed record ErrorResponse(string Error);
 }

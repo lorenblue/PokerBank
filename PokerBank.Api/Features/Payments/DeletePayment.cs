@@ -36,5 +36,4 @@ public static class DeletePayment
         return TypedResults.NoContent();
     }
 
-    private sealed record ErrorResponse(string Error);
 }

@@ -37,5 +37,4 @@ public static class ArchivePlayer
 
     private sealed record Response(Guid Id, string Name, bool IsActive);
 
-    private sealed record ErrorResponse(string Error);
 }

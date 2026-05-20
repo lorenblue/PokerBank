@@ -42,5 +42,4 @@ public static class DeleteGame
         return TypedResults.NoContent();
     }
 
-    private sealed record ErrorResponse(string Error);
 }

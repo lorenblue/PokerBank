@@ -73,5 +73,4 @@ public static class CreatePayment
         PaymentMethod Method,
         DateTimeOffset RecordedAtUtc);
 
-    private sealed record ErrorResponse(string Error);
 }

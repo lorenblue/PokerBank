@@ -42,5 +42,4 @@ public static class CreateGame
 
     private sealed record Response(Guid Id, GameStatus Status, DateTime CreatedAtUtc);
 
-    private sealed record ErrorResponse(string Error);
 }
