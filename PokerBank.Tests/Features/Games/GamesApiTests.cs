@@ -461,6 +461,68 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task DeleteGameEntry_ReturnsNoContent_WhenEntryExistsInOpenGame()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        var buyIn = await AddBuyIn(client, game.Id, player.Id, 50m);
+
+        var response = await client.DeleteAsync($"/games/{game.Id}/entries/{buyIn.Id}");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        var getResponse = await client.GetAsync($"/games/{game.Id}");
+        getResponse.EnsureSuccessStatusCode();
+
+        var gameDetails = await getResponse.Content.ReadFromJsonAsync<GameDetailsResponse>();
+
+        Assert.NotNull(gameDetails);
+        Assert.Empty(gameDetails.Entries);
+        Assert.Equal(0m, gameDetails.TotalBuyInAmount);
+        Assert.Equal(0m, gameDetails.RemainingCashOutAmount);
+    }
+
+    [Fact]
+    public async Task DeleteGameEntry_ReturnsNotFound_WhenGameDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.DeleteAsync($"/games/{Guid.NewGuid()}/entries/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteGameEntry_ReturnsNotFound_WhenEntryDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+
+        var response = await client.DeleteAsync($"/games/{game.Id}/entries/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteGameEntry_ReturnsConflict_WhenGameIsClosed()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        var buyIn = await AddBuyIn(client, game.Id, player.Id, 50m);
+        await AddCashOut(client, game.Id, player.Id, 50m);
+        await CloseGame(client, game.Id);
+
+        var response = await client.DeleteAsync($"/games/{game.Id}/entries/{buyIn.Id}");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CloseGame_ReturnsOk_WhenGameIsBalanced()
     {
         using var client = factory.CreateHttpsClient();

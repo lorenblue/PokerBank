@@ -65,6 +65,11 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 				body
 			}),
 
+		deleteGameEntry: (gameId: string, entryId: string) =>
+			request<void>(apiFetch, baseUrl, `/games/${gameId}/entries/${entryId}`, {
+				method: 'DELETE'
+			}),
+
 		closeGame: (gameId: string) =>
 			request(apiFetch, baseUrl, `/games/${gameId}/close`, {
 				method: 'POST'

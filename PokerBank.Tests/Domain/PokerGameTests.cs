@@ -137,6 +137,49 @@ public sealed class PokerGameTests
     }
 
     [Fact]
+    public void RemoveEntry_RemovesEntry()
+    {
+        var game = PokerGame.Create();
+        var playerId = Guid.NewGuid();
+        var entry = game.AddBuyIn(playerId, new Money(50m)).Value;
+
+        var result = game.RemoveEntry(entry.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.DoesNotContain(entry, game.Entries);
+        Assert.Equal(Money.Zero, game.TotalBuyIns);
+    }
+
+    [Fact]
+    public void RemoveEntry_Fails_WhenEntryDoesNotExist()
+    {
+        var game = PokerGame.Create();
+
+        var result = game.RemoveEntry(Guid.NewGuid());
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.EntryNotFound, error.Code);
+    }
+
+    [Fact]
+    public void RemoveEntry_Fails_WhenGameIsClosed()
+    {
+        var game = PokerGame.Create();
+        var playerId = Guid.NewGuid();
+        var entry = game.AddBuyIn(playerId, new Money(50m)).Value;
+        Assert.True(game.AddCashOut(playerId, new Money(50m)).IsSuccess);
+        Assert.True(game.Close().IsSuccess);
+
+        var result = game.RemoveEntry(entry.Id);
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.GameClosed, error.Code);
+        Assert.Contains(entry, game.Entries);
+    }
+
+    [Fact]
     public void Close_Fails_WhenBuyInsDoNotEqualCashOuts()
     {
         var game = PokerGame.Create();

@@ -7,6 +7,7 @@
 	let isAddCashOutOpen = $state(false);
 	let isDeleteGameOpen = $state(false);
 	let isCloseGameOpen = $state(false);
+	let entryToDelete = $state<PageData['game']['entries'][number] | null>(null);
 
 	const playerNames = $derived(
 		new Map(data.players.map((player) => [player.id, player.name] as const))
@@ -29,6 +30,10 @@
 		if (type === 'CashOut') return 'Cash-out';
 
 		return type;
+	}
+
+	function closeDeleteEntry() {
+		entryToDelete = null;
 	}
 </script>
 
@@ -119,11 +124,22 @@
 								{entryLabel(entry.type)} · {new Date(entry.recordedAtUtc).toLocaleString()}
 							</span>
 						</div>
-						<span
-							class={`shrink-0 font-bold ${entry.type === 'CashOut' ? 'text-emerald-700' : 'text-slate-950'}`}
-						>
-							{money(entry.amount)}
-						</span>
+						<div class="flex shrink-0 items-center gap-3">
+							<span
+								class={`font-bold ${entry.type === 'CashOut' ? 'text-emerald-700' : 'text-slate-950'}`}
+							>
+								{money(entry.amount)}
+							</span>
+							{#if data.game.status === 'Open'}
+								<button
+									type="button"
+									class="rounded-md px-2 py-1 text-xs font-bold text-red-700 hover:bg-red-50"
+									onclick={() => (entryToDelete = entry)}
+								>
+									Delete
+								</button>
+							{/if}
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -268,6 +284,44 @@
 						Add cash-out
 					</button>
 				</div>
+			</form>
+		</div>
+	</div>
+{/if}
+
+{#if entryToDelete}
+	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
+		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+			<h2 class="text-lg font-bold text-slate-950">Delete entry?</h2>
+			<p class="mt-2 text-sm leading-6 text-slate-600">
+				This removes the {entryLabel(entryToDelete.type).toLowerCase()} from the open game. This
+				is only intended for entries recorded by mistake.
+			</p>
+
+			<div class="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
+				<p class="font-bold text-slate-950">
+					{playerNames.get(entryToDelete.playerId) ?? entryToDelete.playerId}
+				</p>
+				<p class="mt-1 text-slate-600">
+					{entryLabel(entryToDelete.type)} · {money(entryToDelete.amount)}
+				</p>
+			</div>
+
+			<form method="POST" action="?/deleteEntry" class="mt-5 flex justify-end gap-2">
+				<input type="hidden" name="entryId" value={entryToDelete.id} />
+				<button
+					type="button"
+					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+					onclick={closeDeleteEntry}
+				>
+					Cancel
+				</button>
+				<button
+					type="submit"
+					class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
+				>
+					Delete entry
+				</button>
 			</form>
 		</div>
 	</div>

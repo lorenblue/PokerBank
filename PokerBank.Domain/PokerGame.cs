@@ -45,6 +45,25 @@ public sealed class PokerGame
 
     public Result<GameEntry> AddCashOut(Guid playerId, Money amount) => AddEntry(playerId, amount, GameEntryType.CashOut);
 
+    public Result RemoveEntry(Guid entryId)
+    {
+        if (IsClosed())
+        {
+            return Result.Fail(PokerGameErrors.GameClosed());
+        }
+
+        var entry = _entries.SingleOrDefault(entry => entry.Id == entryId);
+
+        if (entry is null)
+        {
+            return Result.Fail(PokerGameErrors.EntryNotFound());
+        }
+
+        _entries.Remove(entry);
+
+        return Result.Ok();
+    }
+
     public Result Close()
     {
         if (IsClosed())

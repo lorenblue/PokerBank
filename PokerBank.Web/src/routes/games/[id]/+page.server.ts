@@ -45,6 +45,28 @@ export const actions: Actions = {
 		}
 	},
 
+	deleteEntry: async ({ fetch, params, request }) => {
+		const data = await request.formData();
+		const entryId = data.get('entryId')?.toString();
+
+		if (!entryId) {
+			return fail(400, { error: 'Entry is required.' });
+		}
+
+		const api = pokerBankApi(fetch);
+
+		try {
+			await api.deleteGameEntry(params.id, entryId);
+			return { success: true };
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return fail(error.status, { error: error.message });
+			}
+
+			throw error;
+		}
+	},
+
 	deleteGame: async ({ fetch, params }) => {
 		const api = pokerBankApi(fetch);
 

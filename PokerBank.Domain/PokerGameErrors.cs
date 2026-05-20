@@ -25,4 +25,8 @@ public static class PokerGameErrors
     public static PokerGameError BuyInsMustEqualCashOuts() => new(
         PokerGameErrorCode.BuyInsMustEqualCashOuts,
         "Cannot close a game until total buy-ins equal total cash-outs.");
+
+    public static PokerGameError EntryNotFound() => new(
+        PokerGameErrorCode.EntryNotFound,
+        "Game entry was not found.");
 }
