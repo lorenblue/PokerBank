@@ -11,6 +11,7 @@ export type Player = Schemas['ListPlayersResponse'];
 export type Payment = Schemas['ListPaymentsResponse'];
 export type CreateGameResponse = Schemas['CreateGameResponse'];
 export type CreatePlayerRequest = Schemas['CreatePlayerRequest'];
+export type RenamePlayerRequest = Schemas['RenamePlayerRequest'];
 export type CreatePaymentRequest = Schemas['CreatePaymentRequest'];
 export type AddBuyInRequest = Schemas['AddBuyInRequest'];
 export type AddCashOutRequest = Schemas['AddCashOutRequest'];
@@ -105,6 +106,14 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 		createPlayer: (body: CreatePlayerRequest) =>
 			unwrap<Player>(
 				client.POST('/players', {
+					body
+				})
+			),
+
+		renamePlayer: (id: string, body: RenamePlayerRequest) =>
+			unwrap<Player>(
+				client.PUT('/players/{id}/name', {
+					params: { path: { id } },
 					body
 				})
 			),

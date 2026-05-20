@@ -31,5 +31,28 @@ export const actions: Actions = {
 
 			throw error;
 		}
+	},
+
+	renamePlayer: async ({ fetch, request }) => {
+		const data = await request.formData();
+		const playerId = data.get('playerId')?.toString();
+		const name = data.get('name')?.toString().trim();
+
+		if (!playerId || !name) {
+			return fail(400, { error: 'Player and name are required.' });
+		}
+
+		const api = pokerBankApi(fetch);
+
+		try {
+			await api.renamePlayer(playerId, { name });
+			return { success: true };
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return fail(error.status, { error: error.message });
+			}
+
+			throw error;
+		}
 	}
 };
