@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatDateTime } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: { error?: string } | null } = $props();
@@ -53,7 +54,7 @@
 						href={`/games/${game.id}`}
 						class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3 hover:bg-slate-50"
 					>
-						<span class="text-sm text-slate-500">{new Date(game.createdAtUtc).toLocaleString()}</span>
+						<span class="text-sm text-slate-500">{formatDateTime(game.createdAtUtc)}</span>
 						<strong>{game.status}</strong>
 					</a>
 				{/each}
@@ -73,7 +74,7 @@
 						href={`/games/${game.id}`}
 						class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3 hover:bg-slate-50"
 					>
-						<span class="text-sm text-slate-500">{new Date(game.createdAtUtc).toLocaleString()}</span>
+						<span class="text-sm text-slate-500">{formatDateTime(game.createdAtUtc)}</span>
 						<strong>{game.status}</strong>
 					</a>
 				{/each}

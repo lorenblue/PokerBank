@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatDateTime } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: { error?: string } | null } = $props();
@@ -111,7 +112,7 @@
 
 			{#if openGame}
 				<a href={`/games/${openGame.id}`} class="block rounded-lg border border-slate-100 p-3 hover:bg-slate-50">
-					<strong>{new Date(openGame.createdAtUtc).toLocaleString()}</strong>
+					<strong>{formatDateTime(openGame.createdAtUtc)}</strong>
 					<p class="mt-1 text-sm text-slate-500">In progress</p>
 				</a>
 			{:else}

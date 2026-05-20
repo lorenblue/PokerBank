@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatDateTime, formatGameEntryDateTime } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: { error?: string; success?: boolean } | null } = $props();
@@ -47,7 +48,7 @@
 	<div>
 		<p class="text-xs font-extrabold tracking-wider text-emerald-900 uppercase">Game</p>
 		<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">{data.game.status}</h1>
-		<p class="mt-2 text-slate-500">{new Date(data.game.createdAtUtc).toLocaleString()}</p>
+		<p class="mt-2 text-slate-500">{formatDateTime(data.game.createdAtUtc)}</p>
 	</div>
 
 	{#if data.game.status === 'Open'}
@@ -121,7 +122,10 @@
 						<div class="min-w-0">
 							<strong>{playerNames.get(entry.playerId) ?? entry.playerId}</strong>
 							<span class="mt-1 block text-sm text-slate-500">
-								{entryLabel(entry.type)} · {new Date(entry.recordedAtUtc).toLocaleString()}
+								{entryLabel(entry.type)} · {formatGameEntryDateTime(
+									entry.recordedAtUtc,
+									data.game.createdAtUtc
+								)}
 							</span>
 						</div>
 						<div class="flex shrink-0 items-center gap-3">

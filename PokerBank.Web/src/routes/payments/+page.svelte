@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatDateTime } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let {
@@ -83,9 +84,9 @@
 						<div>
 							<h3 class="text-sm font-bold">{playerNames.get(payment.playerId) ?? payment.playerId}</h3>
 							<p class="mt-1 text-xs text-slate-500">
-								{paymentLabel(payment.type)} · {methodLabel(payment.method)} · {new Date(
+								{paymentLabel(payment.type)} · {methodLabel(payment.method)} · {formatDateTime(
 									payment.recordedAtUtc
-								).toLocaleString()}
+								)}
 							</p>
 						</div>
 						<div class="flex items-center gap-3">
