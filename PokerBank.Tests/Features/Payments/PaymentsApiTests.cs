@@ -133,6 +133,52 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
     }
 
     [Fact]
+    public async Task DeletePayment_ReturnsNoContent_WhenPaymentExists()
+    {
+        using var client = factory.CreateHttpsClient();
+        var player = await CreatePlayer(client, "Lorenzo");
+        var payment = await CreatePayment(client, player.Id, 40m, "PlayerPaysBank");
+
+        var response = await client.DeleteAsync($"/payments/{payment.Id}");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        var getResponse = await client.GetAsync($"/payments/{payment.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeletePayment_ReturnsNotFound_WhenPaymentDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.DeleteAsync($"/payments/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeletePayment_UpdatesBalances()
+    {
+        using var client = factory.CreateHttpsClient();
+        var player = await CreatePlayer(client, "Lorenzo");
+        var payment = await CreatePayment(client, player.Id, 40m, "PlayerPaysBank");
+
+        var deleteResponse = await client.DeleteAsync($"/payments/{payment.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        var balanceResponse = await client.GetAsync($"/balances?playerId={player.Id}");
+        Assert.Equal(HttpStatusCode.OK, balanceResponse.StatusCode);
+
+        var balances = await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse[]>();
+
+        Assert.NotNull(balances);
+        var balance = Assert.Single(balances);
+        Assert.Equal(0m, balance.PaymentNetAmount);
+        Assert.Equal(0m, balance.BalanceAmount);
+    }
+
+    [Fact]
     public async Task CreatePayment_ReturnsNotFound_WhenPlayerDoesNotExist()
     {
         using var client = factory.CreateHttpsClient();
@@ -251,4 +297,12 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         string Type,
         string Method,
         DateTimeOffset RecordedAtUtc);
+
+    private sealed record BalanceResponse(
+        Guid PlayerId,
+        string PlayerName,
+        bool IsActive,
+        decimal GameNetAmount,
+        decimal PaymentNetAmount,
+        decimal BalanceAmount);
 }

@@ -1,9 +1,13 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData; form: { error?: string; success?: boolean } | null } = $props();
+	let {
+		data,
+		form
+	}: { data: PageData; form: { deleted?: boolean; error?: string; success?: boolean } | null } = $props();
 
 	let isRecordPaymentOpen = $state(false);
+	let paymentToDelete = $state<PageData['payments'][number] | null>(null);
 
 	const activePlayers = $derived(data.players.filter((player) => player.isActive));
 	const playerNames = $derived(new Map(data.players.map((player) => [player.id, player.name] as const)));
@@ -24,6 +28,10 @@
 		if (method === 'Cash') return 'cash';
 
 		return method;
+	}
+
+	function closeDeletePayment() {
+		paymentToDelete = null;
 	}
 </script>
 
@@ -49,6 +57,10 @@
 {:else if form?.success}
 	<p class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
 		Payment recorded.
+	</p>
+{:else if form?.deleted}
+	<p class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+		Payment deleted.
 	</p>
 {/if}
 
@@ -76,11 +88,20 @@
 								).toLocaleString()}
 							</p>
 						</div>
-						<strong
-							class={`text-right font-bold ${payment.type === 'BankPaysPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
-						>
-							{payment.type === 'BankPaysPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
-						</strong>
+						<div class="flex items-center gap-3">
+							<strong
+								class={`text-right font-bold ${payment.type === 'BankPaysPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
+							>
+								{payment.type === 'BankPaysPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
+							</strong>
+							<button
+								type="button"
+								class="rounded-md px-2 py-1 text-xs font-bold text-red-700 hover:bg-red-50"
+								onclick={() => (paymentToDelete = payment)}
+							>
+								Delete
+							</button>
+						</div>
 					</article>
 				{/each}
 			</div>
@@ -159,6 +180,45 @@
 						Record payment
 					</button>
 				</div>
+			</form>
+		</div>
+	</div>
+{/if}
+
+{#if paymentToDelete}
+	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
+		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+			<h2 class="text-lg font-bold text-slate-950">Delete payment?</h2>
+			<p class="mt-2 text-sm leading-6 text-slate-600">
+				This removes the payment from the ledger. This is only intended for payments recorded by
+				mistake.
+			</p>
+
+			<div class="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
+				<p class="font-bold text-slate-950">
+					{playerNames.get(paymentToDelete.playerId) ?? paymentToDelete.playerId}
+				</p>
+				<p class="mt-1 text-slate-600">
+					{paymentLabel(paymentToDelete.type)} · {methodLabel(paymentToDelete.method)} ·
+					{unsignedMoney(paymentToDelete.amount)}
+				</p>
+			</div>
+
+			<form method="POST" action="?/deletePayment" class="mt-5 flex justify-end gap-2">
+				<input type="hidden" name="paymentId" value={paymentToDelete.id} />
+				<button
+					type="button"
+					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+					onclick={closeDeletePayment}
+				>
+					Cancel
+				</button>
+				<button
+					type="submit"
+					class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
+				>
+					Delete payment
+				</button>
 			</form>
 		</div>
 	</div>

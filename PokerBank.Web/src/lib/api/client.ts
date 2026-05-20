@@ -82,6 +82,11 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 			request<Payment>(apiFetch, baseUrl, '/payments', {
 				method: 'POST',
 				body
+			}),
+
+		deletePayment: (id: string) =>
+			request<void>(apiFetch, baseUrl, `/payments/${id}`, {
+				method: 'DELETE'
 			})
 	};
 }

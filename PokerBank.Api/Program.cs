@@ -46,6 +46,7 @@ app.MapCloseGame();
 app.MapCreatePayment();
 app.MapListPayments();
 app.MapGetPayment();
+app.MapDeletePayment();
 app.MapCreatePlayer();
 app.MapListPlayers();
 app.MapGetPlayer();

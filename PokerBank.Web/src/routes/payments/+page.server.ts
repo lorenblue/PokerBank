@@ -38,5 +38,27 @@ export const actions: Actions = {
 
 			throw error;
 		}
+	},
+
+	deletePayment: async ({ fetch, request }) => {
+		const data = await request.formData();
+		const paymentId = data.get('paymentId')?.toString();
+
+		if (!paymentId) {
+			return fail(400, { error: 'Payment is required.' });
+		}
+
+		const api = pokerBankApi(fetch);
+
+		try {
+			await api.deletePayment(paymentId);
+			return { deleted: true };
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return fail(error.status, { error: error.message });
+			}
+
+			throw error;
+		}
 	}
 };
