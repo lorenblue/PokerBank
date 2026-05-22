@@ -44,10 +44,10 @@
 			<div class="grid gap-3 sm:grid-cols-2">
 				{#each activePlayers as player}
 					<div class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 p-3">
-						<div class="min-w-0">
+						<a href={`/players/${player.id}`} class="min-w-0 hover:text-emerald-900">
 							<h3 class="text-sm font-bold">{player.name}</h3>
 							<p class="mt-1 text-sm text-slate-500">Active</p>
-						</div>
+						</a>
 						<button
 							type="button"
 							class="rounded-md px-2 py-1 text-xs font-bold text-emerald-900 hover:bg-emerald-50"
@@ -66,8 +66,10 @@
 				<div class="grid gap-3 sm:grid-cols-2">
 					{#each archivedPlayers as player}
 						<div class="rounded-lg border border-slate-100 p-3 opacity-55">
-							<h3 class="text-sm font-bold">{player.name}</h3>
-							<p class="mt-1 text-sm text-slate-500">Archived</p>
+							<a href={`/players/${player.id}`} class="block hover:text-emerald-900">
+								<h3 class="text-sm font-bold">{player.name}</h3>
+								<p class="mt-1 text-sm text-slate-500">Archived</p>
+							</a>
 						</div>
 					{/each}
 				</div>
