@@ -1,5 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { ApiError } from '$lib/api/client';
+import { readPaymentFields } from '$lib/server/payment-form';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -18,18 +19,16 @@ export const actions: Actions = {
 	createPayment: async ({ fetch, request }) => {
 		const data = await request.formData();
 		const playerId = data.get('playerId')?.toString();
-		const amount = Number(data.get('amount'));
-		const type = data.get('type')?.toString();
-		const method = data.get('method')?.toString();
+		const payment = readPaymentFields(data);
 
-		if (!playerId || !Number.isFinite(amount) || !isPaymentType(type) || !isPaymentMethod(method)) {
+		if (!playerId || payment === null) {
 			return fail(400, { error: 'Player, amount, payment direction, and payment method are required.' });
 		}
 
 		const api = pokerBankApi(fetch);
 
 		try {
-			await api.createPayment({ playerId, amount, type, method });
+			await api.createPayment({ playerId, ...payment });
 			return { success: true };
 		} catch (error) {
 			if (error instanceof ApiError) {
@@ -62,11 +61,3 @@ export const actions: Actions = {
 		}
 	}
 };
-
-function isPaymentType(value: string | undefined): value is 'PlayerPaysBank' | 'BankPaysPlayer' {
-	return value === 'PlayerPaysBank' || value === 'BankPaysPlayer';
-}
-
-function isPaymentMethod(value: string | undefined): value is 'ETransfer' | 'Cash' {
-	return value === 'ETransfer' || value === 'Cash';
-}
