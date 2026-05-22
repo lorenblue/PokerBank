@@ -1,4 +1,5 @@
 <script lang="ts">
+	import GameEntryModal from '$lib/components/GameEntryModal.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import StatCard from '$lib/components/StatCard.svelte';
 	import { formatDateTime, formatGameEntryDateTime } from '$lib/format';
@@ -10,10 +11,16 @@
 	let isAddCashOutOpen = $state(false);
 	let isDeleteGameOpen = $state(false);
 	let isCloseGameOpen = $state(false);
+	let selectedEntryPlayerId = $state('');
 	let entryToDelete = $state<PageData['game']['entries'][number] | null>(null);
 
 	const playerNames = $derived(
 		new Map(data.players.map((player) => [player.id, player.name] as const))
+	);
+	const cashOutPlayers = $derived(
+		data.game.playerTotals
+			.filter((total) => Number(total.buyInAmount) > 0)
+			.map((total) => ({ id: total.playerId, name: total.playerName }))
 	);
 	const canCloseGame = $derived(Number(data.game.remainingCashOutAmount) === 0);
 
@@ -38,6 +45,16 @@
 	function closeDeleteEntry() {
 		entryToDelete = null;
 	}
+
+	function openAddBuyIn(playerId = '') {
+		selectedEntryPlayerId = playerId;
+		isAddBuyInOpen = true;
+	}
+
+	function openAddCashOut(playerId = '') {
+		selectedEntryPlayerId = playerId;
+		isAddCashOutOpen = true;
+	}
 </script>
 
 <svelte:head>
@@ -59,15 +76,16 @@
 				type="button"
 				disabled={data.players.length === 0}
 				class="rounded-md border border-slate-300 px-4 py-3 font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-				onclick={() => (isAddBuyInOpen = true)}
+				onclick={() => openAddBuyIn()}
 			>
 				Add buy-in
 			</button>
 			<button
 				type="button"
-				disabled={data.players.length === 0}
+				disabled={cashOutPlayers.length === 0}
+				title={cashOutPlayers.length === 0 ? 'A player needs a buy-in before cashing out.' : 'Add cash-out'}
 				class="rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-				onclick={() => (isAddCashOutOpen = true)}
+				onclick={() => openAddCashOut()}
 			>
 				Add cash-out
 			</button>
@@ -162,11 +180,31 @@
 								Buy-ins {money(total.buyInAmount)} · Cash-outs {money(total.cashOutAmount)}
 							</span>
 						</div>
-						<span
-							class={`shrink-0 font-bold ${Number(total.netAmount) > 0 ? 'text-emerald-700' : Number(total.netAmount) < 0 ? 'text-red-700' : ''}`}
-						>
-							{signedMoney(total.netAmount)}
-						</span>
+						<div class="flex shrink-0 items-center gap-3">
+							{#if data.game.status === 'Open'}
+								<div class="flex gap-1">
+									<button
+										type="button"
+										class="rounded-md px-2 py-1 text-xs font-bold text-slate-700 hover:bg-slate-50"
+										onclick={() => openAddBuyIn(total.playerId)}
+									>
+										Buy-in
+									</button>
+									<button
+										type="button"
+										class="rounded-md px-2 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-50"
+										onclick={() => openAddCashOut(total.playerId)}
+									>
+										Cash-out
+									</button>
+								</div>
+							{/if}
+							<span
+								class={`font-bold ${Number(total.netAmount) > 0 ? 'text-emerald-700' : Number(total.netAmount) < 0 ? 'text-red-700' : ''}`}
+							>
+								{signedMoney(total.netAmount)}
+							</span>
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -175,91 +213,26 @@
 </section>
 
 {#if isAddBuyInOpen}
-	<Modal title="Add buy-in" onClose={() => (isAddBuyInOpen = false)}>
-		<form method="POST" action="?/addBuyIn" class="grid gap-4">
-			<label class="grid gap-1 text-sm font-bold text-slate-700">
-				Player
-				<select name="playerId" required class="rounded-md border border-slate-300 px-3 py-2">
-					<option value="">Choose player</option>
-					{#each data.players as player}
-						<option value={player.id}>{player.name}</option>
-					{/each}
-				</select>
-			</label>
-
-			<label class="grid gap-1 text-sm font-bold text-slate-700">
-				Amount
-				<input
-					name="amount"
-					type="number"
-					min="0.01"
-					step="0.01"
-					required
-					class="rounded-md border border-slate-300 px-3 py-2"
-				/>
-			</label>
-
-			<div class="flex justify-end gap-2">
-				<button
-					type="button"
-					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-					onclick={() => (isAddBuyInOpen = false)}
-				>
-					Cancel
-				</button>
-				<button
-					type="submit"
-					class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-				>
-					Add buy-in
-				</button>
-			</div>
-		</form>
-	</Modal>
+	<GameEntryModal
+		title="Add buy-in"
+		action="?/addBuyIn"
+		players={data.players}
+		selectedPlayerId={selectedEntryPlayerId}
+		submitLabel="Add buy-in"
+		onClose={() => (isAddBuyInOpen = false)}
+	/>
 {/if}
 
 {#if isAddCashOutOpen}
-	<Modal title="Add cash-out" onClose={() => (isAddCashOutOpen = false)}>
-		<form method="POST" action="?/addCashOut" class="grid gap-4">
-			<label class="grid gap-1 text-sm font-bold text-slate-700">
-				Player
-				<select name="playerId" required class="rounded-md border border-slate-300 px-3 py-2">
-					<option value="">Choose player</option>
-					{#each data.players as player}
-						<option value={player.id}>{player.name}</option>
-					{/each}
-				</select>
-			</label>
-
-			<label class="grid gap-1 text-sm font-bold text-slate-700">
-				Amount
-				<input
-					name="amount"
-					type="number"
-					min="0.01"
-					step="0.01"
-					required
-					class="rounded-md border border-slate-300 px-3 py-2"
-				/>
-			</label>
-
-			<div class="flex justify-end gap-2">
-				<button
-					type="button"
-					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-					onclick={() => (isAddCashOutOpen = false)}
-				>
-					Cancel
-				</button>
-				<button
-					type="submit"
-					class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-				>
-					Add cash-out
-				</button>
-			</div>
-		</form>
-	</Modal>
+	<GameEntryModal
+		title="Add cash-out"
+		action="?/addCashOut"
+		players={cashOutPlayers}
+		selectedPlayerId={selectedEntryPlayerId}
+		submitLabel="Add cash-out"
+		hint="Only players with a buy-in can cash out."
+		onClose={() => (isAddCashOutOpen = false)}
+	/>
 {/if}
 
 {#if entryToDelete}
