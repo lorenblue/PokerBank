@@ -8,7 +8,7 @@ public sealed class Payment
     {
     }
 
-    public static Result<Payment> Create(Guid playerId, Money amount, PaymentType type, PaymentMethod method)
+    public static Result<Payment> Create(Guid playerId, Money amount, PaymentDirection direction, PaymentMethod method)
     {
         if (playerId == Guid.Empty)
         {
@@ -20,9 +20,9 @@ public sealed class Payment
             return Result.Fail<Payment>(PaymentErrors.InvalidAmount());
         }
 
-        if (!Enum.IsDefined(type))
+        if (!Enum.IsDefined(direction))
         {
-            return Result.Fail<Payment>(PaymentErrors.InvalidPaymentType());
+            return Result.Fail<Payment>(PaymentErrors.InvalidPaymentDirection());
         }
 
         if (!Enum.IsDefined(method))
@@ -30,21 +30,21 @@ public sealed class Payment
             return Result.Fail<Payment>(PaymentErrors.InvalidPaymentMethod());
         }
 
-        return Result.Ok(new Payment(Guid.NewGuid(), playerId, amount, type, method, DateTimeOffset.UtcNow));
+        return Result.Ok(new Payment(Guid.NewGuid(), playerId, amount, direction, method, DateTimeOffset.UtcNow));
     }
 
     private Payment(
         Guid id,
         Guid playerId,
         Money amount,
-        PaymentType type,
+        PaymentDirection direction,
         PaymentMethod method,
         DateTimeOffset recordedAtUtc)
     {
         Id = id;
         PlayerId = playerId;
         Amount = amount;
-        Type = type;
+        Direction = direction;
         Method = method;
         RecordedAtUtc = recordedAtUtc;
     }
@@ -55,7 +55,7 @@ public sealed class Payment
 
     public Money Amount { get; private set; }
 
-    public PaymentType Type { get; private set; }
+    public PaymentDirection Direction { get; private set; }
 
     public PaymentMethod Method { get; private set; }
 

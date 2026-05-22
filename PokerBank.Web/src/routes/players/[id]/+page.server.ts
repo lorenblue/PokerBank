@@ -40,9 +40,15 @@ export const actions: Actions = {
 		}
 
 		const api = pokerBankApi(fetch);
+		const { direction, ...paymentRequest } = payment;
 
 		try {
-			await api.createPayment({ playerId: params.id, ...payment });
+			if (direction === 'MadeByPlayer') {
+				await api.recordPaymentMadeByPlayer(params.id, paymentRequest);
+			} else {
+				await api.recordPaymentReceivedByPlayer(params.id, paymentRequest);
+			}
+
 			return { success: true };
 		} catch (caught) {
 			if (caught instanceof ApiError) {

@@ -152,8 +152,41 @@ export interface paths {
         /** List payments. */
         get: operations["ListPayments"];
         put?: never;
-        /** Create a payment. */
-        post: operations["CreatePayment"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/players/{playerId}/payments/made": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a payment made by a player. */
+        post: operations["RecordPaymentMadeByPlayer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/players/{playerId}/payments/received": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a payment received by a player. */
+        post: operations["RecordPaymentReceivedByPlayer"];
         delete?: never;
         options?: never;
         head?: never;
@@ -309,22 +342,19 @@ export interface components {
             /** Format: date-time */
             createdAtUtc: string;
         };
-        CreatePaymentRequest: {
-            /** Format: uuid */
-            playerId: string;
+        RecordPaymentRequest: {
             /** Format: double */
             amount: number | string;
-            type: components["schemas"]["PaymentType"];
             method: components["schemas"]["PaymentMethod"];
         };
-        CreatePaymentResponse: {
+        RecordPaymentResponse: {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: components["schemas"]["PaymentType"];
+            direction: components["schemas"]["PaymentDirection"];
             method: components["schemas"]["PaymentMethod"];
             /** Format: date-time */
             recordedAtUtc: string;
@@ -389,7 +419,7 @@ export interface components {
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: components["schemas"]["PaymentType"];
+            direction: components["schemas"]["PaymentDirection"];
             method: components["schemas"]["PaymentMethod"];
             /** Format: date-time */
             recordedAtUtc: string;
@@ -441,7 +471,7 @@ export interface components {
             playerId: string;
             /** Format: double */
             amount: number | string;
-            type: components["schemas"]["PaymentType"];
+            direction: components["schemas"]["PaymentDirection"];
             method: components["schemas"]["PaymentMethod"];
             /** Format: date-time */
             recordedAtUtc: string;
@@ -455,7 +485,7 @@ export interface components {
         /** @enum {unknown} */
         PaymentMethod: "ETransfer" | "Cash";
         /** @enum {unknown} */
-        PaymentType: "PlayerPaysBank" | "BankPaysPlayer";
+        PaymentDirection: "MadeByPlayer" | "ReceivedByPlayer";
         RenamePlayerRequest: {
             name: null | string;
         };
@@ -844,16 +874,18 @@ export interface operations {
             };
         };
     };
-    CreatePayment: {
+    RecordPaymentMadeByPlayer: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                playerId: string;
+            };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreatePaymentRequest"];
+                "application/json": components["schemas"]["RecordPaymentRequest"];
             };
         };
         responses: {
@@ -863,7 +895,51 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CreatePaymentResponse"];
+                    "application/json": components["schemas"]["RecordPaymentResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    RecordPaymentReceivedByPlayer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordPaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordPaymentResponse"];
                 };
             };
             /** @description Bad Request */

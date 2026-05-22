@@ -19,11 +19,11 @@
 		return `$${Math.abs(Number(value)).toFixed(2)}`;
 	}
 
-	function paymentLabel(type: string) {
-		if (type === 'PlayerPaysBank') return 'Player paid me';
-		if (type === 'BankPaysPlayer') return 'I paid player';
+	function paymentLabel(direction: string) {
+		if (direction === 'MadeByPlayer') return 'Player made payment';
+		if (direction === 'ReceivedByPlayer') return 'Player received payment';
 
-		return type;
+		return direction;
 	}
 
 	function methodLabel(method: string) {
@@ -88,16 +88,16 @@
 								{playerNames.get(payment.playerId) ?? payment.playerId}
 							</a>
 							<p class="mt-1 text-xs text-slate-500">
-								{paymentLabel(payment.type)} · {methodLabel(payment.method)} · {formatDateTime(
+								{paymentLabel(payment.direction)} · {methodLabel(payment.method)} · {formatDateTime(
 									payment.recordedAtUtc
 								)}
 							</p>
 						</div>
 						<div class="flex items-center gap-3">
 							<strong
-								class={`text-right font-bold ${payment.type === 'BankPaysPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
+								class={`text-right font-bold ${payment.direction === 'ReceivedByPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
 							>
-								{payment.type === 'BankPaysPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
+								{payment.direction === 'ReceivedByPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
 							</strong>
 							<button
 								type="button"
@@ -130,7 +130,7 @@
 				{playerNames.get(paymentToDelete.playerId) ?? paymentToDelete.playerId}
 			</p>
 			<p class="mt-1 text-slate-600">
-				{paymentLabel(paymentToDelete.type)} · {methodLabel(paymentToDelete.method)} ·
+				{paymentLabel(paymentToDelete.direction)} · {methodLabel(paymentToDelete.method)} ·
 				{unsignedMoney(paymentToDelete.amount)}
 			</p>
 		</div>

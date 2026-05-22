@@ -38,7 +38,7 @@ public static class ListBalances
             .GroupBy(payment => payment.PlayerId)
             .Select(payments => new PlayerAmount(
                 payments.Key,
-                payments.Sum(payment => payment.Type == PaymentType.BankPaysPlayer
+                payments.Sum(payment => payment.Direction == PaymentDirection.ReceivedByPlayer
                     ? payment.Amount.Amount
                     : -payment.Amount.Amount)))
             .ToArrayAsync(cancellationToken);

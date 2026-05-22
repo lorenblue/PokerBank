@@ -30,8 +30,8 @@ public sealed class BalancesApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         var openGame = await CreateGame(client);
         await AddBuyIn(client, openGame.Id, lorenzo.Id, 999m);
 
-        await CreatePayment(client, lorenzo.Id, 20m, "BankPaysPlayer");
-        await CreatePayment(client, maya.Id, 10m, "PlayerPaysBank");
+        await RecordPayment(client, lorenzo.Id, 20m, "ReceivedByPlayer");
+        await RecordPayment(client, maya.Id, 10m, "MadeByPlayer");
 
         var response = await client.GetAsync("/balances");
 
@@ -106,8 +106,8 @@ public sealed class BalancesApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         await AddCashOut(client, game.Id, maya.Id, 40m);
         await CloseGame(client, game.Id);
 
-        await CreatePayment(client, lorenzo.Id, 20m, "BankPaysPlayer");
-        await CreatePayment(client, maya.Id, 10m, "PlayerPaysBank");
+        await RecordPayment(client, lorenzo.Id, 20m, "ReceivedByPlayer");
+        await RecordPayment(client, maya.Id, 10m, "MadeByPlayer");
 
         var response = await client.GetAsync($"/balances?playerId={lorenzo.Id}");
 
@@ -167,13 +167,21 @@ public sealed class BalancesApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         response.EnsureSuccessStatusCode();
     }
 
-    private static async Task CreatePayment(HttpClient client, Guid playerId, decimal amount, string type)
+    private static async Task RecordPayment(HttpClient client, Guid playerId, decimal amount, string direction)
     {
         var response = await client.PostAsJsonAsync(
-            "/payments",
-            new { PlayerId = playerId, Amount = amount, Type = type, Method = "ETransfer" });
+            PaymentUrl(playerId, direction),
+            new { Amount = amount, Method = "ETransfer" });
         response.EnsureSuccessStatusCode();
     }
+
+    private static string PaymentUrl(Guid playerId, string direction) =>
+        direction switch
+        {
+            "MadeByPlayer" => $"/players/{playerId}/payments/made",
+            "ReceivedByPlayer" => $"/players/{playerId}/payments/received",
+            _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, "Unknown payment direction.")
+        };
 
     private static async Task ArchivePlayer(HttpClient client, Guid playerId)
     {

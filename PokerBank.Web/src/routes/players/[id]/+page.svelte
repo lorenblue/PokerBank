@@ -40,11 +40,11 @@
 		return 'neutral';
 	}
 
-	function paymentLabel(type: string) {
-		if (type === 'PlayerPaysBank') return 'Player paid me';
-		if (type === 'BankPaysPlayer') return 'I paid player';
+	function paymentLabel(direction: string) {
+		if (direction === 'MadeByPlayer') return 'Player made payment';
+		if (direction === 'ReceivedByPlayer') return 'Player received payment';
 
-		return type;
+		return direction;
 	}
 
 	function methodLabel(method: string) {
@@ -54,8 +54,8 @@
 		return method;
 	}
 
-	function paymentAmount(type: string, amount: number | string) {
-		return `${type === 'BankPaysPlayer' ? '+' : '-'}${unsignedMoney(amount)}`;
+	function paymentAmount(direction: string, amount: number | string) {
+		return `${direction === 'ReceivedByPlayer' ? '+' : '-'}${unsignedMoney(amount)}`;
 	}
 </script>
 
@@ -162,13 +162,13 @@
 						<div class="min-w-0">
 							<strong>{formatDateTime(payment.recordedAtUtc)}</strong>
 							<span class="mt-1 block text-sm text-slate-500">
-								{paymentLabel(payment.type)} · {methodLabel(payment.method)}
+								{paymentLabel(payment.direction)} · {methodLabel(payment.method)}
 							</span>
 						</div>
 						<strong
-							class={`shrink-0 text-right ${payment.type === 'BankPaysPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
+							class={`shrink-0 text-right ${payment.direction === 'ReceivedByPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
 						>
-							{paymentAmount(payment.type, payment.amount)}
+							{paymentAmount(payment.direction, payment.amount)}
 						</strong>
 					</div>
 				{/each}

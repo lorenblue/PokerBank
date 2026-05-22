@@ -13,7 +13,7 @@ export type Payment = Schemas['ListPaymentsResponse'];
 export type CreateGameResponse = Schemas['CreateGameResponse'];
 export type CreatePlayerRequest = Schemas['CreatePlayerRequest'];
 export type RenamePlayerRequest = Schemas['RenamePlayerRequest'];
-export type CreatePaymentRequest = Schemas['CreatePaymentRequest'];
+export type RecordPaymentRequest = Schemas['RecordPaymentRequest'];
 export type AddBuyInRequest = Schemas['AddBuyInRequest'];
 export type AddCashOutRequest = Schemas['AddCashOutRequest'];
 
@@ -126,9 +126,18 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 				})
 			),
 
-		createPayment: (body: CreatePaymentRequest) =>
+		recordPaymentMadeByPlayer: (playerId: string, body: RecordPaymentRequest) =>
 			unwrap<Payment>(
-				client.POST('/payments', {
+				client.POST('/players/{playerId}/payments/made', {
+					params: { path: { playerId } },
+					body
+				})
+			),
+
+		recordPaymentReceivedByPlayer: (playerId: string, body: RecordPaymentRequest) =>
+			unwrap<Payment>(
+				client.POST('/players/{playerId}/payments/received', {
+					params: { path: { playerId } },
 					body
 				})
 			),

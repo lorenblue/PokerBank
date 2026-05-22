@@ -10,9 +10,9 @@ public static class PaymentErrors
         PaymentErrorCode.InvalidAmount,
         "Amount must be positive.");
 
-    public static PaymentError InvalidPaymentType() => new(
-        PaymentErrorCode.InvalidPaymentType,
-        "Payment type is invalid.");
+    public static PaymentError InvalidPaymentDirection() => new(
+        PaymentErrorCode.InvalidPaymentDirection,
+        "Payment direction is invalid.");
 
     public static PaymentError InvalidPaymentMethod() => new(
         PaymentErrorCode.InvalidPaymentMethod,

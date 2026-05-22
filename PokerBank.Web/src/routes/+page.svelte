@@ -29,11 +29,11 @@
 		return 'settled';
 	}
 
-	function paymentLabel(type: string) {
-		if (type === 'PlayerPaysBank') return 'Player paid me';
-		if (type === 'BankPaysPlayer') return 'I paid player';
+	function paymentLabel(direction: string) {
+		if (direction === 'MadeByPlayer') return 'Player made payment';
+		if (direction === 'ReceivedByPlayer') return 'Player received payment';
 
-		return type;
+		return direction;
 	}
 
 	function methodLabel(method: string) {
@@ -138,13 +138,13 @@
 									{playerNames.get(payment.playerId) ?? payment.playerId}
 								</a>
 								<p class="mt-1 text-xs text-slate-500">
-									{paymentLabel(payment.type)} · {methodLabel(payment.method)}
+									{paymentLabel(payment.direction)} · {methodLabel(payment.method)}
 								</p>
 							</div>
 							<strong
-								class={`text-right font-bold ${payment.type === 'BankPaysPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
+								class={`text-right font-bold ${payment.direction === 'ReceivedByPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
 							>
-								{payment.type === 'BankPaysPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
+								{payment.direction === 'ReceivedByPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
 							</strong>
 						</div>
 					{/each}

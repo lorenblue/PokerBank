@@ -1,21 +1,25 @@
-import type { CreatePaymentRequest } from '$lib/api/client';
+import type { RecordPaymentRequest } from '$lib/api/client';
 
-type PaymentFields = Omit<CreatePaymentRequest, 'playerId'>;
+export type PaymentDirection = 'MadeByPlayer' | 'ReceivedByPlayer';
+
+type PaymentFields = RecordPaymentRequest & {
+	direction: PaymentDirection;
+};
 
 export function readPaymentFields(data: FormData): PaymentFields | null {
 	const amount = Number(data.get('amount'));
-	const type = data.get('type')?.toString();
+	const direction = data.get('direction')?.toString();
 	const method = data.get('method')?.toString();
 
-	if (!Number.isFinite(amount) || !isPaymentType(type) || !isPaymentMethod(method)) {
+	if (!Number.isFinite(amount) || !isPaymentDirection(direction) || !isPaymentMethod(method)) {
 		return null;
 	}
 
-	return { amount, type, method };
+	return { amount, direction, method };
 }
 
-function isPaymentType(value: string | undefined): value is 'PlayerPaysBank' | 'BankPaysPlayer' {
-	return value === 'PlayerPaysBank' || value === 'BankPaysPlayer';
+function isPaymentDirection(value: string | undefined): value is 'MadeByPlayer' | 'ReceivedByPlayer' {
+	return value === 'MadeByPlayer' || value === 'ReceivedByPlayer';
 }
 
 function isPaymentMethod(value: string | undefined): value is 'ETransfer' | 'Cash' {

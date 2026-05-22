@@ -45,10 +45,10 @@
 
 		<label class="grid gap-1 text-sm font-bold text-slate-700">
 			Direction
-			<select name="type" required class="rounded-md border border-slate-300 px-3 py-2">
+			<select name="direction" required class="rounded-md border border-slate-300 px-3 py-2">
 				<option value="">Choose direction</option>
-				<option value="PlayerPaysBank">Player paid me</option>
-				<option value="BankPaysPlayer">I paid player</option>
+				<option value="MadeByPlayer">Player made payment</option>
+				<option value="ReceivedByPlayer">Player received payment</option>
 			</select>
 		</label>
 

@@ -6,25 +6,46 @@ using PokerBank.Domain;
 
 namespace PokerBank.Api.Features.Payments;
 
-public static class CreatePayment
+public static class RecordPayment
 {
-    public static IEndpointRouteBuilder MapCreatePayment(this IEndpointRouteBuilder app)
+    public static IEndpointRouteBuilder MapRecordPayment(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/payments", Handle)
-            .WithName("CreatePayment")
+        app.MapPost("/players/{playerId:guid}/payments/made", HandleMadeByPlayer)
+            .WithName("RecordPaymentMadeByPlayer")
             .WithTags("Payments")
-            .WithSummary("Create a payment.");
+            .WithSummary("Record a payment made by a player.");
+
+        app.MapPost("/players/{playerId:guid}/payments/received", HandleReceivedByPlayer)
+            .WithName("RecordPaymentReceivedByPlayer")
+            .WithTags("Payments")
+            .WithSummary("Record a payment received by a player.");
 
         return app;
     }
 
+    private static Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> HandleMadeByPlayer(
+        Guid playerId,
+        Request request,
+        PokerBankDbContext dbContext,
+        CancellationToken cancellationToken) =>
+        Handle(playerId, PaymentDirection.MadeByPlayer, request, dbContext, cancellationToken);
+
+    private static Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> HandleReceivedByPlayer(
+        Guid playerId,
+        Request request,
+        PokerBankDbContext dbContext,
+        CancellationToken cancellationToken) =>
+        Handle(playerId, PaymentDirection.ReceivedByPlayer, request, dbContext, cancellationToken);
+
     private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> Handle(
+        Guid playerId,
+        PaymentDirection direction,
         Request request,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var playerExists = await dbContext.Players.AnyAsync(
-            player => player.Id == request.PlayerId && player.IsActive,
+            player => player.Id == playerId && player.IsActive,
             cancellationToken);
 
         if (!playerExists)
@@ -32,7 +53,7 @@ public static class CreatePayment
             return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
-        var result = Payment.Create(request.PlayerId, new Money(request.Amount), request.Type, request.Method);
+        var result = Payment.Create(playerId, new Money(request.Amount), direction, request.Method);
 
         if (result.IsFailed)
         {
@@ -50,7 +71,7 @@ public static class CreatePayment
                 payment.Id,
                 payment.PlayerId,
                 payment.Amount.Amount,
-                payment.Type,
+                payment.Direction,
                 payment.Method,
                 payment.RecordedAtUtc));
     }
@@ -63,14 +84,13 @@ public static class CreatePayment
         return TypedResults.BadRequest(new ErrorResponse(message));
     }
 
-    private sealed record Request(Guid PlayerId, decimal Amount, PaymentType Type, PaymentMethod Method);
+    private sealed record Request(decimal Amount, PaymentMethod Method);
 
     private sealed record Response(
         Guid Id,
         Guid PlayerId,
         decimal Amount,
-        PaymentType Type,
+        PaymentDirection Direction,
         PaymentMethod Method,
         DateTimeOffset RecordedAtUtc);
-
 }

@@ -5,21 +5,21 @@ namespace PokerBank.Tests.Domain;
 public sealed class PaymentTests
 {
     [Theory]
-    [InlineData(PaymentType.PlayerPaysBank)]
-    [InlineData(PaymentType.BankPaysPlayer)]
-    public void Create_ReturnsPayment(PaymentType type)
+    [InlineData(PaymentDirection.MadeByPlayer)]
+    [InlineData(PaymentDirection.ReceivedByPlayer)]
+    public void Create_ReturnsPayment(PaymentDirection direction)
     {
         var playerId = Guid.NewGuid();
         var amount = new Money(40m);
         const PaymentMethod method = PaymentMethod.ETransfer;
 
-        var result = Payment.Create(playerId, amount, type, method);
+        var result = Payment.Create(playerId, amount, direction, method);
 
         Assert.True(result.IsSuccess);
         Assert.NotEqual(Guid.Empty, result.Value.Id);
         Assert.Equal(playerId, result.Value.PlayerId);
         Assert.Equal(amount, result.Value.Amount);
-        Assert.Equal(type, result.Value.Type);
+        Assert.Equal(direction, result.Value.Direction);
         Assert.Equal(method, result.Value.Method);
         Assert.NotEqual(default, result.Value.RecordedAtUtc);
     }
@@ -30,7 +30,7 @@ public sealed class PaymentTests
         var result = Payment.Create(
             Guid.Empty,
             new Money(40m),
-            PaymentType.PlayerPaysBank,
+            PaymentDirection.MadeByPlayer,
             PaymentMethod.ETransfer);
 
         Assert.True(result.IsFailed);
@@ -46,7 +46,7 @@ public sealed class PaymentTests
         var result = Payment.Create(
             Guid.NewGuid(),
             new Money(amount),
-            PaymentType.PlayerPaysBank,
+            PaymentDirection.MadeByPlayer,
             PaymentMethod.ETransfer);
 
         Assert.True(result.IsFailed);
@@ -55,19 +55,19 @@ public sealed class PaymentTests
     }
 
     [Fact]
-    public void Create_RequiresValidPaymentType()
+    public void Create_RequiresValidPaymentDirection()
     {
-        var result = Payment.Create(Guid.NewGuid(), new Money(40m), (PaymentType)0, PaymentMethod.ETransfer);
+        var result = Payment.Create(Guid.NewGuid(), new Money(40m), (PaymentDirection)0, PaymentMethod.ETransfer);
 
         Assert.True(result.IsFailed);
         var error = Assert.Single(result.Errors.OfType<PaymentError>());
-        Assert.Equal(PaymentErrorCode.InvalidPaymentType, error.Code);
+        Assert.Equal(PaymentErrorCode.InvalidPaymentDirection, error.Code);
     }
 
     [Fact]
     public void Create_RequiresValidPaymentMethod()
     {
-        var result = Payment.Create(Guid.NewGuid(), new Money(40m), PaymentType.PlayerPaysBank, (PaymentMethod)0);
+        var result = Payment.Create(Guid.NewGuid(), new Money(40m), PaymentDirection.MadeByPlayer, (PaymentMethod)0);
 
         Assert.True(result.IsFailed);
         var error = Assert.Single(result.Errors.OfType<PaymentError>());

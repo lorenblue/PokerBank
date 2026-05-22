@@ -44,7 +44,7 @@ app.MapAddBuyIn();
 app.MapAddCashOut();
 app.MapDeleteGameEntry();
 app.MapCloseGame();
-app.MapCreatePayment();
+app.MapRecordPayment();
 app.MapListPayments();
 app.MapGetPayment();
 app.MapDeletePayment();
