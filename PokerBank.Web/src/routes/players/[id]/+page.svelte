@@ -1,4 +1,6 @@
 <script lang="ts">
+	import RecordPaymentModal from '$lib/components/RecordPaymentModal.svelte';
+	import StatCard from '$lib/components/StatCard.svelte';
 	import { formatDateTime } from '$lib/format';
 	import type { PageData } from './$types';
 
@@ -27,6 +29,15 @@
 		if (amount < 0) return 'owes';
 
 		return 'settled';
+	}
+
+	function moneyTone(value: number | string) {
+		const amount = Number(value);
+
+		if (amount > 0) return 'positive';
+		if (amount < 0) return 'negative';
+
+		return 'neutral';
 	}
 
 	function paymentLabel(type: string) {
@@ -81,31 +92,22 @@
 {/if}
 
 <section class="my-4 grid gap-4 md:grid-cols-3">
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<span class="mb-1 block text-sm text-slate-500">Balance</span>
-		<strong
-			class={`text-2xl ${Number(data.balance?.balanceAmount ?? 0) > 0 ? 'text-emerald-700' : Number(data.balance?.balanceAmount ?? 0) < 0 ? 'text-red-700' : ''}`}
-		>
-			{money(data.balance?.balanceAmount ?? 0)}
-		</strong>
-		<p class="mt-1 text-sm text-slate-500">{balanceLabel(data.balance?.balanceAmount ?? 0)}</p>
-	</div>
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<span class="mb-1 block text-sm text-slate-500">Game net</span>
-		<strong
-			class={`text-2xl ${Number(data.balance?.gameNetAmount ?? 0) > 0 ? 'text-emerald-700' : Number(data.balance?.gameNetAmount ?? 0) < 0 ? 'text-red-700' : ''}`}
-		>
-			{money(data.balance?.gameNetAmount ?? 0)}
-		</strong>
-	</div>
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<span class="mb-1 block text-sm text-slate-500">Payment net</span>
-		<strong
-			class={`text-2xl ${Number(data.balance?.paymentNetAmount ?? 0) > 0 ? 'text-emerald-700' : Number(data.balance?.paymentNetAmount ?? 0) < 0 ? 'text-red-700' : ''}`}
-		>
-			{money(data.balance?.paymentNetAmount ?? 0)}
-		</strong>
-	</div>
+	<StatCard
+		label="Balance"
+		value={money(data.balance?.balanceAmount ?? 0)}
+		detail={balanceLabel(data.balance?.balanceAmount ?? 0)}
+		tone={moneyTone(data.balance?.balanceAmount ?? 0)}
+	/>
+	<StatCard
+		label="Game net"
+		value={money(data.balance?.gameNetAmount ?? 0)}
+		tone={moneyTone(data.balance?.gameNetAmount ?? 0)}
+	/>
+	<StatCard
+		label="Payment net"
+		value={money(data.balance?.paymentNetAmount ?? 0)}
+		tone={moneyTone(data.balance?.paymentNetAmount ?? 0)}
+	/>
 </section>
 
 <section class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -176,70 +178,5 @@
 </section>
 
 {#if isRecordPaymentOpen}
-	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-			<div class="mb-4 flex items-start justify-between gap-4">
-				<div>
-					<h2 class="text-lg font-bold text-slate-950">Record payment</h2>
-					<p class="mt-1 text-sm text-slate-500">{data.player.name}</p>
-				</div>
-				<button
-					type="button"
-					class="rounded-md px-2 py-1 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-					aria-label="Close"
-					onclick={() => (isRecordPaymentOpen = false)}
-				>
-					Close
-				</button>
-			</div>
-
-			<form method="POST" action="?/createPayment" class="grid gap-4">
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Amount
-					<input
-						name="amount"
-						type="number"
-						min="0.01"
-						step="0.01"
-						required
-						class="rounded-md border border-slate-300 px-3 py-2"
-					/>
-				</label>
-
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Direction
-					<select name="type" required class="rounded-md border border-slate-300 px-3 py-2">
-						<option value="">Choose direction</option>
-						<option value="PlayerPaysBank">Player paid me</option>
-						<option value="BankPaysPlayer">I paid player</option>
-					</select>
-				</label>
-
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Method
-					<select name="method" required class="rounded-md border border-slate-300 px-3 py-2">
-						<option value="">Choose method</option>
-						<option value="ETransfer">e-transfer</option>
-						<option value="Cash">cash</option>
-					</select>
-				</label>
-
-				<div class="flex justify-end gap-2">
-					<button
-						type="button"
-						class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-						onclick={() => (isRecordPaymentOpen = false)}
-					>
-						Cancel
-					</button>
-					<button
-						type="submit"
-						class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-					>
-						Record payment
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
+	<RecordPaymentModal playerName={data.player.name} onClose={() => (isRecordPaymentOpen = false)} />
 {/if}

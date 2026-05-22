@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Modal from '$lib/components/Modal.svelte';
+	import RecordPaymentModal from '$lib/components/RecordPaymentModal.svelte';
 	import { formatDateTime } from '$lib/format';
 	import type { PageData } from './$types';
 
@@ -113,116 +115,41 @@
 </section>
 
 {#if isRecordPaymentOpen}
-	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-			<div class="mb-4 flex items-start justify-between gap-4">
-				<h2 class="text-lg font-bold text-slate-950">Record payment</h2>
-				<button
-					type="button"
-					class="rounded-md px-2 py-1 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-					aria-label="Close"
-					onclick={() => (isRecordPaymentOpen = false)}
-				>
-					Close
-				</button>
-			</div>
-
-			<form method="POST" action="?/createPayment" class="grid gap-4">
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Player
-					<select name="playerId" required class="rounded-md border border-slate-300 px-3 py-2">
-						<option value="">Choose a player</option>
-						{#each activePlayers as player}
-							<option value={player.id}>{player.name}</option>
-						{/each}
-					</select>
-				</label>
-
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Amount
-					<input
-						name="amount"
-						type="number"
-						min="0.01"
-						step="0.01"
-						required
-						class="rounded-md border border-slate-300 px-3 py-2"
-					/>
-				</label>
-
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Direction
-					<select name="type" required class="rounded-md border border-slate-300 px-3 py-2">
-						<option value="">Choose direction</option>
-						<option value="PlayerPaysBank">Player paid me</option>
-						<option value="BankPaysPlayer">I paid player</option>
-					</select>
-				</label>
-
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Method
-					<select name="method" required class="rounded-md border border-slate-300 px-3 py-2">
-						<option value="">Choose method</option>
-						<option value="ETransfer">e-transfer</option>
-						<option value="Cash">cash</option>
-					</select>
-				</label>
-
-				<div class="flex justify-end gap-2">
-					<button
-						type="button"
-						class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-						onclick={() => (isRecordPaymentOpen = false)}
-					>
-						Cancel
-					</button>
-					<button
-						type="submit"
-						class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-					>
-						Record payment
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
+	<RecordPaymentModal players={activePlayers} onClose={() => (isRecordPaymentOpen = false)} />
 {/if}
 
 {#if paymentToDelete}
-	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-			<h2 class="text-lg font-bold text-slate-950">Delete payment?</h2>
-			<p class="mt-2 text-sm leading-6 text-slate-600">
-				This removes the payment from the ledger. This is only intended for payments recorded by
-				mistake.
+	<Modal title="Delete payment?" onClose={closeDeletePayment}>
+		<p class="mt-2 text-sm leading-6 text-slate-600">
+			This removes the payment from the ledger. This is only intended for payments recorded by
+			mistake.
+		</p>
+
+		<div class="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
+			<p class="font-bold text-slate-950">
+				{playerNames.get(paymentToDelete.playerId) ?? paymentToDelete.playerId}
 			</p>
-
-			<div class="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
-				<p class="font-bold text-slate-950">
-					{playerNames.get(paymentToDelete.playerId) ?? paymentToDelete.playerId}
-				</p>
-				<p class="mt-1 text-slate-600">
-					{paymentLabel(paymentToDelete.type)} · {methodLabel(paymentToDelete.method)} ·
-					{unsignedMoney(paymentToDelete.amount)}
-				</p>
-			</div>
-
-			<form method="POST" action="?/deletePayment" class="mt-5 flex justify-end gap-2">
-				<input type="hidden" name="paymentId" value={paymentToDelete.id} />
-				<button
-					type="button"
-					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-					onclick={closeDeletePayment}
-				>
-					Cancel
-				</button>
-				<button
-					type="submit"
-					class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
-				>
-					Delete payment
-				</button>
-			</form>
+			<p class="mt-1 text-slate-600">
+				{paymentLabel(paymentToDelete.type)} · {methodLabel(paymentToDelete.method)} ·
+				{unsignedMoney(paymentToDelete.amount)}
+			</p>
 		</div>
-	</div>
+
+		<form method="POST" action="?/deletePayment" class="mt-5 flex justify-end gap-2">
+			<input type="hidden" name="paymentId" value={paymentToDelete.id} />
+			<button
+				type="button"
+				class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+				onclick={closeDeletePayment}
+			>
+				Cancel
+			</button>
+			<button
+				type="submit"
+				class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
+			>
+				Delete payment
+			</button>
+		</form>
+	</Modal>
 {/if}

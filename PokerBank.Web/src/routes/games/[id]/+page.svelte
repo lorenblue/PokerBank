@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Modal from '$lib/components/Modal.svelte';
+	import StatCard from '$lib/components/StatCard.svelte';
 	import { formatDateTime, formatGameEntryDateTime } from '$lib/format';
 	import type { PageData } from './$types';
 
@@ -95,18 +97,9 @@
 {/if}
 
 <section class="my-4 grid gap-4 md:grid-cols-3">
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<span class="mb-1 block text-sm text-slate-500">Buy-ins</span>
-		<strong class="text-2xl">{money(data.game.totalBuyInAmount)}</strong>
-	</div>
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<span class="mb-1 block text-sm text-slate-500">Cash-outs</span>
-		<strong class="text-2xl">{money(data.game.totalCashOutAmount)}</strong>
-	</div>
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<span class="mb-1 block text-sm text-slate-500">Remaining</span>
-		<strong class="text-2xl">{money(data.game.remainingCashOutAmount)}</strong>
-	</div>
+	<StatCard label="Buy-ins" value={money(data.game.totalBuyInAmount)} />
+	<StatCard label="Cash-outs" value={money(data.game.totalCashOutAmount)} />
+	<StatCard label="Remaining" value={money(data.game.remainingCashOutAmount)} />
 </section>
 
 <section class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -182,199 +175,35 @@
 </section>
 
 {#if isAddBuyInOpen}
-	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-			<div class="mb-4 flex items-start justify-between gap-4">
-				<h2 class="text-lg font-bold text-slate-950">Add buy-in</h2>
+	<Modal title="Add buy-in" onClose={() => (isAddBuyInOpen = false)}>
+		<form method="POST" action="?/addBuyIn" class="grid gap-4">
+			<label class="grid gap-1 text-sm font-bold text-slate-700">
+				Player
+				<select name="playerId" required class="rounded-md border border-slate-300 px-3 py-2">
+					<option value="">Choose player</option>
+					{#each data.players as player}
+						<option value={player.id}>{player.name}</option>
+					{/each}
+				</select>
+			</label>
+
+			<label class="grid gap-1 text-sm font-bold text-slate-700">
+				Amount
+				<input
+					name="amount"
+					type="number"
+					min="0.01"
+					step="0.01"
+					required
+					class="rounded-md border border-slate-300 px-3 py-2"
+				/>
+			</label>
+
+			<div class="flex justify-end gap-2">
 				<button
 					type="button"
-					class="rounded-md px-2 py-1 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-					aria-label="Close"
+					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
 					onclick={() => (isAddBuyInOpen = false)}
-				>
-					Close
-				</button>
-			</div>
-
-			<form method="POST" action="?/addBuyIn" class="grid gap-4">
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Player
-					<select name="playerId" required class="rounded-md border border-slate-300 px-3 py-2">
-						<option value="">Choose player</option>
-						{#each data.players as player}
-							<option value={player.id}>{player.name}</option>
-						{/each}
-					</select>
-				</label>
-
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Amount
-					<input
-						name="amount"
-						type="number"
-						min="0.01"
-						step="0.01"
-						required
-						class="rounded-md border border-slate-300 px-3 py-2"
-					/>
-				</label>
-
-				<div class="flex justify-end gap-2">
-					<button
-						type="button"
-						class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-						onclick={() => (isAddBuyInOpen = false)}
-					>
-						Cancel
-					</button>
-					<button
-						type="submit"
-						class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-					>
-						Add buy-in
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-{#if isAddCashOutOpen}
-	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-			<div class="mb-4 flex items-start justify-between gap-4">
-				<h2 class="text-lg font-bold text-slate-950">Add cash-out</h2>
-				<button
-					type="button"
-					class="rounded-md px-2 py-1 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-					aria-label="Close"
-					onclick={() => (isAddCashOutOpen = false)}
-				>
-					Close
-				</button>
-			</div>
-
-			<form method="POST" action="?/addCashOut" class="grid gap-4">
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Player
-					<select name="playerId" required class="rounded-md border border-slate-300 px-3 py-2">
-						<option value="">Choose player</option>
-						{#each data.players as player}
-							<option value={player.id}>{player.name}</option>
-						{/each}
-					</select>
-				</label>
-
-				<label class="grid gap-1 text-sm font-bold text-slate-700">
-					Amount
-					<input
-						name="amount"
-						type="number"
-						min="0.01"
-						step="0.01"
-						required
-						class="rounded-md border border-slate-300 px-3 py-2"
-					/>
-				</label>
-
-				<div class="flex justify-end gap-2">
-					<button
-						type="button"
-						class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-						onclick={() => (isAddCashOutOpen = false)}
-					>
-						Cancel
-					</button>
-					<button
-						type="submit"
-						class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-					>
-						Add cash-out
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-{#if entryToDelete}
-	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-			<h2 class="text-lg font-bold text-slate-950">Delete entry?</h2>
-			<p class="mt-2 text-sm leading-6 text-slate-600">
-				This removes the {entryLabel(entryToDelete.type).toLowerCase()} from the open game. This
-				is only intended for entries recorded by mistake.
-			</p>
-
-			<div class="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
-				<p class="font-bold text-slate-950">
-					{playerNames.get(entryToDelete.playerId) ?? entryToDelete.playerId}
-				</p>
-				<p class="mt-1 text-slate-600">
-					{entryLabel(entryToDelete.type)} · {money(entryToDelete.amount)}
-				</p>
-			</div>
-
-			<form method="POST" action="?/deleteEntry" class="mt-5 flex justify-end gap-2">
-				<input type="hidden" name="entryId" value={entryToDelete.id} />
-				<button
-					type="button"
-					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-					onclick={closeDeleteEntry}
-				>
-					Cancel
-				</button>
-				<button
-					type="submit"
-					class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
-				>
-					Delete entry
-				</button>
-			</form>
-		</div>
-	</div>
-{/if}
-
-{#if isDeleteGameOpen}
-	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-			<h2 class="text-lg font-bold text-slate-950">Delete game?</h2>
-			<p class="mt-2 text-sm leading-6 text-slate-600">
-				This removes the open game and its entries. This is only intended for games created by mistake.
-			</p>
-
-			<form method="POST" action="?/deleteGame" class="mt-5 flex justify-end gap-2">
-				<button
-					type="button"
-					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-					onclick={() => (isDeleteGameOpen = false)}
-				>
-					Cancel
-				</button>
-				<button
-					type="submit"
-					class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
-				>
-					Delete game
-				</button>
-			</form>
-		</div>
-	</div>
-{/if}
-
-{#if isCloseGameOpen}
-	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
-		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-			<h2 class="text-lg font-bold text-slate-950">Close game?</h2>
-			<p class="mt-2 text-sm leading-6 text-slate-600">
-				Closed games cannot be changed. Make sure every buy-in and cash-out has been recorded.
-			</p>
-
-			<form method="POST" action="?/closeGame" class="mt-5 flex justify-end gap-2">
-				<button
-					type="button"
-					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-					onclick={() => (isCloseGameOpen = false)}
 				>
 					Cancel
 				</button>
@@ -382,9 +211,136 @@
 					type="submit"
 					class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
 				>
-					Close game
+					Add buy-in
 				</button>
-			</form>
+			</div>
+		</form>
+	</Modal>
+{/if}
+
+{#if isAddCashOutOpen}
+	<Modal title="Add cash-out" onClose={() => (isAddCashOutOpen = false)}>
+		<form method="POST" action="?/addCashOut" class="grid gap-4">
+			<label class="grid gap-1 text-sm font-bold text-slate-700">
+				Player
+				<select name="playerId" required class="rounded-md border border-slate-300 px-3 py-2">
+					<option value="">Choose player</option>
+					{#each data.players as player}
+						<option value={player.id}>{player.name}</option>
+					{/each}
+				</select>
+			</label>
+
+			<label class="grid gap-1 text-sm font-bold text-slate-700">
+				Amount
+				<input
+					name="amount"
+					type="number"
+					min="0.01"
+					step="0.01"
+					required
+					class="rounded-md border border-slate-300 px-3 py-2"
+				/>
+			</label>
+
+			<div class="flex justify-end gap-2">
+				<button
+					type="button"
+					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+					onclick={() => (isAddCashOutOpen = false)}
+				>
+					Cancel
+				</button>
+				<button
+					type="submit"
+					class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
+				>
+					Add cash-out
+				</button>
+			</div>
+		</form>
+	</Modal>
+{/if}
+
+{#if entryToDelete}
+	<Modal title="Delete entry?" onClose={closeDeleteEntry}>
+		<p class="mt-2 text-sm leading-6 text-slate-600">
+			This removes the {entryLabel(entryToDelete.type).toLowerCase()} from the open game. This
+			is only intended for entries recorded by mistake.
+		</p>
+
+		<div class="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
+			<p class="font-bold text-slate-950">
+				{playerNames.get(entryToDelete.playerId) ?? entryToDelete.playerId}
+			</p>
+			<p class="mt-1 text-slate-600">
+				{entryLabel(entryToDelete.type)} · {money(entryToDelete.amount)}
+			</p>
 		</div>
-	</div>
+
+		<form method="POST" action="?/deleteEntry" class="mt-5 flex justify-end gap-2">
+			<input type="hidden" name="entryId" value={entryToDelete.id} />
+			<button
+				type="button"
+				class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+				onclick={closeDeleteEntry}
+			>
+				Cancel
+			</button>
+			<button
+				type="submit"
+				class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
+			>
+				Delete entry
+			</button>
+		</form>
+	</Modal>
+{/if}
+
+{#if isDeleteGameOpen}
+	<Modal title="Delete game?" onClose={() => (isDeleteGameOpen = false)}>
+		<p class="mt-2 text-sm leading-6 text-slate-600">
+			This removes the open game and its entries. This is only intended for games created by mistake.
+		</p>
+
+		<form method="POST" action="?/deleteGame" class="mt-5 flex justify-end gap-2">
+			<button
+				type="button"
+				class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+				onclick={() => (isDeleteGameOpen = false)}
+			>
+				Cancel
+			</button>
+			<button
+				type="submit"
+				class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
+			>
+				Delete game
+			</button>
+		</form>
+	</Modal>
+{/if}
+
+{#if isCloseGameOpen}
+	<Modal title="Close game?" onClose={() => (isCloseGameOpen = false)}>
+		<p class="mt-2 text-sm leading-6 text-slate-600">
+			Closed games cannot be changed. Make sure every buy-in and cash-out has been recorded.
+		</p>
+
+		<form method="POST" action="?/closeGame" class="mt-5 flex justify-end gap-2">
+			<button
+				type="button"
+				class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+				onclick={() => (isCloseGameOpen = false)}
+			>
+				Cancel
+			</button>
+			<button
+				type="submit"
+				class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
+			>
+				Close game
+			</button>
+		</form>
+	</Modal>
 {/if}
