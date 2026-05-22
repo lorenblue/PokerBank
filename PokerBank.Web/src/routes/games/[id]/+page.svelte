@@ -120,7 +120,9 @@
 				{#each data.game.entries as entry}
 					<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
 						<div class="min-w-0">
-							<strong>{playerNames.get(entry.playerId) ?? entry.playerId}</strong>
+							<a href={`/players/${entry.playerId}`} class="font-bold hover:text-emerald-900">
+								{playerNames.get(entry.playerId) ?? entry.playerId}
+							</a>
 							<span class="mt-1 block text-sm text-slate-500">
 								{entryLabel(entry.type)} · {formatGameEntryDateTime(
 									entry.recordedAtUtc,
@@ -160,7 +162,9 @@
 				{#each data.game.playerTotals as total}
 					<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
 						<div class="min-w-0">
-							<strong>{total.playerName}</strong>
+							<a href={`/players/${total.playerId}`} class="font-bold hover:text-emerald-900">
+								{total.playerName}
+							</a>
 							<span class="mt-1 block text-sm text-slate-500">
 								Buy-ins {money(total.buyInAmount)} · Cash-outs {money(total.cashOutAmount)}
 							</span>

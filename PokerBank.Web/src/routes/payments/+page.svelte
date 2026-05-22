@@ -82,7 +82,9 @@
 				{#each data.payments as payment}
 					<article class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
 						<div>
-							<h3 class="text-sm font-bold">{playerNames.get(payment.playerId) ?? payment.playerId}</h3>
+							<a href={`/players/${payment.playerId}`} class="text-sm font-bold hover:text-emerald-900">
+								{playerNames.get(payment.playerId) ?? payment.playerId}
+							</a>
 							<p class="mt-1 text-xs text-slate-500">
 								{paymentLabel(payment.type)} · {methodLabel(payment.method)} · {formatDateTime(
 									payment.recordedAtUtc

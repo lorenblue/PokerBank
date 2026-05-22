@@ -88,8 +88,9 @@
 		{:else}
 			<div class="grid gap-3">
 				{#each data.balances as balance}
-					<article
-						class={`flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-4 ${balance.isActive ? '' : 'opacity-55'}`}
+					<a
+						href={`/players/${balance.playerId}`}
+						class={`flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-4 hover:bg-slate-50 ${balance.isActive ? '' : 'opacity-55'}`}
 					>
 						<div>
 							<h3 class="font-bold">{balance.playerName}</h3>
@@ -100,7 +101,7 @@
 						>
 							{money(balance.balanceAmount)}
 						</strong>
-					</article>
+					</a>
 				{/each}
 			</div>
 		{/if}
@@ -133,7 +134,9 @@
 					{#each payments.slice(0, 3) as payment}
 						<div class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 p-3">
 							<div>
-								<h3 class="text-sm font-bold">{playerNames.get(payment.playerId) ?? payment.playerId}</h3>
+								<a href={`/players/${payment.playerId}`} class="text-sm font-bold hover:text-emerald-900">
+									{playerNames.get(payment.playerId) ?? payment.playerId}
+								</a>
 								<p class="mt-1 text-xs text-slate-500">
 									{paymentLabel(payment.type)} · {methodLabel(payment.method)}
 								</p>
