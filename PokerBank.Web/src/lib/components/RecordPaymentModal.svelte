@@ -9,11 +9,17 @@
 	let {
 		onClose,
 		playerName,
-		players = []
+		players = [],
+		selectedPlayerId = '',
+		selectedDirection = '',
+		amount = ''
 	}: {
 		onClose: () => void;
 		playerName?: string;
 		players?: PlayerOption[];
+		selectedPlayerId?: string;
+		selectedDirection?: 'MadeByPlayer' | 'ReceivedByPlayer' | '';
+		amount?: string;
 	} = $props();
 </script>
 
@@ -22,7 +28,12 @@
 		{#if players.length > 0}
 			<label class="grid gap-1 text-sm font-bold text-slate-700">
 				Player
-				<select name="playerId" required class="rounded-md border border-slate-300 px-3 py-2">
+				<select
+					name="playerId"
+					required
+					value={selectedPlayerId}
+					class="rounded-md border border-slate-300 px-3 py-2"
+				>
 					<option value="">Choose a player</option>
 					{#each players as player}
 						<option value={player.id}>{player.name}</option>
@@ -39,13 +50,19 @@
 				min="0.01"
 				step="0.01"
 				required
+				value={amount}
 				class="rounded-md border border-slate-300 px-3 py-2"
 			/>
 		</label>
 
 		<label class="grid gap-1 text-sm font-bold text-slate-700">
 			Direction
-			<select name="direction" required class="rounded-md border border-slate-300 px-3 py-2">
+			<select
+				name="direction"
+				required
+				value={selectedDirection}
+				class="rounded-md border border-slate-300 px-3 py-2"
+			>
 				<option value="">Choose direction</option>
 				<option value="MadeByPlayer">Player made payment</option>
 				<option value="ReceivedByPlayer">Player received payment</option>

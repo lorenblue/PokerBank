@@ -1,12 +1,19 @@
 <script lang="ts">
+	import RecordPaymentModal from '$lib/components/RecordPaymentModal.svelte';
 	import { formatDateTime } from '$lib/format';
 	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData; form: { error?: string } | null } = $props();
+	let {
+		data,
+		form
+	}: { data: PageData; form: { error?: string; success?: boolean } | null } = $props();
+
+	let balanceToSettle = $state<PageData['balances'][number] | null>(null);
 
 	const openGame = $derived(data.games.find((game) => game.status === 'Open'));
 	const payments = $derived(data.payments ?? []);
 	const players = $derived(data.players ?? []);
+	const activePlayers = $derived(players.filter((player) => player.isActive));
 	const playerNames = $derived(new Map(players.map((player) => [player.id, player.name] as const)));
 
 	function money(value: number | string) {
@@ -42,6 +49,18 @@
 
 		return method;
 	}
+
+	function settlementDirection(balanceAmount: number | string) {
+		return Number(balanceAmount) < 0 ? 'MadeByPlayer' : 'ReceivedByPlayer';
+	}
+
+	function settlementAmount(balanceAmount: number | string) {
+		return Math.abs(Number(balanceAmount)).toFixed(2);
+	}
+
+	function closeSettleBalance() {
+		balanceToSettle = null;
+	}
 </script>
 
 <svelte:head>
@@ -74,6 +93,10 @@
 
 {#if form?.error}
 	<p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">{form.error}</p>
+{:else if form?.success}
+	<p class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+		Payment recorded.
+	</p>
 {/if}
 
 <section class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
@@ -88,20 +111,32 @@
 		{:else}
 			<div class="grid gap-3">
 				{#each data.balances as balance}
-					<a
-						href={`/players/${balance.playerId}`}
+					<div
 						class={`flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-4 hover:bg-slate-50 ${balance.isActive ? '' : 'opacity-55'}`}
 					>
 						<div>
-							<h3 class="font-bold">{balance.playerName}</h3>
+							<a href={`/players/${balance.playerId}`} class="font-bold hover:text-emerald-900">
+								{balance.playerName}
+							</a>
 							<p class="mt-1 text-sm text-slate-500">{balanceLabel(balance.balanceAmount)}</p>
 						</div>
-						<strong
-							class={`text-right text-2xl font-extrabold ${Number(balance.balanceAmount) > 0 ? 'text-emerald-700' : Number(balance.balanceAmount) < 0 ? 'text-red-700' : ''}`}
-						>
-							{money(balance.balanceAmount)}
-						</strong>
-					</a>
+						<div class="flex shrink-0 items-center gap-3">
+							{#if balance.isActive && Number(balance.balanceAmount) !== 0}
+								<button
+									type="button"
+									class="rounded-md px-3 py-2 text-sm font-bold text-emerald-900 hover:bg-emerald-50"
+									onclick={() => (balanceToSettle = balance)}
+								>
+									Settle
+								</button>
+							{/if}
+							<strong
+								class={`text-right text-2xl font-extrabold ${Number(balance.balanceAmount) > 0 ? 'text-emerald-700' : Number(balance.balanceAmount) < 0 ? 'text-red-700' : ''}`}
+							>
+								{money(balance.balanceAmount)}
+							</strong>
+						</div>
+					</div>
 				{/each}
 			</div>
 		{/if}
@@ -153,3 +188,13 @@
 		</div>
 	</div>
 </section>
+
+{#if balanceToSettle}
+	<RecordPaymentModal
+		players={activePlayers}
+		selectedPlayerId={balanceToSettle.playerId}
+		selectedDirection={settlementDirection(balanceToSettle.balanceAmount)}
+		amount={settlementAmount(balanceToSettle.balanceAmount)}
+		onClose={closeSettleBalance}
+	/>
+{/if}
