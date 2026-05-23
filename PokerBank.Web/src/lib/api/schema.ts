@@ -238,24 +238,8 @@ export interface paths {
         };
         /** Get a player. */
         get: operations["GetPlayer"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/players/{id}/name": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Rename a player. */
-        put: operations["RenamePlayer"];
+        /** Update a player. */
+        put: operations["UpdatePlayer"];
         post?: never;
         delete?: never;
         options?: never;
@@ -326,6 +310,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            emailAddress: null | string;
             isActive: boolean;
         };
         CloseGameResponse: {
@@ -361,11 +346,13 @@ export interface components {
         };
         CreatePlayerRequest: {
             name: null | string;
+            emailAddress: null | string;
         };
         CreatePlayerResponse: {
             /** Format: uuid */
             id: string;
             name: string;
+            emailAddress: null | string;
             isActive: boolean;
         };
         ErrorResponse: {
@@ -428,6 +415,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            emailAddress: null | string;
             isActive: boolean;
         };
         ListBalancesResponse: {
@@ -480,19 +468,22 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            emailAddress: null | string;
             isActive: boolean;
         };
         /** @enum {unknown} */
         PaymentMethod: "ETransfer" | "Cash";
         /** @enum {unknown} */
         PaymentDirection: "MadeByPlayer" | "ReceivedByPlayer";
-        RenamePlayerRequest: {
+        UpdatePlayerRequest: {
             name: null | string;
+            emailAddress: null | string;
         };
-        RenamePlayerResponse: {
+        UpdatePlayerResponse: {
             /** Format: uuid */
             id: string;
             name: string;
+            emailAddress: null | string;
             isActive: boolean;
         };
     };
@@ -1117,7 +1108,7 @@ export interface operations {
             };
         };
     };
-    RenamePlayer: {
+    UpdatePlayer: {
         parameters: {
             query?: never;
             header?: never;
@@ -1128,7 +1119,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RenamePlayerRequest"];
+                "application/json": components["schemas"]["UpdatePlayerRequest"];
             };
         };
         responses: {
@@ -1138,7 +1129,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RenamePlayerResponse"];
+                    "application/json": components["schemas"]["UpdatePlayerResponse"];
                 };
             };
             /** @description Bad Request */

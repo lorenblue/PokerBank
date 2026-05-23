@@ -29,7 +29,7 @@ public static class CreatePlayer
 
         try
         {
-            var player = new Player(request.Name);
+            var player = new Player(request.Name, request.EmailAddress);
 
             if (await dbContext.Players.AnyAsync(
                     existingPlayer => existingPlayer.IsActive && existingPlayer.Name == player.Name,
@@ -41,7 +41,9 @@ public static class CreatePlayer
             dbContext.Players.Add(player);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return TypedResults.Created($"/players/{player.Id}", new Response(player.Id, player.Name, player.IsActive));
+            return TypedResults.Created(
+                $"/players/{player.Id}",
+                new Response(player.Id, player.Name, player.EmailAddress, player.IsActive));
         }
         catch (ArgumentException exception)
         {
@@ -49,8 +51,8 @@ public static class CreatePlayer
         }
     }
 
-    private sealed record Request(string? Name);
+    private sealed record Request(string? Name, string? EmailAddress);
 
-    private sealed record Response(Guid Id, string Name, bool IsActive);
+    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
 
 }

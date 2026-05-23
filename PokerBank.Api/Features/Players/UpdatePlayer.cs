@@ -4,14 +4,14 @@ using PokerBank.Api.Data;
 
 namespace PokerBank.Api.Features.Players;
 
-public static class RenamePlayer
+public static class UpdatePlayer
 {
-    public static IEndpointRouteBuilder MapRenamePlayer(this IEndpointRouteBuilder app)
+    public static IEndpointRouteBuilder MapUpdatePlayer(this IEndpointRouteBuilder app)
     {
-        app.MapPut("/players/{id:guid}/name", Handle)
-            .WithName("RenamePlayer")
+        app.MapPut("/players/{id:guid}", Handle)
+            .WithName("UpdatePlayer")
             .WithTags("Players")
-            .WithSummary("Rename a player.");
+            .WithSummary("Update a player.");
 
         return app;
     }
@@ -50,9 +50,11 @@ public static class RenamePlayer
         try
         {
             player.Rename(request.Name);
+            player.UpdateEmailAddress(request.EmailAddress);
+
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return TypedResults.Ok(new Response(player.Id, player.Name, player.IsActive));
+            return TypedResults.Ok(new Response(player.Id, player.Name, player.EmailAddress, player.IsActive));
         }
         catch (ArgumentException exception)
         {
@@ -60,8 +62,7 @@ public static class RenamePlayer
         }
     }
 
-    private sealed record Request(string? Name);
+    private sealed record Request(string? Name, string? EmailAddress);
 
-    private sealed record Response(Guid Id, string Name, bool IsActive);
-
+    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
 }

@@ -32,9 +32,9 @@ public static class ArchivePlayer
         player.Archive();
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Ok(new Response(player.Id, player.Name, player.IsActive));
+        return TypedResults.Ok(new Response(player.Id, player.Name, player.EmailAddress, player.IsActive));
     }
 
-    private sealed record Response(Guid Id, string Name, bool IsActive);
+    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
 
 }

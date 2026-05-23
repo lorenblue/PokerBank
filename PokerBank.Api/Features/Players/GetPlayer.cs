@@ -24,7 +24,7 @@ public static class GetPlayer
         var player = await dbContext.Players
             .AsNoTracking()
             .Where(player => player.Id == id)
-            .Select(player => new Response(player.Id, player.Name, player.IsActive))
+            .Select(player => new Response(player.Id, player.Name, player.EmailAddress, player.IsActive))
             .SingleOrDefaultAsync(cancellationToken);
 
         return player is null
@@ -32,6 +32,6 @@ public static class GetPlayer
             : TypedResults.Ok(player);
     }
 
-    private sealed record Response(Guid Id, string Name, bool IsActive);
+    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
 
 }

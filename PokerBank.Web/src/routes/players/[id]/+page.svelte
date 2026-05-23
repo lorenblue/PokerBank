@@ -71,6 +71,7 @@
 			{data.player.isActive ? 'Active player' : 'Archived player'}
 		</p>
 		<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">{data.player.name}</h1>
+		<p class="mt-2 text-sm text-slate-500">{data.player.emailAddress ?? 'No email address'}</p>
 	</div>
 
 	<button

@@ -14,6 +14,7 @@ export const actions: Actions = {
 	createPlayer: async ({ fetch, request }) => {
 		const data = await request.formData();
 		const name = data.get('name')?.toString().trim();
+		const emailAddress = data.get('emailAddress')?.toString().trim() || null;
 
 		if (!name) {
 			return fail(400, { error: 'Player name is required.' });
@@ -22,7 +23,7 @@ export const actions: Actions = {
 		const api = pokerBankApi(fetch);
 
 		try {
-			await api.createPlayer({ name });
+			await api.createPlayer({ name, emailAddress });
 			return { success: true };
 		} catch (error) {
 			if (error instanceof ApiError) {
@@ -33,10 +34,11 @@ export const actions: Actions = {
 		}
 	},
 
-	renamePlayer: async ({ fetch, request }) => {
+	updatePlayer: async ({ fetch, request }) => {
 		const data = await request.formData();
 		const playerId = data.get('playerId')?.toString();
 		const name = data.get('name')?.toString().trim();
+		const emailAddress = data.get('emailAddress')?.toString().trim() || null;
 
 		if (!playerId || !name) {
 			return fail(400, { error: 'Player and name are required.' });
@@ -45,7 +47,7 @@ export const actions: Actions = {
 		const api = pokerBankApi(fetch);
 
 		try {
-			await api.renamePlayer(playerId, { name });
+			await api.updatePlayer(playerId, { name, emailAddress });
 			return { success: true };
 		} catch (error) {
 			if (error instanceof ApiError) {

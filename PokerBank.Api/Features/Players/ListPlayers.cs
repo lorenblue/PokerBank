@@ -30,11 +30,11 @@ public static class ListPlayers
 
         var players = await query
             .OrderBy(player => player.Name)
-            .Select(player => new Response(player.Id, player.Name, player.IsActive))
+            .Select(player => new Response(player.Id, player.Name, player.EmailAddress, player.IsActive))
             .ToArrayAsync(cancellationToken);
 
         return TypedResults.Ok(players);
     }
 
-    private sealed record Response(Guid Id, string Name, bool IsActive);
+    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
 }

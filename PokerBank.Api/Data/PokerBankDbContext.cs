@@ -21,6 +21,9 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
                 .HasMaxLength(Player.MaxNameLength)
                 .IsRequired();
 
+            player.Property(p => p.EmailAddress)
+                .HasMaxLength(Player.MaxEmailAddressLength);
+
             player.Property(p => p.IsActive)
                 .IsRequired();
         });

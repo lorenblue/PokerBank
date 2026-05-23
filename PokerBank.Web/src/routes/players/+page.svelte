@@ -4,13 +4,13 @@
 	let { data, form }: { data: PageData; form: { error?: string } | null } = $props();
 
 	let isAddPlayerOpen = $state(false);
-	let playerToRename = $state<PageData['players'][number] | null>(null);
+	let playerToEdit = $state<PageData['players'][number] | null>(null);
 
 	const activePlayers = $derived(data.players.filter((player) => player.isActive));
 	const archivedPlayers = $derived(data.players.filter((player) => !player.isActive));
 
-	function closeRenamePlayer() {
-		playerToRename = null;
+	function closeEditPlayer() {
+		playerToEdit = null;
 	}
 </script>
 
@@ -46,14 +46,16 @@
 					<div class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 p-3">
 						<a href={`/players/${player.id}`} class="min-w-0 hover:text-emerald-900">
 							<h3 class="text-sm font-bold">{player.name}</h3>
-							<p class="mt-1 text-sm text-slate-500">Active</p>
+							<p class="mt-1 text-sm text-slate-500">
+								{player.emailAddress ?? 'No email address'}
+							</p>
 						</a>
 						<button
 							type="button"
 							class="rounded-md px-2 py-1 text-xs font-bold text-emerald-900 hover:bg-emerald-50"
-							onclick={() => (playerToRename = player)}
+							onclick={() => (playerToEdit = player)}
 						>
-							Rename
+							Edit
 						</button>
 					</div>
 				{/each}
@@ -68,7 +70,9 @@
 						<div class="rounded-lg border border-slate-100 p-3 opacity-55">
 							<a href={`/players/${player.id}`} class="block hover:text-emerald-900">
 								<h3 class="text-sm font-bold">{player.name}</h3>
-								<p class="mt-1 text-sm text-slate-500">Archived</p>
+								<p class="mt-1 text-sm text-slate-500">
+									{player.emailAddress ?? 'No email address'}
+								</p>
 							</a>
 						</div>
 					{/each}
@@ -105,6 +109,16 @@
 					/>
 				</label>
 
+				<label class="grid gap-1 text-sm font-bold text-slate-700">
+					Email
+					<input
+						name="emailAddress"
+						type="email"
+						autocomplete="email"
+						class="rounded-md border border-slate-300 px-3 py-2"
+					/>
+				</label>
+
 				<div class="flex justify-end gap-2">
 					<button
 						type="button"
@@ -125,23 +139,23 @@
 	</div>
 {/if}
 
-{#if playerToRename}
+{#if playerToEdit}
 	<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
 		<div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
 			<div class="mb-4 flex items-start justify-between gap-4">
-				<h2 class="text-lg font-bold text-slate-950">Rename player</h2>
+				<h2 class="text-lg font-bold text-slate-950">Edit player</h2>
 				<button
 					type="button"
 					class="rounded-md px-2 py-1 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900"
 					aria-label="Close"
-					onclick={closeRenamePlayer}
+					onclick={closeEditPlayer}
 				>
 					Close
 				</button>
 			</div>
 
-			<form method="POST" action="?/renamePlayer" class="grid gap-4">
-				<input type="hidden" name="playerId" value={playerToRename.id} />
+			<form method="POST" action="?/updatePlayer" class="grid gap-4">
+				<input type="hidden" name="playerId" value={playerToEdit.id} />
 				<label class="grid gap-1 text-sm font-bold text-slate-700">
 					Name
 					<input
@@ -149,7 +163,18 @@
 						type="text"
 						autocomplete="off"
 						required
-						value={playerToRename.name}
+						value={playerToEdit.name}
+						class="rounded-md border border-slate-300 px-3 py-2"
+					/>
+				</label>
+
+				<label class="grid gap-1 text-sm font-bold text-slate-700">
+					Email
+					<input
+						name="emailAddress"
+						type="email"
+						autocomplete="email"
+						value={playerToEdit.emailAddress ?? ''}
 						class="rounded-md border border-slate-300 px-3 py-2"
 					/>
 				</label>
@@ -158,7 +183,7 @@
 					<button
 						type="button"
 						class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-						onclick={closeRenamePlayer}
+						onclick={closeEditPlayer}
 					>
 						Cancel
 					</button>
@@ -166,7 +191,7 @@
 						type="submit"
 						class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
 					>
-						Rename player
+						Save player
 					</button>
 				</div>
 			</form>

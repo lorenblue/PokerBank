@@ -51,7 +51,7 @@ app.MapDeletePayment();
 app.MapCreatePlayer();
 app.MapListPlayers();
 app.MapGetPlayer();
-app.MapRenamePlayer();
+app.MapUpdatePlayer();
 app.MapArchivePlayer();
 
 app.Run();

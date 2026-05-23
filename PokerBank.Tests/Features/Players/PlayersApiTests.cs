@@ -16,7 +16,9 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var response = await client.PostAsJsonAsync("/players", new { Name = "Lorenzo" });
+        var response = await client.PostAsJsonAsync(
+            "/players",
+            new { Name = "Lorenzo", EmailAddress = "lorenzo@example.com" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
@@ -25,6 +27,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         Assert.NotNull(player);
         Assert.NotEqual(Guid.Empty, player.Id);
         Assert.Equal("Lorenzo", player.Name);
+        Assert.Equal("lorenzo@example.com", player.EmailAddress);
         Assert.True(player.IsActive);
         Assert.Equal($"/players/{player.Id}", response.Headers.Location?.OriginalString);
     }
@@ -124,13 +127,15 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task RenamePlayer_UpdatesPlayerName()
+    public async Task UpdatePlayer_UpdatesPlayerDetails()
     {
         using var client = factory.CreateHttpsClient();
 
         var createdPlayer = await CreatePlayer(client, "Lorenzo");
 
-        var response = await client.PutAsJsonAsync($"/players/{createdPlayer.Id}/name", new { Name = "Enzo" });
+        var response = await client.PutAsJsonAsync(
+            $"/players/{createdPlayer.Id}",
+            new { Name = "Enzo", EmailAddress = "enzo@example.com" });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -139,18 +144,58 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         Assert.NotNull(player);
         Assert.Equal(createdPlayer.Id, player.Id);
         Assert.Equal("Enzo", player.Name);
+        Assert.Equal("enzo@example.com", player.EmailAddress);
         Assert.True(player.IsActive);
     }
 
     [Fact]
-    public async Task RenamePlayer_ReturnsConflict_WhenActivePlayerNameAlreadyExists()
+    public async Task UpdatePlayer_ClearsPlayerEmailAddress()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var createdPlayer = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+
+        var response = await client.PutAsJsonAsync(
+            $"/players/{createdPlayer.Id}",
+            new { Name = "Lorenzo", EmailAddress = (string?)null });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var player = await response.Content.ReadFromJsonAsync<PlayerResponse>();
+
+        Assert.NotNull(player);
+        Assert.Null(player.EmailAddress);
+    }
+
+    [Fact]
+    public async Task UpdatePlayer_ReturnsBadRequest_WhenEmailAddressIsInvalid()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var createdPlayer = await CreatePlayer(client, "Lorenzo");
+
+        var response = await client.PutAsJsonAsync(
+            $"/players/{createdPlayer.Id}",
+            new { Name = "Lorenzo", EmailAddress = "not-an-email" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal("Player email address is invalid.", error?.Error);
+    }
+
+    [Fact]
+    public async Task UpdatePlayer_ReturnsConflict_WhenActivePlayerNameAlreadyExists()
     {
         using var client = factory.CreateHttpsClient();
 
         var lorenzo = await CreatePlayer(client, "Lorenzo");
         await CreatePlayer(client, "Enzo");
 
-        var response = await client.PutAsJsonAsync($"/players/{lorenzo.Id}/name", new { Name = "Enzo" });
+        var response = await client.PutAsJsonAsync(
+            $"/players/{lorenzo.Id}",
+            new { Name = "Enzo", EmailAddress = "lorenzo@example.com" });
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
@@ -173,9 +218,12 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         Assert.False(player.IsActive);
     }
 
-    private static async Task<PlayerResponse> CreatePlayer(HttpClient client, string name)
+    private static async Task<PlayerResponse> CreatePlayer(
+        HttpClient client,
+        string name,
+        string? emailAddress = null)
     {
-        var response = await client.PostAsJsonAsync("/players", new { Name = name });
+        var response = await client.PostAsJsonAsync("/players", new { Name = name, EmailAddress = emailAddress });
         response.EnsureSuccessStatusCode();
 
         var player = await response.Content.ReadFromJsonAsync<PlayerResponse>();
@@ -189,7 +237,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         response.EnsureSuccessStatusCode();
     }
 
-    private sealed record PlayerResponse(Guid Id, string Name, bool IsActive);
+    private sealed record PlayerResponse(Guid Id, string Name, string? EmailAddress, bool IsActive);
 
     private sealed record ErrorResponse(string Error);
 }
