@@ -26,31 +26,31 @@ public static class RecordPayment
     private static Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> HandleMadeByPlayer(
         Guid playerId,
         Request request,
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken) =>
-        Handle(playerId, PaymentDirection.MadeByPlayer, request, currentGroup, dbContext, cancellationToken);
+        Handle(playerId, PaymentDirection.MadeByPlayer, request, groupContext, dbContext, cancellationToken);
 
     private static Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> HandleReceivedByPlayer(
         Guid playerId,
         Request request,
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken) =>
-        Handle(playerId, PaymentDirection.ReceivedByPlayer, request, currentGroup, dbContext, cancellationToken);
+        Handle(playerId, PaymentDirection.ReceivedByPlayer, request, groupContext, dbContext, cancellationToken);
 
     private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> Handle(
         Guid playerId,
         PaymentDirection direction,
         Request request,
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var playerExists = await dbContext.Players.AnyAsync(
             player =>
                 player.Id == playerId &&
-                player.PokerGroupId == currentGroup.Id &&
+                player.PokerGroupId == groupContext.Id &&
                 player.IsActive,
             cancellationToken);
 
@@ -59,7 +59,7 @@ public static class RecordPayment
             return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
-        var result = Payment.Create(currentGroup.Id, playerId, new Money(request.Amount), direction, request.Method);
+        var result = Payment.Create(groupContext.Id, playerId, new Money(request.Amount), direction, request.Method);
 
         if (result.IsFailed)
         {

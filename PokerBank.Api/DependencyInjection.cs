@@ -13,7 +13,7 @@ public static class DependencyInjection
 {
     public static WebApplicationBuilder AddApiServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddScoped<ICurrentPokerGroup, DefaultCurrentPokerGroup>();
+        builder.Services.AddScoped<IPokerGroupContext, DefaultPokerGroupContext>();
 
         builder.Services.ConfigureHttpJsonOptions(options =>
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)));

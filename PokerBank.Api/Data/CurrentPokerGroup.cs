@@ -1,11 +1,11 @@
 namespace PokerBank.Api.Data;
 
-public interface ICurrentPokerGroup
+public interface IPokerGroupContext
 {
     Guid Id { get; }
 }
 
-public sealed class DefaultCurrentPokerGroup : ICurrentPokerGroup
+public sealed class DefaultPokerGroupContext : IPokerGroupContext
 {
     public Guid Id => DefaultPokerGroup.Id;
 }

@@ -18,12 +18,12 @@ public static class CreateGame
     }
 
     private static async Task<Results<Created<Response>, Conflict<ErrorResponse>>> Handle(
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var openGameExists = await dbContext.Games.AnyAsync(
-            game => game.PokerGroupId == currentGroup.Id && game.Status == GameStatus.Open,
+            game => game.PokerGroupId == groupContext.Id && game.Status == GameStatus.Open,
             cancellationToken);
 
         if (openGameExists)
@@ -31,7 +31,7 @@ public static class CreateGame
             return TypedResults.Conflict(new ErrorResponse("An open game already exists."));
         }
 
-        var game = PokerGame.Create(currentGroup.Id);
+        var game = PokerGame.Create(groupContext.Id);
 
         dbContext.Games.Add(game);
         await dbContext.SaveChangesAsync(cancellationToken);

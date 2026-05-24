@@ -18,13 +18,13 @@ public static class ListGames
     }
 
     private static async Task<Ok<Response[]>> Handle(
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var games = await dbContext.Games
             .AsNoTracking()
-            .Where(game => game.PokerGroupId == currentGroup.Id)
+            .Where(game => game.PokerGroupId == groupContext.Id)
             .OrderByDescending(game => game.CreatedAtUtc)
             .Select(game => new Response(game.Id, game.Status, game.CreatedAtUtc))
             .ToArrayAsync(cancellationToken);

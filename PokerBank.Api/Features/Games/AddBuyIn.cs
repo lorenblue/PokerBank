@@ -21,14 +21,14 @@ public static class AddBuyIn
     private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Guid gameId,
         Request request,
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var game = await dbContext.Games
             .Include(game => game.Entries)
             .SingleOrDefaultAsync(
-                game => game.Id == gameId && game.PokerGroupId == currentGroup.Id,
+                game => game.Id == gameId && game.PokerGroupId == groupContext.Id,
                 cancellationToken);
 
         if (game is null)
@@ -39,7 +39,7 @@ public static class AddBuyIn
         var playerExists = await dbContext.Players.AnyAsync(
             player =>
                 player.Id == request.PlayerId &&
-                player.PokerGroupId == currentGroup.Id &&
+                player.PokerGroupId == groupContext.Id &&
                 player.IsActive,
             cancellationToken);
 

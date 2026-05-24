@@ -18,13 +18,13 @@ public static class GetPlayer
 
     private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
         Guid id,
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var player = await dbContext.Players
             .AsNoTracking()
-            .Where(player => player.Id == id && player.PokerGroupId == currentGroup.Id)
+            .Where(player => player.Id == id && player.PokerGroupId == groupContext.Id)
             .Select(player => new Response(player.Id, player.Name, player.EmailAddress, player.IsActive))
             .SingleOrDefaultAsync(cancellationToken);
 

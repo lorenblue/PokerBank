@@ -19,13 +19,13 @@ public static class GetPayment
 
     private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
         Guid id,
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var payment = await dbContext.Payments
             .AsNoTracking()
-            .Where(payment => payment.Id == id && payment.PokerGroupId == currentGroup.Id)
+            .Where(payment => payment.Id == id && payment.PokerGroupId == groupContext.Id)
             .Select(payment => new Response(
                 payment.Id,
                 payment.PlayerId,

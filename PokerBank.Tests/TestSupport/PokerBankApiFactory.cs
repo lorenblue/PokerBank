@@ -35,8 +35,8 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
         return WithWebHostBuilder(builder =>
             builder.ConfigureServices(services =>
             {
-                services.RemoveAll<ICurrentPokerGroup>();
-                services.AddScoped<ICurrentPokerGroup>(_ => new TestCurrentPokerGroup(pokerGroupId));
+                services.RemoveAll<IPokerGroupContext>();
+                services.AddScoped<IPokerGroupContext>(_ => new TestPokerGroupContext(pokerGroupId));
             }))
             .CreateClient(new WebApplicationFactoryClientOptions
             {
@@ -86,7 +86,7 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
         await _postgres.DisposeAsync();
     }
 
-    private sealed class TestCurrentPokerGroup(Guid id) : ICurrentPokerGroup
+    private sealed class TestPokerGroupContext(Guid id) : IPokerGroupContext
     {
         public Guid Id { get; } = id;
     }

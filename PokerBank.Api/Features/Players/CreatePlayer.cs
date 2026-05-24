@@ -19,7 +19,7 @@ public static class CreatePlayer
 
     private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Request request,
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -30,11 +30,11 @@ public static class CreatePlayer
 
         try
         {
-            var player = new Player(currentGroup.Id, request.Name, request.EmailAddress);
+            var player = new Player(groupContext.Id, request.Name, request.EmailAddress);
 
             if (await dbContext.Players.AnyAsync(
                     existingPlayer =>
-                        existingPlayer.PokerGroupId == currentGroup.Id &&
+                        existingPlayer.PokerGroupId == groupContext.Id &&
                         existingPlayer.IsActive &&
                         existingPlayer.Name == player.Name,
                     cancellationToken))

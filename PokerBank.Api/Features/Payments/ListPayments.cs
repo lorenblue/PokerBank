@@ -19,13 +19,13 @@ public static class ListPayments
 
     private static async Task<Ok<Response[]>> Handle(
         Guid? playerId,
-        ICurrentPokerGroup currentGroup,
+        IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var query = dbContext.Payments
             .AsNoTracking()
-            .Where(payment => payment.PokerGroupId == currentGroup.Id);
+            .Where(payment => payment.PokerGroupId == groupContext.Id);
 
         if (playerId is not null)
         {
