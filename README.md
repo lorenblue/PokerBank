@@ -1,0 +1,96 @@
+# PokerBank
+
+PokerBank tracks friendly poker games where players do not need to bring cash to the table. It records buy-ins, cash-outs, and real-money settlement payments so the group can reconcile who owes money and who should receive money later.
+
+The project is also a .NET portfolio app: the backend uses a vertical-slice API style, a small domain model, EF Core with PostgreSQL, integration tests, OpenAPI/Scalar, Docker Compose, and OpenTelemetry through the Aspire dashboard.
+
+## Features
+
+- Create, delete, close, and view poker games
+- Record game buy-ins and cash-outs
+- Track player-level game results
+- Track settlement payments made by or received by players
+- View balances across game results and payments
+- Manage players, including optional contact email addresses
+- Use a Svelte frontend backed by generated OpenAPI types
+
+## Tech Stack
+
+- .NET 10
+- ASP.NET Core minimal APIs
+- EF Core 10
+- PostgreSQL 18
+- xUnit and Testcontainers
+- Scalar for API testing
+- OpenTelemetry with the Aspire dashboard
+- SvelteKit, Tailwind CSS, and `openapi-fetch`
+
+## Architecture Notes
+
+The API is organized by feature slices under `PokerBank.Api/Features`. Each slice owns its endpoint mapping, request/response types, and handler logic.
+
+The domain project contains the core business objects:
+
+- `PokerGame`
+- `GameEntry`
+- `Payment`
+- `Player`
+- `Money`
+
+The domain handles local rules such as valid money amounts, game close rules, player email validation, and payment direction. Query-heavy screens such as balances and game results are projected with EF Core so the database does the aggregation work.
+
+## Run Locally
+
+Start the full local stack:
+
+```sh
+docker compose up --build
+```
+
+Useful URLs:
+
+- Web app: `http://localhost:5173`
+- API: `http://localhost:5186`
+- OpenAPI JSON: `http://localhost:5186/openapi/v1.json`
+- Scalar UI: `http://localhost:5186/scalar/v1`
+- Aspire dashboard: `http://localhost:18888`
+
+PostgreSQL is exposed locally for database tools:
+
+```txt
+Host: localhost
+Port: 54329
+Database: pokerbank
+Username: pokerbank
+Password: pokerbank
+```
+
+EF Core migrations are applied by the API on startup.
+
+## Development
+
+Run backend build and tests:
+
+```sh
+dotnet build PokerBank.slnx
+dotnet test PokerBank.slnx
+```
+
+Run frontend checks:
+
+```sh
+cd PokerBank.Web
+npm run check
+npm run build
+```
+
+Regenerate frontend API types while the API is running:
+
+```sh
+cd PokerBank.Web
+npm run generate:api
+```
+
+## Current Direction
+
+The app is focused on the core poker-night workflow first: record games, compute results, track settlement payments, and make balances obvious. Future work will likely include authentication/RBAC, better settlement communication, pagination/filtering where it becomes useful, and a more polished frontend.
