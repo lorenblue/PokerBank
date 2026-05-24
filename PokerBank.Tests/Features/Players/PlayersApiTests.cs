@@ -71,6 +71,46 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task ListPlayers_ReturnsOnlyPlayersInCurrentPokerGroup()
+    {
+        var otherGroupId = Guid.NewGuid();
+        await factory.CreatePokerGroupAsync(otherGroupId);
+
+        using var client = factory.CreateHttpsClient();
+        using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
+
+        var currentGroupPlayer = await CreatePlayer(client, "Lorenzo");
+        await CreatePlayer(otherGroupClient, "Maya");
+
+        var response = await client.GetAsync("/players");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var players = await response.Content.ReadFromJsonAsync<PlayerResponse[]>();
+
+        Assert.NotNull(players);
+        var player = Assert.Single(players);
+        Assert.Equal(currentGroupPlayer.Id, player.Id);
+        Assert.Equal("Lorenzo", player.Name);
+    }
+
+    [Fact]
+    public async Task CreatePlayer_AllowsSameNameInDifferentPokerGroups()
+    {
+        var otherGroupId = Guid.NewGuid();
+        await factory.CreatePokerGroupAsync(otherGroupId);
+
+        using var client = factory.CreateHttpsClient();
+        using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
+
+        await CreatePlayer(otherGroupClient, "Lorenzo");
+
+        var response = await client.PostAsJsonAsync("/players", new { Name = "Lorenzo" });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
     public async Task ListPlayers_IncludesArchivedPlayers_WhenRequested()
     {
         using var client = factory.CreateHttpsClient();

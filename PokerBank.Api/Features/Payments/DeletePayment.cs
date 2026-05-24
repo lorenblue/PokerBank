@@ -18,11 +18,12 @@ public static class DeletePayment
 
     private static async Task<Results<NoContent, NotFound<ErrorResponse>>> Handle(
         Guid id,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var payment = await dbContext.Payments
-            .Where(payment => payment.Id == id)
+            .Where(payment => payment.Id == id && payment.PokerGroupId == currentGroup.Id)
             .SingleOrDefaultAsync(cancellationToken);
 
         if (payment is null)

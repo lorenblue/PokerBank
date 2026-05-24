@@ -5,6 +5,8 @@ namespace PokerBank.Api.Data;
 
 public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> options) : DbContext(options)
 {
+    public DbSet<PokerGroup> PokerGroups => Set<PokerGroup>();
+
     public DbSet<Player> Players => Set<Player>();
 
     public DbSet<PokerGame> Games => Set<PokerGame>();
@@ -13,9 +15,29 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<PokerGroup>(group =>
+        {
+            group.HasKey(g => g.Id);
+
+            group.Property(g => g.Name)
+                .HasMaxLength(PokerGroup.MaxNameLength)
+                .IsRequired();
+
+            group.Property(g => g.IsActive)
+                .IsRequired();
+        });
+
         modelBuilder.Entity<Player>(player =>
         {
             player.HasKey(p => p.Id);
+
+            player.Property(p => p.PokerGroupId)
+                .IsRequired();
+
+            player.HasOne<PokerGroup>()
+                .WithMany()
+                .HasForeignKey(p => p.PokerGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             player.Property(p => p.Name)
                 .HasMaxLength(Player.MaxNameLength)
@@ -31,6 +53,14 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
         modelBuilder.Entity<PokerGame>(game =>
         {
             game.HasKey(g => g.Id);
+
+            game.Property(g => g.PokerGroupId)
+                .IsRequired();
+
+            game.HasOne<PokerGroup>()
+                .WithMany()
+                .HasForeignKey(g => g.PokerGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             game.Property(g => g.CreatedAtUtc)
                 .IsRequired();
@@ -89,6 +119,14 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
         modelBuilder.Entity<Payment>(payment =>
         {
             payment.HasKey(p => p.Id);
+
+            payment.Property(p => p.PokerGroupId)
+                .IsRequired();
+
+            payment.HasOne<PokerGroup>()
+                .WithMany()
+                .HasForeignKey(p => p.PokerGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             payment.Property(p => p.PlayerId)
                 .IsRequired();

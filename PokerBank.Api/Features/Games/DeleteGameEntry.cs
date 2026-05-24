@@ -21,12 +21,15 @@ public static class DeleteGameEntry
     private static async Task<Results<NoContent, NotFound<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Guid gameId,
         Guid entryId,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var game = await dbContext.Games
             .Include(game => game.Entries)
-            .SingleOrDefaultAsync(game => game.Id == gameId, cancellationToken);
+            .SingleOrDefaultAsync(
+                game => game.Id == gameId && game.PokerGroupId == currentGroup.Id,
+                cancellationToken);
 
         if (game is null)
         {

@@ -19,6 +19,7 @@ public static class CreatePlayer
 
     private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Request request,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -29,10 +30,13 @@ public static class CreatePlayer
 
         try
         {
-            var player = new Player(request.Name, request.EmailAddress);
+            var player = new Player(currentGroup.Id, request.Name, request.EmailAddress);
 
             if (await dbContext.Players.AnyAsync(
-                    existingPlayer => existingPlayer.IsActive && existingPlayer.Name == player.Name,
+                    existingPlayer =>
+                        existingPlayer.PokerGroupId == currentGroup.Id &&
+                        existingPlayer.IsActive &&
+                        existingPlayer.Name == player.Name,
                     cancellationToken))
             {
                 return TypedResults.Conflict(new ErrorResponse("An active player with this name already exists."));

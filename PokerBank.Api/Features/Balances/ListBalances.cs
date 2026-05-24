@@ -20,11 +20,13 @@ public static class ListBalances
 
     private static async Task<Ok<Response[]>> Handle(
         Guid? playerId,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var gameNets = await dbContext.Games
             .AsNoTracking()
+            .Where(game => game.PokerGroupId == currentGroup.Id)
             .ToGamePlayerTotals(playerId, closedOnly: true)
             .GroupBy(result => result.PlayerId)
             .Select(results => new PlayerAmount(
@@ -34,7 +36,9 @@ public static class ListBalances
 
         var paymentNets = await dbContext.Payments
             .AsNoTracking()
-            .Where(payment => playerId == null || payment.PlayerId == playerId)
+            .Where(payment =>
+                payment.PokerGroupId == currentGroup.Id &&
+                (playerId == null || payment.PlayerId == playerId))
             .GroupBy(payment => payment.PlayerId)
             .Select(payments => new PlayerAmount(
                 payments.Key,
@@ -46,7 +50,9 @@ public static class ListBalances
         var gameNetsByPlayerId = gameNets.ToDictionary(amount => amount.PlayerId, amount => amount.Amount);
         var paymentNetsByPlayerId = paymentNets.ToDictionary(amount => amount.PlayerId, amount => amount.Amount);
 
-        var playerQuery = dbContext.Players.AsNoTracking();
+        var playerQuery = dbContext.Players
+            .AsNoTracking()
+            .Where(player => player.PokerGroupId == currentGroup.Id);
 
         if (playerId is not null)
         {

@@ -46,6 +46,22 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task CreateGame_AllowsOpenGameInDifferentPokerGroups()
+    {
+        var otherGroupId = Guid.NewGuid();
+        await factory.CreatePokerGroupAsync(otherGroupId);
+
+        using var client = factory.CreateHttpsClient();
+        using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
+
+        await CreateGame(otherGroupClient);
+
+        var response = await client.PostAsync("/games", content: null);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
     public async Task ListGames_ReturnsGamesNewestFirst()
     {
         using var client = factory.CreateHttpsClient();
@@ -67,6 +83,30 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
             game => Assert.Equal(newerGame.Id, game.Id),
             game => Assert.Equal(olderGame.Id, game.Id));
     }
+
+    [Fact]
+    public async Task ListGames_ReturnsOnlyGamesInCurrentPokerGroup()
+    {
+        var otherGroupId = Guid.NewGuid();
+        await factory.CreatePokerGroupAsync(otherGroupId);
+
+        using var client = factory.CreateHttpsClient();
+        using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
+
+        var currentGroupGame = await CreateGame(client);
+        await CreateGame(otherGroupClient);
+
+        var response = await client.GetAsync("/games");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var games = await response.Content.ReadFromJsonAsync<GameResponse[]>();
+
+        Assert.NotNull(games);
+        var game = Assert.Single(games);
+        Assert.Equal(currentGroupGame.Id, game.Id);
+    }
+
 
     [Fact]
     public async Task DeleteGame_ReturnsNoContent_WhenGameIsOpen()

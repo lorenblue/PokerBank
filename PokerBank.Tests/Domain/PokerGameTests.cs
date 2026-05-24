@@ -4,10 +4,12 @@ namespace PokerBank.Tests.Domain;
 
 public sealed class PokerGameTests
 {
+    private static readonly Guid PokerGroupId = Guid.NewGuid();
+
     [Fact]
     public void Create_StartsOpen()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
 
         Assert.Equal(GameStatus.Open, game.Status);
     }
@@ -15,16 +17,23 @@ public sealed class PokerGameTests
     [Fact]
     public void Create_RecordsGameDetails()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
 
         Assert.NotEqual(Guid.Empty, game.Id);
+        Assert.Equal(PokerGroupId, game.PokerGroupId);
         Assert.NotEqual(default, game.CreatedAtUtc);
+    }
+
+    [Fact]
+    public void Create_RequiresPokerGroupId()
+    {
+        Assert.Throws<ArgumentException>(() => PokerGame.Create(Guid.Empty));
     }
 
     [Fact]
     public void AddBuyIn_RecordsBuyInEntry()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
         var playerId = Guid.NewGuid();
 
         var result = game.AddBuyIn(playerId, new Money(50m));
@@ -41,7 +50,7 @@ public sealed class PokerGameTests
     [Fact]
     public void AddCashOut_RecordsCashOutEntry()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
         var playerId = Guid.NewGuid();
         Assert.True(game.AddBuyIn(playerId, new Money(75m)).IsSuccess);
 
@@ -61,7 +70,7 @@ public sealed class PokerGameTests
     [InlineData(-10)]
     public void AddBuyIn_RequiresPositiveAmount(decimal amount)
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
 
         var result = game.AddBuyIn(Guid.NewGuid(), new Money(amount));
 
@@ -75,7 +84,7 @@ public sealed class PokerGameTests
     [InlineData(-10)]
     public void AddCashOut_RequiresPositiveAmount(decimal amount)
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
 
         var result = game.AddCashOut(Guid.NewGuid(), new Money(amount));
 
@@ -87,7 +96,7 @@ public sealed class PokerGameTests
     [Fact]
     public void AddCashOut_Fails_WhenTotalCashOutsWouldExceedTotalBuyIns()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
         var playerId = Guid.NewGuid();
 
         Assert.True(game.AddBuyIn(playerId, new Money(100m)).IsSuccess);
@@ -103,7 +112,7 @@ public sealed class PokerGameTests
     [Fact]
     public void AddCashOut_Fails_WhenPlayerHasNoBuyIns()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
         var playerWithBuyIn = Guid.NewGuid();
         var playerWithoutBuyIn = Guid.NewGuid();
 
@@ -120,7 +129,7 @@ public sealed class PokerGameTests
     [Fact]
     public void ClosedGame_CannotBeModified()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
         var playerId = Guid.NewGuid();
 
         Assert.True(game.AddBuyIn(playerId, new Money(25m)).IsSuccess);
@@ -139,7 +148,7 @@ public sealed class PokerGameTests
     [Fact]
     public void RemoveEntry_RemovesEntry()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
         var playerId = Guid.NewGuid();
         var entry = game.AddBuyIn(playerId, new Money(50m)).Value;
 
@@ -153,7 +162,7 @@ public sealed class PokerGameTests
     [Fact]
     public void RemoveEntry_Fails_WhenEntryDoesNotExist()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
 
         var result = game.RemoveEntry(Guid.NewGuid());
 
@@ -165,7 +174,7 @@ public sealed class PokerGameTests
     [Fact]
     public void RemoveEntry_Fails_WhenGameIsClosed()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
         var playerId = Guid.NewGuid();
         var entry = game.AddBuyIn(playerId, new Money(50m)).Value;
         Assert.True(game.AddCashOut(playerId, new Money(50m)).IsSuccess);
@@ -182,7 +191,7 @@ public sealed class PokerGameTests
     [Fact]
     public void Close_Fails_WhenBuyInsDoNotEqualCashOuts()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
         var playerId = Guid.NewGuid();
 
         Assert.True(game.AddBuyIn(playerId, new Money(100m)).IsSuccess);
@@ -199,7 +208,7 @@ public sealed class PokerGameTests
     [Fact]
     public void Close_Succeeds_WhenBuyInsEqualCashOuts()
     {
-        var game = PokerGame.Create();
+        var game = PokerGame.Create(PokerGroupId);
         var playerA = Guid.NewGuid();
         var playerB = Guid.NewGuid();
 

@@ -18,10 +18,13 @@ public static class ListPlayers
 
     private static async Task<Ok<Response[]>> Handle(
         bool? includeArchived,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var query = dbContext.Players.AsNoTracking();
+        var query = dbContext.Players
+            .AsNoTracking()
+            .Where(player => player.PokerGroupId == currentGroup.Id);
 
         if (includeArchived is not true)
         {

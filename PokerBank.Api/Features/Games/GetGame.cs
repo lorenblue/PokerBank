@@ -19,13 +19,14 @@ public static class GetGame
 
     private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
         Guid id,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var game = await dbContext.Games
             .AsNoTracking()
             .Include(game => game.Entries)
-            .Where(game => game.Id == id)
+            .Where(game => game.Id == id && game.PokerGroupId == currentGroup.Id)
             .SingleOrDefaultAsync(cancellationToken);
 
         if (game is null)
@@ -35,10 +36,10 @@ public static class GetGame
 
         var playerTotals = await dbContext.Games
             .AsNoTracking()
-            .Where(game => game.Id == id)
+            .Where(game => game.Id == id && game.PokerGroupId == currentGroup.Id)
             .ToGamePlayerTotals()
             .Join(
-                dbContext.Players.AsNoTracking(),
+                dbContext.Players.AsNoTracking().Where(player => player.PokerGroupId == currentGroup.Id),
                 total => total.PlayerId,
                 player => player.Id,
                 (total, player) => new { Total = total, PlayerName = player.Name })

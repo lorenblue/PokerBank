@@ -8,8 +8,18 @@ public sealed class Payment
     {
     }
 
-    public static Result<Payment> Create(Guid playerId, Money amount, PaymentDirection direction, PaymentMethod method)
+    public static Result<Payment> Create(
+        Guid pokerGroupId,
+        Guid playerId,
+        Money amount,
+        PaymentDirection direction,
+        PaymentMethod method)
     {
+        if (pokerGroupId == Guid.Empty)
+        {
+            return Result.Fail<Payment>(PaymentErrors.InvalidPokerGroupId());
+        }
+
         if (playerId == Guid.Empty)
         {
             return Result.Fail<Payment>(PaymentErrors.InvalidPlayerId());
@@ -30,11 +40,19 @@ public sealed class Payment
             return Result.Fail<Payment>(PaymentErrors.InvalidPaymentMethod());
         }
 
-        return Result.Ok(new Payment(Guid.NewGuid(), playerId, amount, direction, method, DateTimeOffset.UtcNow));
+        return Result.Ok(new Payment(
+            Guid.NewGuid(),
+            pokerGroupId,
+            playerId,
+            amount,
+            direction,
+            method,
+            DateTimeOffset.UtcNow));
     }
 
     private Payment(
         Guid id,
+        Guid pokerGroupId,
         Guid playerId,
         Money amount,
         PaymentDirection direction,
@@ -42,6 +60,7 @@ public sealed class Payment
         DateTimeOffset recordedAtUtc)
     {
         Id = id;
+        PokerGroupId = pokerGroupId;
         PlayerId = playerId;
         Amount = amount;
         Direction = direction;
@@ -50,6 +69,8 @@ public sealed class Payment
     }
 
     public Guid Id { get; private set; }
+
+    public Guid PokerGroupId { get; private set; }
 
     public Guid PlayerId { get; private set; }
 

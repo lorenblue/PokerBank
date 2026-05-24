@@ -20,14 +20,16 @@ public static class ListGameResults
     private static async Task<Ok<Response[]>> Handle(
         Guid? playerId,
         Guid? gameId,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var results = await dbContext.Games
             .AsNoTracking()
+            .Where(game => game.PokerGroupId == currentGroup.Id)
             .ToGamePlayerTotals(playerId, gameId, closedOnly: true)
             .Join(
-                dbContext.Players.AsNoTracking(),
+                dbContext.Players.AsNoTracking().Where(player => player.PokerGroupId == currentGroup.Id),
                 result => result.PlayerId,
                 player => player.Id,
                 (result, player) => new { Result = result, PlayerName = player.Name })

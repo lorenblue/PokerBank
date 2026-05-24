@@ -19,6 +19,7 @@ public static class UpdatePlayer
     private static async Task<Results<Ok<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Guid id,
         Request request,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -28,7 +29,9 @@ public static class UpdatePlayer
         }
 
         var player = await dbContext.Players
-            .SingleOrDefaultAsync(player => player.Id == id, cancellationToken);
+            .SingleOrDefaultAsync(
+                player => player.Id == id && player.PokerGroupId == currentGroup.Id,
+                cancellationToken);
 
         if (player is null)
         {
@@ -40,6 +43,7 @@ public static class UpdatePlayer
         if (player.IsActive && await dbContext.Players.AnyAsync(
                 existingPlayer =>
                     existingPlayer.IsActive &&
+                    existingPlayer.PokerGroupId == currentGroup.Id &&
                     existingPlayer.Id != player.Id &&
                     existingPlayer.Name == normalizedName,
                 cancellationToken))

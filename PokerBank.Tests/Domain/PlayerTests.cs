@@ -4,21 +4,30 @@ namespace PokerBank.Tests.Domain;
 
 public sealed class PlayerTests
 {
+    private static readonly Guid PokerGroupId = Guid.NewGuid();
+
     [Fact]
     public void NewPlayer_RecordsPlayerDetails()
     {
-        var player = new Player("Lorenzo", "lorenzo@example.com");
+        var player = new Player(PokerGroupId, "Lorenzo", "lorenzo@example.com");
 
         Assert.NotEqual(Guid.Empty, player.Id);
+        Assert.Equal(PokerGroupId, player.PokerGroupId);
         Assert.Equal("Lorenzo", player.Name);
         Assert.Equal("lorenzo@example.com", player.EmailAddress);
         Assert.True(player.IsActive);
     }
 
     [Fact]
+    public void NewPlayer_RequiresPokerGroupId()
+    {
+        Assert.Throws<ArgumentException>(() => new Player(Guid.Empty, "Lorenzo"));
+    }
+
+    [Fact]
     public void NewPlayer_TrimsName()
     {
-        var player = new Player("  Lorenzo  ");
+        var player = new Player(PokerGroupId, "  Lorenzo  ");
 
         Assert.Equal("Lorenzo", player.Name);
     }
@@ -26,7 +35,7 @@ public sealed class PlayerTests
     [Fact]
     public void NewPlayer_TrimsEmailAddress()
     {
-        var player = new Player("Lorenzo", "  lorenzo@example.com  ");
+        var player = new Player(PokerGroupId, "Lorenzo", "  lorenzo@example.com  ");
 
         Assert.Equal("lorenzo@example.com", player.EmailAddress);
     }
@@ -37,7 +46,7 @@ public sealed class PlayerTests
     [InlineData(" ")]
     public void NewPlayer_AllowsMissingEmailAddress(string? emailAddress)
     {
-        var player = new Player("Lorenzo", emailAddress);
+        var player = new Player(PokerGroupId, "Lorenzo", emailAddress);
 
         Assert.Null(player.EmailAddress);
     }
@@ -48,7 +57,7 @@ public sealed class PlayerTests
     [InlineData(" ")]
     public void NewPlayer_RequiresName(string? name)
     {
-        Assert.Throws<ArgumentException>(() => new Player(name!));
+        Assert.Throws<ArgumentException>(() => new Player(PokerGroupId, name!));
     }
 
     [Fact]
@@ -56,7 +65,7 @@ public sealed class PlayerTests
     {
         var name = new string('A', Player.MaxNameLength + 1);
 
-        Assert.Throws<ArgumentException>(() => new Player(name));
+        Assert.Throws<ArgumentException>(() => new Player(PokerGroupId, name));
     }
 
     [Theory]
@@ -65,7 +74,7 @@ public sealed class PlayerTests
     [InlineData("Lorenzo <lorenzo@example.com>")]
     public void NewPlayer_RequiresValidEmailAddress(string emailAddress)
     {
-        Assert.Throws<ArgumentException>(() => new Player("Lorenzo", emailAddress));
+        Assert.Throws<ArgumentException>(() => new Player(PokerGroupId, "Lorenzo", emailAddress));
     }
 
     [Fact]
@@ -73,13 +82,13 @@ public sealed class PlayerTests
     {
         var emailAddress = $"{new string('a', Player.MaxEmailAddressLength)}@example.com";
 
-        Assert.Throws<ArgumentException>(() => new Player("Lorenzo", emailAddress));
+        Assert.Throws<ArgumentException>(() => new Player(PokerGroupId, "Lorenzo", emailAddress));
     }
 
     [Fact]
     public void Rename_ChangesPlayerName()
     {
-        var player = new Player("Lorenzo");
+        var player = new Player(PokerGroupId, "Lorenzo");
 
         player.Rename("Enzo");
 
@@ -89,7 +98,7 @@ public sealed class PlayerTests
     [Fact]
     public void Rename_TrimsName()
     {
-        var player = new Player("Lorenzo");
+        var player = new Player(PokerGroupId, "Lorenzo");
 
         player.Rename("  Enzo  ");
 
@@ -102,7 +111,7 @@ public sealed class PlayerTests
     [InlineData(" ")]
     public void Rename_RequiresName(string? name)
     {
-        var player = new Player("Lorenzo");
+        var player = new Player(PokerGroupId, "Lorenzo");
 
         Assert.Throws<ArgumentException>(() => player.Rename(name!));
     }
@@ -110,7 +119,7 @@ public sealed class PlayerTests
     [Fact]
     public void Rename_RequiresNameWithinMaximumLength()
     {
-        var player = new Player("Lorenzo");
+        var player = new Player(PokerGroupId, "Lorenzo");
         var name = new string('A', Player.MaxNameLength + 1);
 
         Assert.Throws<ArgumentException>(() => player.Rename(name));
@@ -119,7 +128,7 @@ public sealed class PlayerTests
     [Fact]
     public void UpdateEmailAddress_ChangesEmailAddress()
     {
-        var player = new Player("Lorenzo");
+        var player = new Player(PokerGroupId, "Lorenzo");
 
         player.UpdateEmailAddress("enzo@example.com");
 
@@ -129,7 +138,7 @@ public sealed class PlayerTests
     [Fact]
     public void UpdateEmailAddress_TrimsEmailAddress()
     {
-        var player = new Player("Lorenzo");
+        var player = new Player(PokerGroupId, "Lorenzo");
 
         player.UpdateEmailAddress("  enzo@example.com  ");
 
@@ -142,7 +151,7 @@ public sealed class PlayerTests
     [InlineData(" ")]
     public void UpdateEmailAddress_ClearsEmailAddress(string? emailAddress)
     {
-        var player = new Player("Lorenzo", "lorenzo@example.com");
+        var player = new Player(PokerGroupId, "Lorenzo", "lorenzo@example.com");
 
         player.UpdateEmailAddress(emailAddress);
 
@@ -155,7 +164,7 @@ public sealed class PlayerTests
     [InlineData("Lorenzo <lorenzo@example.com>")]
     public void UpdateEmailAddress_RequiresValidEmailAddress(string emailAddress)
     {
-        var player = new Player("Lorenzo");
+        var player = new Player(PokerGroupId, "Lorenzo");
 
         Assert.Throws<ArgumentException>(() => player.UpdateEmailAddress(emailAddress));
     }
@@ -163,7 +172,7 @@ public sealed class PlayerTests
     [Fact]
     public void Archive_MarksPlayerInactive()
     {
-        var player = new Player("Lorenzo");
+        var player = new Player(PokerGroupId, "Lorenzo");
 
         player.Archive();
 

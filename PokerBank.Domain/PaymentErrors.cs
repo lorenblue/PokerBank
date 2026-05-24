@@ -17,4 +17,8 @@ public static class PaymentErrors
     public static PaymentError InvalidPaymentMethod() => new(
         PaymentErrorCode.InvalidPaymentMethod,
         "Payment method is invalid.");
+
+    public static PaymentError InvalidPokerGroupId() => new(
+        PaymentErrorCode.InvalidPokerGroupId,
+        "Poker group id is required.");
 }

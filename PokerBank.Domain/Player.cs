@@ -7,25 +7,33 @@ public sealed class Player
     public const int MaxNameLength = 100;
     public const int MaxEmailAddressLength = 254;
 
-    public Player(string name, string? emailAddress = null)
-        : this(Guid.NewGuid(), name, emailAddress)
+    public Player(Guid pokerGroupId, string name, string? emailAddress = null)
+        : this(Guid.NewGuid(), pokerGroupId, name, emailAddress)
     {
     }
 
-    internal Player(Guid id, string name, string? emailAddress = null)
+    internal Player(Guid id, Guid pokerGroupId, string name, string? emailAddress = null)
     {
         if (id == Guid.Empty)
         {
             throw new ArgumentException("Player id is required.", nameof(id));
         }
 
+        if (pokerGroupId == Guid.Empty)
+        {
+            throw new ArgumentException("Poker group id is required.", nameof(pokerGroupId));
+        }
+
         Id = id;
+        PokerGroupId = pokerGroupId;
         Name = NormalizeName(name);
         EmailAddress = NormalizeEmailAddress(emailAddress);
         IsActive = true;
     }
 
     public Guid Id { get; }
+
+    public Guid PokerGroupId { get; private set; }
 
     public string Name { get; private set; }
 

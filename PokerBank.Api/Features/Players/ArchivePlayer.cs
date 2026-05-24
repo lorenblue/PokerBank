@@ -18,11 +18,14 @@ public static class ArchivePlayer
 
     private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
         Guid id,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var player = await dbContext.Players
-            .SingleOrDefaultAsync(player => player.Id == id, cancellationToken);
+            .SingleOrDefaultAsync(
+                player => player.Id == id && player.PokerGroupId == currentGroup.Id,
+                cancellationToken);
 
         if (player is null)
         {

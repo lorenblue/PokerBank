@@ -20,12 +20,15 @@ public static class CloseGame
 
     private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Guid gameId,
+        ICurrentPokerGroup currentGroup,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var game = await dbContext.Games
             .Include(game => game.Entries)
-            .SingleOrDefaultAsync(game => game.Id == gameId, cancellationToken);
+            .SingleOrDefaultAsync(
+                game => game.Id == gameId && game.PokerGroupId == currentGroup.Id,
+                cancellationToken);
 
         if (game is null)
         {

@@ -10,13 +10,18 @@ public sealed class PokerGame
     {
     }
 
-    public static PokerGame Create() => new(Guid.NewGuid(), DateTime.UtcNow, GameStatus.Open);
+    public static PokerGame Create(Guid pokerGroupId) => new(Guid.NewGuid(), pokerGroupId, DateTime.UtcNow, GameStatus.Open);
 
-    internal PokerGame(Guid id, DateTime createdAtUtc, GameStatus status)
+    internal PokerGame(Guid id, Guid pokerGroupId, DateTime createdAtUtc, GameStatus status)
     {
         if (id == Guid.Empty)
         {
             throw new ArgumentException("Game id is required.", nameof(id));
+        }
+
+        if (pokerGroupId == Guid.Empty)
+        {
+            throw new ArgumentException("Poker group id is required.", nameof(pokerGroupId));
         }
 
         if (!Enum.IsDefined(status))
@@ -25,11 +30,14 @@ public sealed class PokerGame
         }
 
         Id = id;
+        PokerGroupId = pokerGroupId;
         CreatedAtUtc = createdAtUtc;
         Status = status;
     }
 
     public Guid Id { get; private set; }
+
+    public Guid PokerGroupId { get; private set; }
 
     public DateTime CreatedAtUtc { get; private set; }
 
