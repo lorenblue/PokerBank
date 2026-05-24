@@ -3,16 +3,16 @@ import { ApiError } from '$lib/api/client';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ fetch }) => {
-	const api = pokerBankApi(fetch);
+export const load: PageServerLoad = async ({ fetch, request }) => {
+	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 	const games = await api.listGames();
 
 	return { games };
 };
 
 export const actions: Actions = {
-	createGame: async ({ fetch }) => {
-		const api = pokerBankApi(fetch);
+	createGame: async ({ fetch, request }) => {
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 		try {
 			const game = await api.createGame();

@@ -3,8 +3,8 @@ import { ApiError } from '$lib/api/client';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ fetch, params }) => {
-	const api = pokerBankApi(fetch);
+export const load: PageServerLoad = async ({ fetch, params, request }) => {
+	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 	const [game, players] = await Promise.all([
 		api.getGame(params.id),
@@ -21,17 +21,17 @@ export const actions: Actions = {
 	addBuyIn: async ({ fetch, params, request }) => {
 		const data = await request.formData();
 
-		return addEntry(fetch, params.id, 'buyIn', data);
+		return addEntry(fetch, request.headers.get('cookie'), params.id, 'buyIn', data);
 	},
 
 	addCashOut: async ({ fetch, params, request }) => {
 		const data = await request.formData();
 
-		return addEntry(fetch, params.id, 'cashOut', data);
+		return addEntry(fetch, request.headers.get('cookie'), params.id, 'cashOut', data);
 	},
 
-	closeGame: async ({ fetch, params }) => {
-		const api = pokerBankApi(fetch);
+	closeGame: async ({ fetch, params, request }) => {
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 		try {
 			await api.closeGame(params.id);
@@ -53,7 +53,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Entry is required.' });
 		}
 
-		const api = pokerBankApi(fetch);
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 		try {
 			await api.deleteGameEntry(params.id, entryId);
@@ -67,8 +67,8 @@ export const actions: Actions = {
 		}
 	},
 
-	deleteGame: async ({ fetch, params }) => {
-		const api = pokerBankApi(fetch);
+	deleteGame: async ({ fetch, params, request }) => {
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 		try {
 			await api.deleteGame(params.id);
@@ -85,6 +85,7 @@ export const actions: Actions = {
 
 async function addEntry(
 	apiFetch: typeof fetch,
+	cookieHeader: string | null,
 	gameId: string,
 	type: 'buyIn' | 'cashOut',
 	data: FormData
@@ -96,7 +97,7 @@ async function addEntry(
 		return fail(400, { error: 'Player and amount are required.' });
 	}
 
-	const api = pokerBankApi(apiFetch);
+	const api = pokerBankApi(apiFetch, cookieHeader);
 
 	try {
 		if (type === 'buyIn') {

@@ -1,11 +1,17 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using PokerBank.Api.Data.Auth;
 using PokerBank.Domain;
 
 namespace PokerBank.Api.Data;
 
-public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> options) : DbContext(options)
+public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> options)
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<PokerGroup> PokerGroups => Set<PokerGroup>();
+
+    public DbSet<GroupMembership> GroupMemberships => Set<GroupMembership>();
 
     public DbSet<Player> Players => Set<Player>();
 
@@ -15,6 +21,8 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<PokerGroup>(group =>
         {
             group.HasKey(g => g.Id);
@@ -25,6 +33,25 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 
             group.Property(g => g.IsActive)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<GroupMembership>(membership =>
+        {
+            membership.HasKey(m => new { m.UserId, m.PokerGroupId });
+
+            membership.Property(m => m.Role)
+                .HasConversion<string>()
+                .IsRequired();
+
+            membership.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            membership.HasOne<PokerGroup>()
+                .WithMany()
+                .HasForeignKey(m => m.PokerGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Player>(player =>

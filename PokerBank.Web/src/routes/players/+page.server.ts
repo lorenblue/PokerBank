@@ -3,8 +3,8 @@ import { ApiError } from '$lib/api/client';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ fetch }) => {
-	const api = pokerBankApi(fetch);
+export const load: PageServerLoad = async ({ fetch, request }) => {
+	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 	const players = await api.listPlayers();
 
 	return { players };
@@ -20,7 +20,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Player name is required.' });
 		}
 
-		const api = pokerBankApi(fetch);
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 		try {
 			await api.createPlayer({ name, emailAddress });
@@ -44,7 +44,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Player and name are required.' });
 		}
 
-		const api = pokerBankApi(fetch);
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 		try {
 			await api.updatePlayer(playerId, { name, emailAddress });

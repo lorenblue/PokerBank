@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api;
+using PokerBank.Api.Auth;
 using PokerBank.Api.Data;
+using PokerBank.Api.Features.Auth;
 using PokerBank.Api.Features.Balances;
 using PokerBank.Api.Features.GameResults;
 using PokerBank.Api.Features.Games;
@@ -21,6 +23,7 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<PokerBankDbContext>();
     await dbContext.Database.MigrateAsync();
+    await DevelopmentAuthSeed.SeedAsync(scope.ServiceProvider);
 }
 
 // Configure the HTTP request pipeline.
@@ -34,24 +37,34 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapLogin();
+app.MapLogout();
+app.MapGetCurrentUser();
 app.MapListBalances();
 app.MapListGameResults();
-app.MapCreateGame();
 app.MapListGames();
 app.MapGetGame();
-app.MapDeleteGame();
-app.MapAddBuyIn();
-app.MapAddCashOut();
-app.MapDeleteGameEntry();
-app.MapCloseGame();
-app.MapRecordPayment();
 app.MapListPayments();
 app.MapGetPayment();
-app.MapDeletePayment();
-app.MapCreatePlayer();
 app.MapListPlayers();
 app.MapGetPlayer();
-app.MapUpdatePlayer();
-app.MapArchivePlayer();
+
+var manageGroup = app.MapGroup("")
+    .RequireAuthorization(AuthorizationPolicies.ManageGroup);
+
+manageGroup.MapCreateGame();
+manageGroup.MapDeleteGame();
+manageGroup.MapAddBuyIn();
+manageGroup.MapAddCashOut();
+manageGroup.MapDeleteGameEntry();
+manageGroup.MapCloseGame();
+manageGroup.MapRecordPayment();
+manageGroup.MapDeletePayment();
+manageGroup.MapCreatePlayer();
+manageGroup.MapUpdatePlayer();
+manageGroup.MapArchivePlayer();
 
 app.Run();

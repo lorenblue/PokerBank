@@ -4,8 +4,8 @@ import { readPaymentFields } from '$lib/server/payment-form';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ fetch }) => {
-	const api = pokerBankApi(fetch);
+export const load: PageServerLoad = async ({ fetch, request }) => {
+	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 	const [players, payments] = await Promise.all([api.listPlayers(), api.listPayments()]);
 
@@ -25,7 +25,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Player, amount, payment direction, and payment method are required.' });
 		}
 
-		const api = pokerBankApi(fetch);
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 		const { direction, ...paymentRequest } = payment;
 
 		try {
@@ -53,7 +53,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Payment is required.' });
 		}
 
-		const api = pokerBankApi(fetch);
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 		try {
 			await api.deletePayment(paymentId);
