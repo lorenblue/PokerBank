@@ -17,7 +17,7 @@ export type RecordPaymentRequest = Schemas['RecordPaymentRequest'];
 export type AddBuyInRequest = Schemas['AddBuyInRequest'];
 export type AddCashOutRequest = Schemas['AddCashOutRequest'];
 
-type ApiFetch = typeof fetch;
+type ApiFetch = (request: Request) => Promise<Response>;
 
 export class ApiError extends Error {
 	constructor(
@@ -156,7 +156,7 @@ async function unwrap<T>(
 ): Promise<T> {
 	const { data, error, response } = await request;
 
-	if (error !== undefined) {
+	if (!response.ok || error !== undefined) {
 		throw new ApiError(readError(error, response), response.status);
 	}
 

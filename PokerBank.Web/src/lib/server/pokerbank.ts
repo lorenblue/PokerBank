@@ -5,18 +5,19 @@ const apiBaseUrl = env.POKERBANK_API_BASE_URL ?? 'http://localhost:5186';
 
 export function pokerBankApi(apiFetch: typeof fetch, cookieHeader?: string | null) {
 	if (!cookieHeader) {
-		return createPokerBankApi(apiFetch, apiBaseUrl);
+		return createPokerBankApi((request) => apiFetch(request), apiBaseUrl);
 	}
 
 	return createPokerBankApi(
-		(input, init) =>
-			apiFetch(input, {
-				...init,
-				headers: {
-					...headersToObject(init?.headers),
-					cookie: cookieHeader
-				}
-			}),
+		(request) =>
+			apiFetch(
+				new Request(request, {
+					headers: {
+						...headersToObject(request.headers),
+						cookie: cookieHeader
+					}
+				})
+			),
 		apiBaseUrl
 	);
 }
