@@ -44,7 +44,7 @@ export const actions: Actions = {
 				await api.recordPaymentReceivedByPlayer(playerId, paymentRequest);
 			}
 
-			return { success: true };
+			return { paymentRecorded: true };
 		} catch (error) {
 			if (error instanceof ApiError) {
 				return fail(error.status, { error: error.message });
@@ -60,6 +60,22 @@ export const actions: Actions = {
 		try {
 			const game = await api.createGame();
 			redirect(303, `/games/${game.id}`);
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return fail(error.status, { error: error.message });
+			}
+
+			throw error;
+		}
+	},
+
+	sendBalanceUpdates: async ({ fetch, request }) => {
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
+
+		try {
+			const result = await api.sendBalanceUpdates();
+
+			return { balanceUpdates: result };
 		} catch (error) {
 			if (error instanceof ApiError) {
 				return fail(error.status, { error: error.message });

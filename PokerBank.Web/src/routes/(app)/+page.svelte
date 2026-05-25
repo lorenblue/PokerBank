@@ -1,14 +1,23 @@
 <script lang="ts">
+	import Modal from '$lib/components/Modal.svelte';
 	import RecordPaymentModal from '$lib/components/RecordPaymentModal.svelte';
 	import { formatDateTime } from '$lib/format';
+	import type { SendBalanceUpdatesResponse } from '$lib/api/client';
 	import type { PageData } from './$types';
+
+	type FormData = {
+		error?: string;
+		paymentRecorded?: boolean;
+		balanceUpdates?: SendBalanceUpdatesResponse;
+	};
 
 	let {
 		data,
 		form
-	}: { data: PageData; form: { error?: string; success?: boolean } | null } = $props();
+	}: { data: PageData; form: FormData | null } = $props();
 
 	let balanceToSettle = $state<PageData['balances'][number] | null>(null);
+	let isSendUpdatesOpen = $state(false);
 
 	const games = $derived(data.games ?? []);
 	const balances = $derived(data.balances ?? []);
@@ -95,17 +104,39 @@
 
 {#if form?.error}
 	<p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">{form.error}</p>
-{:else if form?.success}
+{:else if form?.paymentRecorded}
 	<p class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
 		Payment recorded.
 	</p>
+{:else if form?.balanceUpdates}
+	<div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+		<p>Sent {form.balanceUpdates.sent} balance update emails.</p>
+		{#if form.balanceUpdates.skipped.length > 0}
+			<ul class="mt-2 grid gap-1 text-sm">
+				{#each form.balanceUpdates.skipped as skipped}
+					<li>{skipped.playerName}: {skipped.reason}</li>
+				{/each}
+			</ul>
+		{/if}
+	</div>
 {/if}
 
 <section class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
 	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<div class="mb-4 flex items-center justify-between">
+		<div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<h2 class="text-base font-bold">Current balances</h2>
-			<a href="/payments" class="text-sm font-bold text-emerald-900 hover:text-emerald-950">Record payment</a>
+			<div class="flex flex-wrap gap-2">
+				<button
+					type="button"
+					class="rounded-md px-3 py-2 text-sm font-bold text-emerald-900 hover:bg-emerald-50"
+					onclick={() => (isSendUpdatesOpen = true)}
+				>
+					Send updates
+				</button>
+				<a href="/payments" class="rounded-md px-3 py-2 text-sm font-bold text-emerald-900 hover:bg-emerald-50">
+					Record payment
+				</a>
+			</div>
 		</div>
 
 		{#if balances.length === 0}
@@ -199,4 +230,35 @@
 		amount={settlementAmount(balanceToSettle.balanceAmount)}
 		onClose={closeSettleBalance}
 	/>
+{/if}
+
+{#if isSendUpdatesOpen}
+	<Modal
+		title="Send balance updates"
+		subtitle="Emails will be sent to active players with email addresses."
+		onClose={() => (isSendUpdatesOpen = false)}
+	>
+		<form method="POST" action="?/sendBalanceUpdates" class="grid gap-4">
+			<p class="text-sm leading-6 text-slate-600">
+				Players without email addresses will be skipped. In development, emails are logged by the API
+				instead of being sent through a real provider.
+			</p>
+
+			<div class="flex justify-end gap-2">
+				<button
+					type="button"
+					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+					onclick={() => (isSendUpdatesOpen = false)}
+				>
+					Cancel
+				</button>
+				<button
+					type="submit"
+					class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
+				>
+					Send updates
+				</button>
+			</div>
+		</form>
+	</Modal>
 {/if}
