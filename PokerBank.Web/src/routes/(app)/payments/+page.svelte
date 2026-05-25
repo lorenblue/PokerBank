@@ -12,8 +12,10 @@
 	let isRecordPaymentOpen = $state(false);
 	let paymentToDelete = $state<PageData['payments'][number] | null>(null);
 
-	const activePlayers = $derived(data.players.filter((player) => player.isActive));
-	const playerNames = $derived(new Map(data.players.map((player) => [player.id, player.name] as const)));
+	const players = $derived(data.players ?? []);
+	const payments = $derived(data.payments ?? []);
+	const activePlayers = $derived(players.filter((player) => player.isActive));
+	const playerNames = $derived(new Map(players.map((player) => [player.id, player.name] as const)));
 
 	function unsignedMoney(value: number | string) {
 		return `$${Math.abs(Number(value)).toFixed(2)}`;
@@ -77,11 +79,11 @@
 			</p>
 		{/if}
 
-		{#if data.payments.length === 0}
+		{#if payments.length === 0}
 			<p class="text-sm text-slate-500">No payments recorded yet.</p>
 		{:else}
 			<div class="grid gap-3">
-				{#each data.payments as payment}
+				{#each payments as payment}
 					<article class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
 						<div>
 							<a href={`/players/${payment.playerId}`} class="text-sm font-bold hover:text-emerald-900">

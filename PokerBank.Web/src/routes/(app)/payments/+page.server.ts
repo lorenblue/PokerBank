@@ -4,7 +4,9 @@ import { readPaymentFields } from '$lib/server/payment-form';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ fetch, request }) => {
+export const load: PageServerLoad = async ({ fetch, parent, request }) => {
+	await parent();
+
 	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 	const [players, payments] = await Promise.all([api.listPlayers(), api.listPayments()]);

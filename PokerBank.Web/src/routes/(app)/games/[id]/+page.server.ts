@@ -3,7 +3,9 @@ import { ApiError } from '$lib/api/client';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ fetch, params, request }) => {
+export const load: PageServerLoad = async ({ fetch, params, parent, request }) => {
+	await parent();
+
 	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 	const [game, players] = await Promise.all([

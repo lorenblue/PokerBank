@@ -4,8 +4,9 @@
 
 	let { data, form }: { data: PageData; form: { error?: string } | null } = $props();
 
-	const openGames = $derived(data.games.filter((game) => game.status === 'Open'));
-	const closedGames = $derived(data.games.filter((game) => game.status !== 'Open'));
+	const games = $derived(data.games ?? []);
+	const openGames = $derived(games.filter((game) => game.status === 'Open'));
+	const closedGames = $derived(games.filter((game) => game.status !== 'Open'));
 	const openGame = $derived(openGames[0]);
 </script>
 

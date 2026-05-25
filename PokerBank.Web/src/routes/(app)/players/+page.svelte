@@ -6,8 +6,9 @@
 	let isAddPlayerOpen = $state(false);
 	let playerToEdit = $state<PageData['players'][number] | null>(null);
 
-	const activePlayers = $derived(data.players.filter((player) => player.isActive));
-	const archivedPlayers = $derived(data.players.filter((player) => !player.isActive));
+	const players = $derived(data.players ?? []);
+	const activePlayers = $derived(players.filter((player) => player.isActive));
+	const archivedPlayers = $derived(players.filter((player) => !player.isActive));
 
 	function closeEditPlayer() {
 		playerToEdit = null;

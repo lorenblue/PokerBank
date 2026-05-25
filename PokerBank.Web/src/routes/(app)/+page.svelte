@@ -10,9 +10,11 @@
 
 	let balanceToSettle = $state<PageData['balances'][number] | null>(null);
 
-	const openGame = $derived(data.games.find((game) => game.status === 'Open'));
+	const games = $derived(data.games ?? []);
+	const balances = $derived(data.balances ?? []);
 	const payments = $derived(data.payments ?? []);
 	const players = $derived(data.players ?? []);
+	const openGame = $derived(games.find((game) => game.status === 'Open'));
 	const activePlayers = $derived(players.filter((player) => player.isActive));
 	const playerNames = $derived(new Map(players.map((player) => [player.id, player.name] as const)));
 
@@ -106,11 +108,11 @@
 			<a href="/payments" class="text-sm font-bold text-emerald-900 hover:text-emerald-950">Record payment</a>
 		</div>
 
-		{#if data.balances.length === 0}
+		{#if balances.length === 0}
 			<p class="text-sm text-slate-500">No players yet.</p>
 		{:else}
 			<div class="grid gap-3">
-				{#each data.balances as balance}
+				{#each balances as balance}
 					<div
 						class={`flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-4 hover:bg-slate-50 ${balance.isActive ? '' : 'opacity-55'}`}
 					>

@@ -8,7 +8,7 @@
 	<title>Sign in | PokerBank</title>
 </svelte:head>
 
-<section class="mx-auto max-w-md">
+<section class="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
 	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-5xl">Sign in</h1>
 
 	{#if form?.error}
