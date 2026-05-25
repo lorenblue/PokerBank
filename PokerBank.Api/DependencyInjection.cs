@@ -10,6 +10,7 @@ using OpenTelemetry.Trace;
 using PokerBank.Api.Auth;
 using PokerBank.Api.Data;
 using PokerBank.Api.Data.Auth;
+using PokerBank.Api.Email;
 using PokerBank.Domain;
 
 namespace PokerBank.Api;
@@ -20,6 +21,7 @@ public static class DependencyInjection
     {
         builder.Services.AddScoped<IPokerGroupContext, DefaultPokerGroupContext>();
         builder.Services.AddScoped<IAuthorizationHandler, GroupRoleAuthorizationHandler>();
+        builder.Services.AddSingleton<IEmailSender, LoggingEmailSender>();
 
         builder.Services.ConfigureHttpJsonOptions(options =>
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)));

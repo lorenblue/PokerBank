@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 using PokerBank.Api.Data;
+using PokerBank.Api.Email;
 using PokerBank.Domain;
 using Testcontainers.PostgreSql;
 
@@ -12,6 +13,8 @@ namespace PokerBank.Tests.TestSupport;
 
 public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
 {
+    private readonly RecordingEmailSender _emailSender = new();
+
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18-alpine")
         .WithDatabase("pokerbank")
         .WithUsername("pokerbank")
@@ -39,6 +42,8 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
             BaseAddress = new Uri("https://localhost")
         });
     }
+
+    public IReadOnlyCollection<EmailMessage> SentEmails => _emailSender.Messages;
 
     public HttpClient CreateHttpsClient(Guid pokerGroupId)
     {
@@ -91,7 +96,43 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
         await using var command = connection.CreateCommand();
         command.CommandText = """
             TRUNCATE TABLE "GameEntries", "Payments", "Games", "Players" RESTART IDENTITY CASCADE;
+
+            UPDATE "GroupMemberships"
+            SET "Role" = @ownerRole
+            WHERE "PokerGroupId" = @defaultPokerGroupId
+              AND "UserId" IN (
+                  SELECT "Id"
+                  FROM "AspNetUsers"
+                  WHERE "NormalizedEmail" = @normalizedEmail
+              );
             """;
+        command.Parameters.AddWithValue("ownerRole", GroupRole.Owner.ToString());
+        command.Parameters.AddWithValue("defaultPokerGroupId", DefaultPokerGroup.Id);
+        command.Parameters.AddWithValue("normalizedEmail", DevelopmentAuthSeed.DefaultAdminEmail.ToUpperInvariant());
+
+        await command.ExecuteNonQueryAsync();
+        _emailSender.Clear();
+    }
+
+    public async Task SetDefaultAdminRoleAsync(GroupRole role)
+    {
+        await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE "GroupMemberships"
+            SET "Role" = @role
+            WHERE "PokerGroupId" = @defaultPokerGroupId
+              AND "UserId" IN (
+                  SELECT "Id"
+                  FROM "AspNetUsers"
+                  WHERE "NormalizedEmail" = @normalizedEmail
+              );
+            """;
+        command.Parameters.AddWithValue("role", role.ToString());
+        command.Parameters.AddWithValue("defaultPokerGroupId", DefaultPokerGroup.Id);
+        command.Parameters.AddWithValue("normalizedEmail", DevelopmentAuthSeed.DefaultAdminEmail.ToUpperInvariant());
 
         await command.ExecuteNonQueryAsync();
     }
@@ -100,6 +141,11 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:PokerBank", _postgres.GetConnectionString());
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<IEmailSender>(_emailSender);
+        });
     }
 
     public override async ValueTask DisposeAsync()
@@ -111,6 +157,41 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
     private sealed class TestPokerGroupContext(Guid id) : IPokerGroupContext
     {
         public Guid Id { get; } = id;
+    }
+
+    private sealed class RecordingEmailSender : IEmailSender
+    {
+        private readonly List<EmailMessage> _messages = [];
+        private readonly Lock _lock = new();
+
+        public IReadOnlyCollection<EmailMessage> Messages
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _messages.ToArray();
+                }
+            }
+        }
+
+        public Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
+        {
+            lock (_lock)
+            {
+                _messages.Add(message);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public void Clear()
+        {
+            lock (_lock)
+            {
+                _messages.Clear();
+            }
+        }
     }
 
     private static async Task SignInAsync(HttpClient client)

@@ -70,5 +70,6 @@ manageGroup.MapDeletePayment();
 manageGroup.MapCreatePlayer();
 manageGroup.MapUpdatePlayer();
 manageGroup.MapArchivePlayer();
+manageGroup.MapSendBalanceUpdates();
 
 app.Run();
