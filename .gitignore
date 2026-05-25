@@ -6,6 +6,11 @@ obj/
 .idea/
 .DS_Store
 
+.env
+.env.*
+!.env.example
+!.env.test
+
 *.user
 *.suo
 *.userosscache

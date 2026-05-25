@@ -67,6 +67,29 @@ Password: pokerbank
 
 EF Core migrations are applied by the API on startup.
 
+### Email
+
+Balance update emails use `LoggingEmailSender` by default, so local sends are written to API logs instead of actually being sent.
+
+To test SMTP through Docker Compose, copy `.env.example` to `.env` at the repository root and fill in the SMTP values:
+
+```sh
+cp .env.example .env
+```
+
+```txt
+EMAIL__SMTP__ENABLED=true
+EMAIL__SMTP__HOST=smtp.example.com
+EMAIL__SMTP__PORT=587
+EMAIL__SMTP__USERNAME=...
+EMAIL__SMTP__PASSWORD=...
+EMAIL__SMTP__FROMEMAIL=pokerbank@example.com
+EMAIL__SMTP__FROMNAME=PokerBank
+EMAIL__SMTP__SECURESOCKETOPTIONS=StartTls
+```
+
+The API requires `Host` and `FromEmail` when SMTP is enabled. `UserName` and `Password` must either both be configured or both be omitted.
+
 ## Development
 
 Run backend build and tests:

@@ -24,6 +24,14 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__PokerBank: Host=pokerbank.postgres;Port=5432;Database=pokerbank;Username=pokerbank;Password=pokerbank
+      Email__Smtp__Enabled: ${EMAIL__SMTP__ENABLED:-false}
+      Email__Smtp__Host: ${EMAIL__SMTP__HOST:-}
+      Email__Smtp__Port: ${EMAIL__SMTP__PORT:-587}
+      Email__Smtp__UserName: ${EMAIL__SMTP__USERNAME:-}
+      Email__Smtp__Password: ${EMAIL__SMTP__PASSWORD:-}
+      Email__Smtp__FromEmail: ${EMAIL__SMTP__FROMEMAIL:-}
+      Email__Smtp__FromName: ${EMAIL__SMTP__FROMNAME:-PokerBank}
+      Email__Smtp__SecureSocketOptions: ${EMAIL__SMTP__SECURESOCKETOPTIONS:-StartTls}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://pokerbank.aspire-dashboard:18889
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
     ports:

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -21,7 +22,23 @@ public static class DependencyInjection
     {
         builder.Services.AddScoped<IPokerGroupContext, DefaultPokerGroupContext>();
         builder.Services.AddScoped<IAuthorizationHandler, GroupRoleAuthorizationHandler>();
-        builder.Services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        builder.Services
+            .AddOptions<SmtpEmailOptions>()
+            .Bind(builder.Configuration.GetSection(SmtpEmailOptions.SectionName))
+            .Validate(options => !options.Enabled || !string.IsNullOrWhiteSpace(options.Host), "SMTP host is required when SMTP email is enabled.")
+            .Validate(options => !options.Enabled || options.Port > 0, "SMTP port must be positive when SMTP email is enabled.")
+            .Validate(options => !options.Enabled || !string.IsNullOrWhiteSpace(options.FromEmail), "SMTP from email is required when SMTP email is enabled.")
+            .Validate(options => !options.Enabled || options.HasCompleteCredentials, "SMTP username and password must both be configured, or both omitted.")
+            .ValidateOnStart();
+
+        builder.Services.AddSingleton<IEmailSender>(services =>
+        {
+            var smtpOptions = services.GetRequiredService<IOptions<SmtpEmailOptions>>().Value;
+
+            return smtpOptions.Enabled
+                ? ActivatorUtilities.CreateInstance<MailKitEmailSender>(services)
+                : ActivatorUtilities.CreateInstance<LoggingEmailSender>(services);
+        });
 
         builder.Services.ConfigureHttpJsonOptions(options =>
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)));
