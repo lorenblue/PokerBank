@@ -43,14 +43,18 @@ app.UseAuthorization();
 app.MapLogin();
 app.MapLogout();
 app.MapGetCurrentUser();
-app.MapListBalances();
-app.MapListGameResults();
-app.MapListGames();
-app.MapGetGame();
-app.MapListPayments();
-app.MapGetPayment();
-app.MapListPlayers();
-app.MapGetPlayer();
+
+var viewGroup = app.MapGroup("")
+    .RequireAuthorization(AuthorizationPolicies.ViewGroup);
+
+viewGroup.MapListBalances();
+viewGroup.MapListGameResults();
+viewGroup.MapListGames();
+viewGroup.MapGetGame();
+viewGroup.MapListPayments();
+viewGroup.MapGetPayment();
+viewGroup.MapListPlayers();
+viewGroup.MapGetPlayer();
 
 var manageGroup = app.MapGroup("")
     .RequireAuthorization(AuthorizationPolicies.ManageGroup);

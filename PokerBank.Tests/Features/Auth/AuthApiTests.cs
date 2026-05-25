@@ -71,5 +71,15 @@ public sealed class AuthApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task ProtectedReadEndpoint_ReturnsUnauthorized_WhenUserIsNotSignedIn()
+    {
+        using var client = factory.CreateUnauthenticatedHttpsClient();
+
+        var response = await client.GetAsync("/players");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     private sealed record CurrentUserResponse(Guid Id, string Email, Guid PokerGroupId, string? GroupRole);
 }

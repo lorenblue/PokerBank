@@ -60,6 +60,10 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorization(options =>
         {
+            options.AddPolicy(AuthorizationPolicies.ViewGroup, policy => policy
+                .RequireAuthenticatedUser()
+                .AddRequirements(new GroupRoleRequirement(GroupRole.Owner, GroupRole.Admin, GroupRole.Member)));
+
             options.AddPolicy(AuthorizationPolicies.ManageGroup, policy => policy
                 .RequireAuthenticatedUser()
                 .AddRequirements(new GroupRoleRequirement(GroupRole.Owner, GroupRole.Admin)));
