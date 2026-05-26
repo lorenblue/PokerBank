@@ -17,7 +17,7 @@ public static class CreatePlayer
         return app;
     }
 
-    private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
+    private static async Task<Results<Created<PlayerResponse>, BadRequest<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Request request,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
@@ -47,7 +47,7 @@ public static class CreatePlayer
 
             return TypedResults.Created(
                 $"/players/{player.Id}",
-                new Response(player.Id, player.Name, player.EmailAddress, player.IsActive));
+                PlayerResponse.From(player));
         }
         catch (ArgumentException exception)
         {
@@ -56,7 +56,4 @@ public static class CreatePlayer
     }
 
     private sealed record Request(string? Name, string? EmailAddress);
-
-    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
-
 }

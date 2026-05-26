@@ -425,13 +425,6 @@ export interface components {
             /** Format: date-time */
             recordedAtUtc: string;
         };
-        ArchivePlayerResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            emailAddress: null | string;
-            isActive: boolean;
-        };
         BalanceResponse: {
             /** Format: uuid */
             playerId: string;
@@ -461,13 +454,6 @@ export interface components {
         CreatePlayerRequest: {
             name: null | string;
             emailAddress: null | string;
-        };
-        CreatePlayerResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            emailAddress: null | string;
-            isActive: boolean;
         };
         ErrorResponse: {
             error: string;
@@ -536,38 +522,12 @@ export interface components {
             entries: components["schemas"]["GetGameEntryResponse"][];
             playerTotals: components["schemas"]["GetGamePlayerTotalResponse"][];
         };
-        GetPaymentResponse: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            playerId: string;
-            /** Format: double */
-            amount: number | string;
-            direction: components["schemas"]["PaymentDirection"];
-            method: components["schemas"]["PaymentMethod"];
-            /** Format: date-time */
-            recordedAtUtc: string;
-        };
-        GetPlayerResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            emailAddress: null | string;
-            isActive: boolean;
-        };
         ListGamesResponse: {
             /** Format: uuid */
             id: string;
             status: components["schemas"]["GameStatus"];
             /** Format: date-time */
             createdAtUtc: string;
-        };
-        ListPlayersResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            emailAddress: null | string;
-            isActive: boolean;
         };
         LoginRequest: {
             email: null | string;
@@ -592,22 +552,17 @@ export interface components {
             /** Format: date-time */
             recordedAtUtc: string;
         };
+        PlayerResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            emailAddress: null | string;
+            isActive: boolean;
+        };
         RecordPaymentRequest: {
             /** Format: double */
             amount: number | string;
             method: components["schemas"]["PaymentMethod"];
-        };
-        RecordPaymentResponse: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            playerId: string;
-            /** Format: double */
-            amount: number | string;
-            direction: components["schemas"]["PaymentDirection"];
-            method: components["schemas"]["PaymentMethod"];
-            /** Format: date-time */
-            recordedAtUtc: string;
         };
         SendBalanceUpdatesResponse: {
             /** Format: int32 */
@@ -623,13 +578,6 @@ export interface components {
         UpdatePlayerRequest: {
             name: null | string;
             emailAddress: null | string;
-        };
-        UpdatePlayerResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            emailAddress: null | string;
-            isActive: boolean;
         };
     };
     responses: never;
@@ -935,7 +883,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListPlayersResponse"][];
+                    "application/json": components["schemas"]["PlayerResponse"][];
                 };
             };
         };
@@ -959,7 +907,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CreatePlayerResponse"];
+                    "application/json": components["schemas"]["PlayerResponse"];
                 };
             };
             /** @description Bad Request */
@@ -999,7 +947,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetPlayerResponse"];
+                    "application/json": components["schemas"]["PlayerResponse"];
                 };
             };
             /** @description Not Found */
@@ -1034,7 +982,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UpdatePlayerResponse"];
+                    "application/json": components["schemas"]["PlayerResponse"];
                 };
             };
             /** @description Bad Request */
@@ -1272,7 +1220,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RecordPaymentResponse"];
+                    "application/json": components["schemas"]["PaymentResponse"];
                 };
             };
             /** @description Bad Request */
@@ -1316,7 +1264,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RecordPaymentResponse"];
+                    "application/json": components["schemas"]["PaymentResponse"];
                 };
             };
             /** @description Bad Request */
@@ -1356,7 +1304,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetPaymentResponse"];
+                    "application/json": components["schemas"]["PaymentResponse"];
                 };
             };
             /** @description Not Found */
@@ -1483,7 +1431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ArchivePlayerResponse"];
+                    "application/json": components["schemas"]["PlayerResponse"];
                 };
             };
             /** @description Not Found */

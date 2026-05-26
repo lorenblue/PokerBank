@@ -16,7 +16,7 @@ public static class ArchivePlayer
         return app;
     }
 
-    private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
+    private static async Task<Results<Ok<PlayerResponse>, NotFound<ErrorResponse>>> Handle(
         Guid id,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
@@ -35,9 +35,6 @@ public static class ArchivePlayer
         player.Archive();
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Ok(new Response(player.Id, player.Name, player.EmailAddress, player.IsActive));
+        return TypedResults.Ok(PlayerResponse.From(player));
     }
-
-    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
-
 }

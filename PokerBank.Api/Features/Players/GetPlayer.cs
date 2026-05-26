@@ -16,7 +16,7 @@ public static class GetPlayer
         return app;
     }
 
-    private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
+    private static async Task<Results<Ok<PlayerResponse>, NotFound<ErrorResponse>>> Handle(
         Guid id,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
@@ -25,14 +25,10 @@ public static class GetPlayer
         var player = await dbContext.Players
             .AsNoTracking()
             .Where(player => player.Id == id && player.PokerGroupId == groupContext.Id)
-            .Select(player => new Response(player.Id, player.Name, player.EmailAddress, player.IsActive))
             .SingleOrDefaultAsync(cancellationToken);
 
         return player is null
             ? TypedResults.NotFound(new ErrorResponse("Player was not found."))
-            : TypedResults.Ok(player);
+            : TypedResults.Ok(PlayerResponse.From(player));
     }
-
-    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
-
 }

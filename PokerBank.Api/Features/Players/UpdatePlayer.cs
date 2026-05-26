@@ -16,7 +16,7 @@ public static class UpdatePlayer
         return app;
     }
 
-    private static async Task<Results<Ok<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
+    private static async Task<Results<Ok<PlayerResponse>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>, Conflict<ErrorResponse>>> Handle(
         Guid id,
         Request request,
         IPokerGroupContext groupContext,
@@ -58,7 +58,7 @@ public static class UpdatePlayer
 
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return TypedResults.Ok(new Response(player.Id, player.Name, player.EmailAddress, player.IsActive));
+            return TypedResults.Ok(PlayerResponse.From(player));
         }
         catch (ArgumentException exception)
         {
@@ -67,6 +67,4 @@ public static class UpdatePlayer
     }
 
     private sealed record Request(string? Name, string? EmailAddress);
-
-    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
 }

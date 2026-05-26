@@ -16,7 +16,7 @@ public static class ListPlayers
         return app;
     }
 
-    private static async Task<Ok<Response[]>> Handle(
+    private static async Task<Ok<PlayerResponse[]>> Handle(
         bool? includeArchived,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
@@ -33,11 +33,10 @@ public static class ListPlayers
 
         var players = await query
             .OrderBy(player => player.Name)
-            .Select(player => new Response(player.Id, player.Name, player.EmailAddress, player.IsActive))
             .ToArrayAsync(cancellationToken);
 
-        return TypedResults.Ok(players);
+        return TypedResults.Ok(players
+            .Select(PlayerResponse.From)
+            .ToArray());
     }
-
-    private sealed record Response(Guid Id, string Name, string? EmailAddress, bool IsActive);
 }
