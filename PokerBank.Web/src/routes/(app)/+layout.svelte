@@ -1,5 +1,7 @@
 <script lang="ts">
-	let { children }: { children: import('svelte').Snippet } = $props();
+	import type { LayoutData } from './$types';
+
+	let { children, data }: { children: import('svelte').Snippet; data: LayoutData } = $props();
 </script>
 
 <div class="min-h-screen">
@@ -8,10 +10,18 @@
 			<a href="/" class="text-lg font-extrabold text-emerald-950">PokerBank</a>
 
 			<nav class="flex flex-wrap gap-1 text-sm font-bold text-slate-600">
-				<a href="/" class="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-950">Dashboard</a>
-				<a href="/games" class="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-950">Games</a>
-				<a href="/players" class="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-950">Players</a>
-				<a href="/payments" class="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-950">Payments</a>
+				<a href="/" class="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-950">
+					{data.isManager ? 'Dashboard' : 'My Summary'}
+				</a>
+				<a href="/games" class="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-950">
+					{data.isManager ? 'Games' : 'My Games'}
+				</a>
+				{#if data.isManager}
+					<a href="/players" class="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-950">Players</a>
+				{/if}
+				<a href="/payments" class="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-950">
+					{data.isManager ? 'Payments' : 'My Payments'}
+				</a>
 				<form method="POST" action="/logout">
 					<button type="submit" class="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-950">
 						Sign out

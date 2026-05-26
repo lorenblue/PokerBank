@@ -5,13 +5,24 @@ import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ fetch, parent, request }) => {
-	await parent();
+	const { isManager } = await parent();
 
 	const api = pokerBankApi(fetch, request.headers.get('cookie'));
+
+	if (!isManager) {
+		const payments = await api.getMyPayments();
+
+		return {
+			isManager,
+			players: [],
+			payments
+		};
+	}
 
 	const [players, payments] = await Promise.all([api.listPlayers(), api.listPayments()]);
 
 	return {
+		isManager,
 		players,
 		payments
 	};

@@ -5,9 +5,24 @@ import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ fetch, parent, request }) => {
-	await parent();
+	const { isManager } = await parent();
 
 	const api = pokerBankApi(fetch, request.headers.get('cookie'));
+
+	if (!isManager) {
+		const [balance, games, payments] = await Promise.all([
+			api.getMyBalance(),
+			api.getMyGames(),
+			api.getMyPayments()
+		]);
+
+		return {
+			view: 'member' as const,
+			balance,
+			games,
+			payments
+		};
+	}
 
 	const [balances, games, players, payments] = await Promise.all([
 		api.listBalances(),
@@ -17,6 +32,7 @@ export const load: PageServerLoad = async ({ fetch, parent, request }) => {
 	]);
 
 	return {
+		view: 'manager' as const,
 		balances,
 		games,
 		players,

@@ -5,7 +5,11 @@ import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ fetch, params, parent, request }) => {
-	await parent();
+	const { isManager } = await parent();
+
+	if (!isManager) {
+		error(404, 'Player was not found.');
+	}
 
 	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 

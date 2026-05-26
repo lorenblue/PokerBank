@@ -1,22 +1,31 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { ApiError } from '$lib/api/client';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ fetch, params, parent, request }) => {
-	await parent();
+	const { isManager } = await parent();
 
 	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
-	const [game, players] = await Promise.all([
-		api.getGame(params.id),
-		api.listPlayers()
-	]);
+	try {
+		const game = await api.getGame(params.id);
+		const players = isManager
+			? (await api.listPlayers()).filter((player) => player.isActive)
+			: [];
 
-	return {
-		game,
-		players: players.filter((player) => player.isActive)
-	};
+		return {
+			game,
+			isManager,
+			players
+		};
+	} catch (caught) {
+		if (caught instanceof ApiError && (caught.status === 403 || caught.status === 404)) {
+			error(caught.status, caught.message);
+		}
+
+		throw caught;
+	}
 };
 
 export const actions: Actions = {

@@ -14,8 +14,12 @@
 	let selectedEntryPlayerId = $state('');
 	let entryToDelete = $state<PageData['game']['entries'][number] | null>(null);
 
+	const isManager = $derived(data.isManager);
 	const playerNames = $derived(
-		new Map(data.players.map((player) => [player.id, player.name] as const))
+		new Map([
+			...data.game.playerTotals.map((total) => [total.playerId, total.playerName] as const),
+			...data.players.map((player) => [player.id, player.name] as const)
+		])
 	);
 	const cashOutPlayers = $derived(
 		data.game.playerTotals
@@ -61,7 +65,9 @@
 	<title>Game | PokerBank</title>
 </svelte:head>
 
-<a href="/" class="mb-4 inline-block font-bold text-emerald-900">Back to balances</a>
+<a href={isManager ? '/' : '/games'} class="mb-4 inline-block font-bold text-emerald-900">
+	{isManager ? 'Back to dashboard' : 'Back to my games'}
+</a>
 
 <section class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 	<div>
@@ -70,7 +76,7 @@
 		<p class="mt-2 text-slate-500">{formatDateTime(data.game.createdAtUtc)}</p>
 	</div>
 
-	{#if data.game.status === 'Open'}
+	{#if isManager && data.game.status === 'Open'}
 		<div class="flex flex-wrap justify-end gap-3">
 			<button
 				type="button"
@@ -131,9 +137,13 @@
 				{#each data.game.entries as entry}
 					<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
 						<div class="min-w-0">
-							<a href={`/players/${entry.playerId}`} class="font-bold hover:text-emerald-900">
-								{playerNames.get(entry.playerId) ?? entry.playerId}
-							</a>
+							{#if isManager}
+								<a href={`/players/${entry.playerId}`} class="font-bold hover:text-emerald-900">
+									{playerNames.get(entry.playerId) ?? entry.playerId}
+								</a>
+							{:else}
+								<p class="font-bold">{playerNames.get(entry.playerId) ?? entry.playerId}</p>
+							{/if}
 							<span class="mt-1 block text-sm text-slate-500">
 								{entryLabel(entry.type)} · {formatGameEntryDateTime(
 									entry.recordedAtUtc,
@@ -147,7 +157,7 @@
 							>
 								{money(entry.amount)}
 							</span>
-							{#if data.game.status === 'Open'}
+							{#if isManager && data.game.status === 'Open'}
 								<button
 									type="button"
 									class="rounded-md px-2 py-1 text-xs font-bold text-red-700 hover:bg-red-50"
@@ -173,15 +183,19 @@
 				{#each data.game.playerTotals as total}
 					<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
 						<div class="min-w-0">
-							<a href={`/players/${total.playerId}`} class="font-bold hover:text-emerald-900">
-								{total.playerName}
-							</a>
+							{#if isManager}
+								<a href={`/players/${total.playerId}`} class="font-bold hover:text-emerald-900">
+									{total.playerName}
+								</a>
+							{:else}
+								<p class="font-bold">{total.playerName}</p>
+							{/if}
 							<span class="mt-1 block text-sm text-slate-500">
 								Buy-ins {money(total.buyInAmount)} · Cash-outs {money(total.cashOutAmount)}
 							</span>
 						</div>
 						<div class="flex shrink-0 items-center gap-3">
-							{#if data.game.status === 'Open'}
+							{#if isManager && data.game.status === 'Open'}
 								<div class="flex gap-1">
 									<button
 										type="button"
@@ -212,7 +226,7 @@
 	</div>
 </section>
 
-{#if isAddBuyInOpen}
+{#if isManager && isAddBuyInOpen}
 	<GameEntryModal
 		title="Add buy-in"
 		action="?/addBuyIn"
@@ -223,7 +237,7 @@
 	/>
 {/if}
 
-{#if isAddCashOutOpen}
+{#if isManager && isAddCashOutOpen}
 	<GameEntryModal
 		title="Add cash-out"
 		action="?/addCashOut"
@@ -235,7 +249,7 @@
 	/>
 {/if}
 
-{#if entryToDelete}
+{#if isManager && entryToDelete}
 	<Modal title="Delete entry?" onClose={closeDeleteEntry}>
 		<p class="mt-2 text-sm leading-6 text-slate-600">
 			This removes the {entryLabel(entryToDelete.type).toLowerCase()} from the open game. This
@@ -270,7 +284,7 @@
 	</Modal>
 {/if}
 
-{#if isDeleteGameOpen}
+{#if isManager && isDeleteGameOpen}
 	<Modal title="Delete game?" onClose={() => (isDeleteGameOpen = false)}>
 		<p class="mt-2 text-sm leading-6 text-slate-600">
 			This removes the open game and its entries. This is only intended for games created by mistake.
@@ -294,7 +308,7 @@
 	</Modal>
 {/if}
 
-{#if isCloseGameOpen}
+{#if isManager && isCloseGameOpen}
 	<Modal title="Close game?" onClose={() => (isCloseGameOpen = false)}>
 		<p class="mt-2 text-sm leading-6 text-slate-600">
 			Closed games cannot be changed. Make sure every buy-in and cash-out has been recorded.

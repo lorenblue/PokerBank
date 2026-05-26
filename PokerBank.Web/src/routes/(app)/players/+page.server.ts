@@ -1,10 +1,14 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { ApiError } from '$lib/api/client';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ fetch, parent, request }) => {
-	await parent();
+	const { isManager } = await parent();
+
+	if (!isManager) {
+		redirect(303, '/');
+	}
 
 	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 	const players = await api.listPlayers();

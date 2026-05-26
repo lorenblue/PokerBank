@@ -7,6 +7,7 @@ export type Balance = Schemas['BalanceResponse'];
 export type GameSummary = Schemas['ListGamesResponse'];
 export type GameDetails = Schemas['GetGameResponse'];
 export type GameResult = Schemas['GameResultResponse'];
+export type MyGame = Schemas['GetMyGamesResponse'];
 export type Player = Schemas['PlayerResponse'];
 export type PlayerDetails = Schemas['PlayerResponse'];
 export type Payment = Schemas['PaymentResponse'];
@@ -41,6 +42,8 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 				})
 			),
 
+		getMyBalance: () => unwrap<Balance>(client.GET('/me/balance')),
+
 		sendBalanceUpdates: () =>
 			unwrap<SendBalanceUpdatesResponse>(
 				client.POST('/balances/updates/send')
@@ -53,7 +56,11 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 				})
 			),
 
+		getMyPayments: () => unwrap<Payment[]>(client.GET('/me/payments')),
+
 		listGames: () => unwrap<GameSummary[]>(client.GET('/games')),
+
+		getMyGames: () => unwrap<MyGame[]>(client.GET('/me/games')),
 
 		createGame: () => unwrap<CreateGameResponse>(client.POST('/games')),
 
