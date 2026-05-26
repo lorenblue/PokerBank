@@ -244,6 +244,34 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Fact]
+    public async Task ListPlayers_ReturnsForbidden_ForMember()
+    {
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.GetAsync("/players");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetPlayer_ReturnsForbidden_ForMember()
+    {
+        using var ownerClient = factory.CreateHttpsClient();
+
+        var player = await CreatePlayer(ownerClient, "Lorenzo");
+
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var memberClient = factory.CreateHttpsClient();
+
+        var response = await memberClient.GetAsync($"/players/{player.Id}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
     private static async Task<PlayerResponse> CreatePlayer(HttpClient client, string name)
     {
         var response = await client.PostAsJsonAsync("/players", new { Name = name });

@@ -52,8 +52,6 @@ viewGroup.MapGetMyBalance();
 viewGroup.MapGetMyPayments();
 viewGroup.MapGetMyGames();
 viewGroup.MapGetGame();
-viewGroup.MapListPlayers();
-viewGroup.MapGetPlayer();
 
 var manageGroup = app.MapGroup("")
     .RequireAuthorization(AuthorizationPolicies.ManageGroup);
@@ -70,6 +68,8 @@ manageGroup.MapListBalances();
 manageGroup.MapListGameResults();
 manageGroup.MapListPayments();
 manageGroup.MapGetPayment();
+manageGroup.MapListPlayers();
+manageGroup.MapGetPlayer();
 manageGroup.MapCreatePlayer();
 manageGroup.MapUpdatePlayer();
 manageGroup.MapArchivePlayer();
