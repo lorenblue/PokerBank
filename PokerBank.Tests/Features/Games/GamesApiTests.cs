@@ -189,8 +189,8 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         var maya = await CreatePlayer(ownerClient, "Maya");
 
         var game = await CreateGame(ownerClient);
-        await AddBuyIn(ownerClient, game.Id, lorenzo.Id, 100m);
-        await AddBuyIn(ownerClient, game.Id, maya.Id, 50m);
+        var lorenzoBuyIn = await AddBuyIn(ownerClient, game.Id, lorenzo.Id, 100m);
+        var mayaBuyIn = await AddBuyIn(ownerClient, game.Id, maya.Id, 50m);
 
         await factory.LinkDefaultAdminToPlayerAsync(lorenzo.Id);
         await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
@@ -206,6 +206,22 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.NotNull(gameDetails);
         Assert.Equal(game.Id, gameDetails.Id);
         Assert.Equal(150m, gameDetails.TotalBuyInAmount);
+        Assert.Collection(
+            gameDetails.Entries,
+            entry =>
+            {
+                Assert.Equal(lorenzoBuyIn.Id, entry.Id);
+                Assert.Equal(lorenzo.Id, entry.PlayerId);
+                Assert.Equal(100m, entry.Amount);
+                Assert.Equal("BuyIn", entry.Type);
+            },
+            entry =>
+            {
+                Assert.Equal(mayaBuyIn.Id, entry.Id);
+                Assert.Equal(maya.Id, entry.PlayerId);
+                Assert.Equal(50m, entry.Amount);
+                Assert.Equal("BuyIn", entry.Type);
+            });
         Assert.Collection(
             gameDetails.PlayerTotals,
             total =>
