@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
-using PokerBank.Domain;
 
 namespace PokerBank.Api.Features.Payments;
 
@@ -17,40 +15,20 @@ public static class ListPayments
         return app;
     }
 
-    private static async Task<Ok<Response[]>> Handle(
+    private static async Task<Ok<PaymentResponse[]>> Handle(
         Guid? playerId,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var query = dbContext.Payments
-            .AsNoTracking()
-            .Where(payment => payment.PokerGroupId == groupContext.Id);
+        var payments = await PaymentQuery.ListAsync(
+            dbContext,
+            groupContext.Id,
+            playerId,
+            cancellationToken);
 
-        if (playerId is not null)
-        {
-            query = query.Where(payment => payment.PlayerId == playerId);
-        }
-
-        var payments = await query
-            .OrderByDescending(payment => payment.RecordedAtUtc)
-            .Select(payment => new Response(
-                payment.Id,
-                payment.PlayerId,
-                payment.Amount.Amount,
-                payment.Direction,
-                payment.Method,
-                payment.RecordedAtUtc))
-            .ToArrayAsync(cancellationToken);
-
-        return TypedResults.Ok(payments);
+        return TypedResults.Ok(payments
+            .Select(PaymentResponse.From)
+            .ToArray());
     }
-
-    private sealed record Response(
-        Guid Id,
-        Guid PlayerId,
-        decimal Amount,
-        PaymentDirection Direction,
-        PaymentMethod Method,
-        DateTimeOffset RecordedAtUtc);
 }

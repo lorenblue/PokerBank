@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
-using PokerBank.Api.Features.Games;
 
 namespace PokerBank.Api.Features.GameResults;
 
@@ -17,43 +15,22 @@ public static class ListGameResults
         return app;
     }
 
-    private static async Task<Ok<Response[]>> Handle(
+    private static async Task<Ok<GameResultResponse[]>> Handle(
         Guid? playerId,
         Guid? gameId,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var results = await dbContext.Games
-            .AsNoTracking()
-            .Where(game => game.PokerGroupId == groupContext.Id)
-            .ToGamePlayerTotals(playerId, gameId, closedOnly: true)
-            .Join(
-                dbContext.Players.AsNoTracking().Where(player => player.PokerGroupId == groupContext.Id),
-                result => result.PlayerId,
-                player => player.Id,
-                (result, player) => new { Result = result, PlayerName = player.Name })
-            .OrderByDescending(result => result.Result.PlayedAtUtc)
-            .ThenBy(result => result.PlayerName)
-            .Select(result => new Response(
-                result.Result.PlayerId,
-                result.PlayerName,
-                result.Result.GameId,
-                result.Result.PlayedAtUtc,
-                result.Result.BuyInAmount,
-                result.Result.CashOutAmount,
-                result.Result.NetAmount))
-            .ToArrayAsync(cancellationToken);
+        var results = await GameResultQuery.ListAsync(
+            dbContext,
+            groupContext.Id,
+            playerId,
+            gameId,
+            cancellationToken);
 
-        return TypedResults.Ok(results);
+        return TypedResults.Ok(results
+            .Select(GameResultResponse.From)
+            .ToArray());
     }
-
-    private sealed record Response(
-        Guid PlayerId,
-        string PlayerName,
-        Guid GameId,
-        DateTime PlayedAtUtc,
-        decimal BuyInAmount,
-        decimal CashOutAmount,
-        decimal NetAmount);
 }

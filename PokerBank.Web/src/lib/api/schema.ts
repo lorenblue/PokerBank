@@ -432,6 +432,18 @@ export interface components {
             emailAddress: null | string;
             isActive: boolean;
         };
+        BalanceResponse: {
+            /** Format: uuid */
+            playerId: string;
+            playerName: string;
+            isActive: boolean;
+            /** Format: double */
+            gameNetAmount: number | string;
+            /** Format: double */
+            paymentNetAmount: number | string;
+            /** Format: double */
+            balanceAmount: number | string;
+        };
         CloseGameResponse: {
             /** Format: uuid */
             id: string;
@@ -462,6 +474,21 @@ export interface components {
         };
         /** @enum {unknown} */
         GameEntryType: "BuyIn" | "CashOut";
+        GameResultResponse: {
+            /** Format: uuid */
+            playerId: string;
+            playerName: string;
+            /** Format: uuid */
+            gameId: string;
+            /** Format: date-time */
+            playedAtUtc: string;
+            /** Format: double */
+            buyInAmount: number | string;
+            /** Format: double */
+            cashOutAmount: number | string;
+            /** Format: double */
+            netAmount: number | string;
+        };
         /** @enum {unknown} */
         GameStatus: "Open" | "Closed";
         GetCurrentUserResponse: {
@@ -509,45 +536,6 @@ export interface components {
             entries: components["schemas"]["GetGameEntryResponse"][];
             playerTotals: components["schemas"]["GetGamePlayerTotalResponse"][];
         };
-        GetMyBalanceResponse: {
-            /** Format: uuid */
-            playerId: string;
-            playerName: string;
-            isActive: boolean;
-            /** Format: double */
-            gameNetAmount: number | string;
-            /** Format: double */
-            paymentNetAmount: number | string;
-            /** Format: double */
-            balanceAmount: number | string;
-        };
-        GetMyGameResultsResponse: {
-            /** Format: uuid */
-            playerId: string;
-            playerName: string;
-            /** Format: uuid */
-            gameId: string;
-            /** Format: date-time */
-            playedAtUtc: string;
-            /** Format: double */
-            buyInAmount: number | string;
-            /** Format: double */
-            cashOutAmount: number | string;
-            /** Format: double */
-            netAmount: number | string;
-        };
-        GetMyPaymentsResponse: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            playerId: string;
-            /** Format: double */
-            amount: number | string;
-            direction: components["schemas"]["PaymentDirection"];
-            method: components["schemas"]["PaymentMethod"];
-            /** Format: date-time */
-            recordedAtUtc: string;
-        };
         GetPaymentResponse: {
             /** Format: uuid */
             id: string;
@@ -567,51 +555,12 @@ export interface components {
             emailAddress: null | string;
             isActive: boolean;
         };
-        ListBalancesResponse: {
-            /** Format: uuid */
-            playerId: string;
-            playerName: string;
-            isActive: boolean;
-            /** Format: double */
-            gameNetAmount: number | string;
-            /** Format: double */
-            paymentNetAmount: number | string;
-            /** Format: double */
-            balanceAmount: number | string;
-        };
-        ListGameResultsResponse: {
-            /** Format: uuid */
-            playerId: string;
-            playerName: string;
-            /** Format: uuid */
-            gameId: string;
-            /** Format: date-time */
-            playedAtUtc: string;
-            /** Format: double */
-            buyInAmount: number | string;
-            /** Format: double */
-            cashOutAmount: number | string;
-            /** Format: double */
-            netAmount: number | string;
-        };
         ListGamesResponse: {
             /** Format: uuid */
             id: string;
             status: components["schemas"]["GameStatus"];
             /** Format: date-time */
             createdAtUtc: string;
-        };
-        ListPaymentsResponse: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            playerId: string;
-            /** Format: double */
-            amount: number | string;
-            direction: components["schemas"]["PaymentDirection"];
-            method: components["schemas"]["PaymentMethod"];
-            /** Format: date-time */
-            recordedAtUtc: string;
         };
         ListPlayersResponse: {
             /** Format: uuid */
@@ -631,6 +580,18 @@ export interface components {
         PaymentDirection: "MadeByPlayer" | "ReceivedByPlayer";
         /** @enum {unknown} */
         PaymentMethod: "ETransfer" | "Cash";
+        PaymentResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            playerId: string;
+            /** Format: double */
+            amount: number | string;
+            direction: components["schemas"]["PaymentDirection"];
+            method: components["schemas"]["PaymentMethod"];
+            /** Format: date-time */
+            recordedAtUtc: string;
+        };
         RecordPaymentRequest: {
             /** Format: double */
             amount: number | string;
@@ -765,7 +726,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetMyBalanceResponse"];
+                    "application/json": components["schemas"]["BalanceResponse"];
                 };
             };
             /** @description Not Found */
@@ -794,7 +755,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetMyPaymentsResponse"][];
+                    "application/json": components["schemas"]["PaymentResponse"][];
                 };
             };
             /** @description Not Found */
@@ -825,7 +786,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetMyGameResultsResponse"][];
+                    "application/json": components["schemas"]["GameResultResponse"][];
                 };
             };
             /** @description Not Found */
@@ -1455,7 +1416,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListBalancesResponse"][];
+                    "application/json": components["schemas"]["BalanceResponse"][];
                 };
             };
         };
@@ -1478,7 +1439,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListGameResultsResponse"][];
+                    "application/json": components["schemas"]["GameResultResponse"][];
                 };
             };
         };
@@ -1500,7 +1461,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListPaymentsResponse"][];
+                    "application/json": components["schemas"]["PaymentResponse"][];
                 };
             };
         };

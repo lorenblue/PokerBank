@@ -7,7 +7,7 @@ namespace PokerBank.Api.Features.Balances;
 
 public static class BalanceQuery
 {
-    public static async Task<PlayerBalance[]> ListAsync(
+    public static async Task<BalanceRow[]> ListAsync(
         PokerBankDbContext dbContext,
         Guid pokerGroupId,
         Guid? playerId,
@@ -69,7 +69,7 @@ public static class BalanceQuery
                 var gameNetAmount = gameNetsByPlayerId.GetValueOrDefault(player.Id);
                 var paymentNetAmount = paymentNetsByPlayerId.GetValueOrDefault(player.Id);
 
-                return new PlayerBalance(
+                return new BalanceRow(
                     player.Id,
                     player.Name,
                     player.EmailAddress,

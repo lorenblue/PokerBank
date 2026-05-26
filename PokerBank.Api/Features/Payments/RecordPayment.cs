@@ -23,7 +23,7 @@ public static class RecordPayment
         return app;
     }
 
-    private static Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> HandleMadeByPlayer(
+    private static Task<Results<Created<PaymentResponse>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> HandleMadeByPlayer(
         Guid playerId,
         Request request,
         IPokerGroupContext groupContext,
@@ -31,7 +31,7 @@ public static class RecordPayment
         CancellationToken cancellationToken) =>
         Handle(playerId, PaymentDirection.MadeByPlayer, request, groupContext, dbContext, cancellationToken);
 
-    private static Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> HandleReceivedByPlayer(
+    private static Task<Results<Created<PaymentResponse>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> HandleReceivedByPlayer(
         Guid playerId,
         Request request,
         IPokerGroupContext groupContext,
@@ -39,7 +39,7 @@ public static class RecordPayment
         CancellationToken cancellationToken) =>
         Handle(playerId, PaymentDirection.ReceivedByPlayer, request, groupContext, dbContext, cancellationToken);
 
-    private static async Task<Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> Handle(
+    private static async Task<Results<Created<PaymentResponse>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> Handle(
         Guid playerId,
         PaymentDirection direction,
         Request request,
@@ -73,16 +73,10 @@ public static class RecordPayment
 
         return TypedResults.Created(
             $"/payments/{payment.Id}",
-            new Response(
-                payment.Id,
-                payment.PlayerId,
-                payment.Amount.Amount,
-                payment.Direction,
-                payment.Method,
-                payment.RecordedAtUtc));
+            PaymentResponse.From(payment));
     }
 
-    private static Results<Created<Response>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>> Failure(ResultBase result)
+    private static Results<Created<PaymentResponse>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>> Failure(ResultBase result)
     {
         var error = result.Errors.OfType<PaymentError>().FirstOrDefault();
         var message = error?.Message ?? result.Errors[0].Message;
@@ -91,12 +85,4 @@ public static class RecordPayment
     }
 
     private sealed record Request(decimal Amount, PaymentMethod Method);
-
-    private sealed record Response(
-        Guid Id,
-        Guid PlayerId,
-        decimal Amount,
-        PaymentDirection Direction,
-        PaymentMethod Method,
-        DateTimeOffset RecordedAtUtc);
 }

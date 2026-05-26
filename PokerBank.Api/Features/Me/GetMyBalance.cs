@@ -16,7 +16,7 @@ public static class GetMyBalance
         return app;
     }
 
-    private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
+    private static async Task<Results<Ok<BalanceResponse>, NotFound<ErrorResponse>>> Handle(
         ICurrentPlayerProvider currentPlayerProvider,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
@@ -38,20 +38,6 @@ public static class GetMyBalance
 
         var myBalance = balance.Single();
 
-        return TypedResults.Ok(new Response(
-            myBalance.PlayerId,
-            myBalance.PlayerName,
-            myBalance.IsActive,
-            myBalance.GameNetAmount,
-            myBalance.PaymentNetAmount,
-            myBalance.BalanceAmount));
+        return TypedResults.Ok(BalanceResponse.From(myBalance));
     }
-
-    private sealed record Response(
-        Guid PlayerId,
-        string PlayerName,
-        bool IsActive,
-        decimal GameNetAmount,
-        decimal PaymentNetAmount,
-        decimal BalanceAmount);
 }

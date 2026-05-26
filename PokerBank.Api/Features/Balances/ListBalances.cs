@@ -15,7 +15,7 @@ public static class ListBalances
         return app;
     }
 
-    private static async Task<Ok<Response[]>> Handle(
+    private static async Task<Ok<BalanceResponse[]>> Handle(
         Guid? playerId,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
@@ -29,21 +29,7 @@ public static class ListBalances
             cancellationToken);
 
         return TypedResults.Ok(balances
-            .Select(balance => new Response(
-                balance.PlayerId,
-                balance.PlayerName,
-                balance.IsActive,
-                balance.GameNetAmount,
-                balance.PaymentNetAmount,
-                balance.BalanceAmount))
+            .Select(BalanceResponse.From)
             .ToArray());
     }
-
-    private sealed record Response(
-        Guid PlayerId,
-        string PlayerName,
-        bool IsActive,
-        decimal GameNetAmount,
-        decimal PaymentNetAmount,
-        decimal BalanceAmount);
 }

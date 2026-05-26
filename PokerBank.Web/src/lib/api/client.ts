@@ -3,13 +3,13 @@ import type { components, paths } from './schema';
 
 type Schemas = components['schemas'];
 
-export type Balance = Schemas['ListBalancesResponse'];
+export type Balance = Schemas['BalanceResponse'];
 export type GameSummary = Schemas['ListGamesResponse'];
 export type GameDetails = Schemas['GetGameResponse'];
-export type GameResult = Schemas['ListGameResultsResponse'];
+export type GameResult = Schemas['GameResultResponse'];
 export type Player = Schemas['ListPlayersResponse'];
 export type PlayerDetails = Schemas['GetPlayerResponse'];
-export type Payment = Schemas['ListPaymentsResponse'];
+export type Payment = Schemas['PaymentResponse'];
 export type CreateGameResponse = Schemas['CreateGameResponse'];
 export type CreatePlayerRequest = Schemas['CreatePlayerRequest'];
 export type UpdatePlayerRequest = Schemas['UpdatePlayerRequest'];
