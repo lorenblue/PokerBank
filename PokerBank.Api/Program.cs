@@ -49,11 +49,10 @@ var viewGroup = app.MapGroup("")
     .RequireAuthorization(AuthorizationPolicies.ViewGroup);
 
 viewGroup.MapGetMyBalance();
-viewGroup.MapListGameResults();
+viewGroup.MapGetMyPayments();
+viewGroup.MapGetMyGameResults();
 viewGroup.MapListGames();
 viewGroup.MapGetGame();
-viewGroup.MapListPayments();
-viewGroup.MapGetPayment();
 viewGroup.MapListPlayers();
 viewGroup.MapGetPlayer();
 
@@ -69,6 +68,9 @@ manageGroup.MapCloseGame();
 manageGroup.MapRecordPayment();
 manageGroup.MapDeletePayment();
 manageGroup.MapListBalances();
+manageGroup.MapListGameResults();
+manageGroup.MapListPayments();
+manageGroup.MapGetPayment();
 manageGroup.MapCreatePlayer();
 manageGroup.MapUpdatePlayer();
 manageGroup.MapArchivePlayer();

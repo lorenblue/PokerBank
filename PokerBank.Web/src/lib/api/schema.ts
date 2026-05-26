@@ -72,15 +72,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/game-results": {
+    "/me/payments": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List closed-game results. */
-        get: operations["ListGameResults"];
+        /** Get my payments. */
+        get: operations["GetMyPayments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/game-results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get my closed-game results. */
+        get: operations["GetMyGameResults"];
         put?: never;
         post?: never;
         delete?: never;
@@ -120,41 +137,6 @@ export interface paths {
         post?: never;
         /** Delete an open game. */
         delete: operations["DeleteGame"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/payments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List payments. */
-        get: operations["ListPayments"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/payments/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a payment. */
-        get: operations["GetPayment"];
-        put?: never;
-        post?: never;
-        /** Delete a payment. */
-        delete: operations["DeletePayment"];
         options?: never;
         head?: never;
         patch?: never;
@@ -298,6 +280,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/payments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a payment. */
+        get: operations["GetPayment"];
+        put?: never;
+        post?: never;
+        /** Delete a payment. */
+        delete: operations["DeletePayment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/balances": {
         parameters: {
             query?: never;
@@ -307,6 +307,40 @@ export interface paths {
         };
         /** List player balances. */
         get: operations["ListBalances"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/game-results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List closed-game results. */
+        get: operations["ListGameResults"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List payments. */
+        get: operations["ListPayments"];
         put?: never;
         post?: never;
         delete?: never;
@@ -486,6 +520,33 @@ export interface components {
             paymentNetAmount: number | string;
             /** Format: double */
             balanceAmount: number | string;
+        };
+        GetMyGameResultsResponse: {
+            /** Format: uuid */
+            playerId: string;
+            playerName: string;
+            /** Format: uuid */
+            gameId: string;
+            /** Format: date-time */
+            playedAtUtc: string;
+            /** Format: double */
+            buyInAmount: number | string;
+            /** Format: double */
+            cashOutAmount: number | string;
+            /** Format: double */
+            netAmount: number | string;
+        };
+        GetMyPaymentsResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            playerId: string;
+            /** Format: double */
+            amount: number | string;
+            direction: components["schemas"]["PaymentDirection"];
+            method: components["schemas"]["PaymentMethod"];
+            /** Format: date-time */
+            recordedAtUtc: string;
         };
         GetPaymentResponse: {
             /** Format: uuid */
@@ -718,10 +779,38 @@ export interface operations {
             };
         };
     };
-    ListGameResults: {
+    GetMyPayments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetMyPaymentsResponse"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    GetMyGameResults: {
         parameters: {
             query?: {
-                playerId?: string;
                 gameId?: string;
             };
             header?: never;
@@ -736,7 +825,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListGameResultsResponse"][];
+                    "application/json": components["schemas"]["GetMyGameResultsResponse"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -850,88 +948,6 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    ListPayments: {
-        parameters: {
-            query?: {
-                playerId?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ListPaymentsResponse"][];
-                };
-            };
-        };
-    };
-    GetPayment: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GetPaymentResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    DeletePayment: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not Found */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1362,6 +1378,66 @@ export interface operations {
             };
         };
     };
+    GetPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetPaymentResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    DeletePayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     ListBalances: {
         parameters: {
             query?: {
@@ -1380,6 +1456,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListBalancesResponse"][];
+                };
+            };
+        };
+    };
+    ListGameResults: {
+        parameters: {
+            query?: {
+                playerId?: string;
+                gameId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListGameResultsResponse"][];
+                };
+            };
+        };
+    };
+    ListPayments: {
+        parameters: {
+            query?: {
+                playerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListPaymentsResponse"][];
                 };
             };
         };
