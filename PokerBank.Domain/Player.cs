@@ -39,6 +39,8 @@ public sealed class Player
 
     public string? EmailAddress { get; private set; }
 
+    public Guid? UserId { get; private set; }
+
     public bool IsActive { get; private set; }
 
     public void Rename(string name)
@@ -49,6 +51,16 @@ public sealed class Player
     public void UpdateEmailAddress(string? emailAddress)
     {
         EmailAddress = NormalizeEmailAddress(emailAddress);
+    }
+
+    public void LinkUser(Guid userId)
+    {
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException("User id is required.", nameof(userId));
+        }
+
+        UserId = userId;
     }
 
     public void Archive()

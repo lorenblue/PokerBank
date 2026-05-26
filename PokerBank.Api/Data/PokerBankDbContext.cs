@@ -73,6 +73,17 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
             player.Property(p => p.EmailAddress)
                 .HasMaxLength(Player.MaxEmailAddressLength);
 
+            player.Property(p => p.UserId);
+
+            player.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            player.HasIndex(p => new { p.PokerGroupId, p.UserId })
+                .IsUnique()
+                .HasFilter("\"UserId\" IS NOT NULL");
+
             player.Property(p => p.IsActive)
                 .IsRequired();
         });

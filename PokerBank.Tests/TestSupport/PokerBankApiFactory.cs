@@ -137,6 +137,27 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
         await command.ExecuteNonQueryAsync();
     }
 
+    public async Task LinkDefaultAdminToPlayerAsync(Guid playerId)
+    {
+        await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE "Players"
+            SET "UserId" = (
+                SELECT "Id"
+                FROM "AspNetUsers"
+                WHERE "NormalizedEmail" = @normalizedEmail
+            )
+            WHERE "Id" = @playerId;
+            """;
+        command.Parameters.AddWithValue("normalizedEmail", DevelopmentAuthSeed.DefaultAdminEmail.ToUpperInvariant());
+        command.Parameters.AddWithValue("playerId", playerId);
+
+        await command.ExecuteNonQueryAsync();
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");

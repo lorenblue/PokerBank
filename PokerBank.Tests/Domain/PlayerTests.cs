@@ -15,6 +15,7 @@ public sealed class PlayerTests
         Assert.Equal(PokerGroupId, player.PokerGroupId);
         Assert.Equal("Lorenzo", player.Name);
         Assert.Equal("lorenzo@example.com", player.EmailAddress);
+        Assert.Null(player.UserId);
         Assert.True(player.IsActive);
     }
 
@@ -177,5 +178,24 @@ public sealed class PlayerTests
         player.Archive();
 
         Assert.False(player.IsActive);
+    }
+
+    [Fact]
+    public void LinkUser_RecordsUserId()
+    {
+        var player = new Player(PokerGroupId, "Lorenzo");
+        var userId = Guid.NewGuid();
+
+        player.LinkUser(userId);
+
+        Assert.Equal(userId, player.UserId);
+    }
+
+    [Fact]
+    public void LinkUser_RequiresUserId()
+    {
+        var player = new Player(PokerGroupId, "Lorenzo");
+
+        Assert.Throws<ArgumentException>(() => player.LinkUser(Guid.Empty));
     }
 }

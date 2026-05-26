@@ -55,15 +55,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/balances": {
+    "/me/balance": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List player balances. */
-        get: operations["ListBalances"];
+        /** Get my balance. */
+        get: operations["GetMyBalance"];
         put?: never;
         post?: never;
         delete?: never;
@@ -298,6 +298,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List player balances. */
+        get: operations["ListBalances"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/players/{id}/archive": {
         parameters: {
             query?: never;
@@ -457,6 +474,18 @@ export interface components {
             remainingCashOutAmount: number | string;
             entries: components["schemas"]["GetGameEntryResponse"][];
             playerTotals: components["schemas"]["GetGamePlayerTotalResponse"][];
+        };
+        GetMyBalanceResponse: {
+            /** Format: uuid */
+            playerId: string;
+            playerName: string;
+            isActive: boolean;
+            /** Format: double */
+            gameNetAmount: number | string;
+            /** Format: double */
+            paymentNetAmount: number | string;
+            /** Format: double */
+            balanceAmount: number | string;
         };
         GetPaymentResponse: {
             /** Format: uuid */
@@ -660,11 +689,9 @@ export interface operations {
             };
         };
     };
-    ListBalances: {
+    GetMyBalance: {
         parameters: {
-            query?: {
-                playerId?: string;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -677,7 +704,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListBalancesResponse"][];
+                    "application/json": components["schemas"]["GetMyBalanceResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1322,6 +1358,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ListBalances: {
+        parameters: {
+            query?: {
+                playerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListBalancesResponse"][];
                 };
             };
         };

@@ -6,6 +6,7 @@ using PokerBank.Api.Features.Auth;
 using PokerBank.Api.Features.Balances;
 using PokerBank.Api.Features.GameResults;
 using PokerBank.Api.Features.Games;
+using PokerBank.Api.Features.Me;
 using PokerBank.Api.Features.Payments;
 using PokerBank.Api.Features.Players;
 using Scalar.AspNetCore;
@@ -47,7 +48,7 @@ app.MapGetCurrentUser();
 var viewGroup = app.MapGroup("")
     .RequireAuthorization(AuthorizationPolicies.ViewGroup);
 
-viewGroup.MapListBalances();
+viewGroup.MapGetMyBalance();
 viewGroup.MapListGameResults();
 viewGroup.MapListGames();
 viewGroup.MapGetGame();
@@ -67,6 +68,7 @@ manageGroup.MapDeleteGameEntry();
 manageGroup.MapCloseGame();
 manageGroup.MapRecordPayment();
 manageGroup.MapDeletePayment();
+manageGroup.MapListBalances();
 manageGroup.MapCreatePlayer();
 manageGroup.MapUpdatePlayer();
 manageGroup.MapArchivePlayer();
