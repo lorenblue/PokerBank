@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using PokerBank.Api.Auth;
 using PokerBank.Api.Data;
+using PokerBank.Api.Features.Me;
 using PokerBank.Domain;
 
 namespace PokerBank.Api.Features.Games;
@@ -17,10 +20,13 @@ public static class GetGame
         return app;
     }
 
-    private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
+    private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>, ForbidHttpResult>> Handle(
         Guid id,
+        HttpContext httpContext,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        IAuthorizationService authorizationService,
+        ICurrentPlayerProvider currentPlayerProvider,
         CancellationToken cancellationToken)
     {
         var game = await dbContext.Games
@@ -32,6 +38,20 @@ public static class GetGame
         if (game is null)
         {
             return TypedResults.NotFound(new ErrorResponse("Game was not found."));
+        }
+
+        var canManageGroup = await authorizationService.AuthorizeAsync(
+            httpContext.User,
+            AuthorizationPolicies.ManageGroup);
+
+        if (!canManageGroup.Succeeded)
+        {
+            var currentPlayer = await currentPlayerProvider.GetAsync(cancellationToken);
+
+            if (currentPlayer is null || game.Entries.All(entry => entry.PlayerId != currentPlayer.Id))
+            {
+                return TypedResults.Forbid();
+            }
         }
 
         var playerTotals = await dbContext.Games

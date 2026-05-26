@@ -181,6 +181,86 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetGame_ReturnsGameForMemberWhoParticipated()
+    {
+        using var ownerClient = factory.CreateHttpsClient();
+
+        var lorenzo = await CreatePlayer(ownerClient, "Lorenzo");
+        var maya = await CreatePlayer(ownerClient, "Maya");
+
+        var game = await CreateGame(ownerClient);
+        await AddBuyIn(ownerClient, game.Id, lorenzo.Id, 100m);
+        await AddBuyIn(ownerClient, game.Id, maya.Id, 50m);
+
+        await factory.LinkDefaultAdminToPlayerAsync(lorenzo.Id);
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var memberClient = factory.CreateHttpsClient();
+
+        var response = await memberClient.GetAsync($"/games/{game.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var gameDetails = await response.Content.ReadFromJsonAsync<GameDetailsResponse>();
+
+        Assert.NotNull(gameDetails);
+        Assert.Equal(game.Id, gameDetails.Id);
+        Assert.Equal(150m, gameDetails.TotalBuyInAmount);
+        Assert.Collection(
+            gameDetails.PlayerTotals,
+            total =>
+            {
+                Assert.Equal(lorenzo.Id, total.PlayerId);
+                Assert.Equal(-100m, total.NetAmount);
+            },
+            total =>
+            {
+                Assert.Equal(maya.Id, total.PlayerId);
+                Assert.Equal(-50m, total.NetAmount);
+            });
+    }
+
+    [Fact]
+    public async Task GetGame_ReturnsForbiddenForMemberWhoDidNotParticipate()
+    {
+        using var ownerClient = factory.CreateHttpsClient();
+
+        var lorenzo = await CreatePlayer(ownerClient, "Lorenzo");
+        var maya = await CreatePlayer(ownerClient, "Maya");
+
+        var game = await CreateGame(ownerClient);
+        await AddBuyIn(ownerClient, game.Id, maya.Id, 50m);
+
+        await factory.LinkDefaultAdminToPlayerAsync(lorenzo.Id);
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var memberClient = factory.CreateHttpsClient();
+
+        var response = await memberClient.GetAsync($"/games/{game.Id}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetGame_ReturnsForbiddenForMemberWithoutLinkedPlayer()
+    {
+        using var ownerClient = factory.CreateHttpsClient();
+
+        var player = await CreatePlayer(ownerClient, "Lorenzo");
+
+        var game = await CreateGame(ownerClient);
+        await AddBuyIn(ownerClient, game.Id, player.Id, 50m);
+
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var memberClient = factory.CreateHttpsClient();
+
+        var response = await memberClient.GetAsync($"/games/{game.Id}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetGame_ReturnsEntries_WhenGameHasBuyIns()
     {
         using var client = factory.CreateHttpsClient();

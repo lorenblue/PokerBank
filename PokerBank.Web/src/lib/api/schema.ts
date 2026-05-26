@@ -89,35 +89,17 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/me/game-results": {
+    "/me/games": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get my closed-game results. */
-        get: operations["GetMyGameResults"];
+        /** Get my games. */
+        get: operations["GetMyGames"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/games": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List games. */
-        get: operations["ListGames"];
-        put?: never;
-        /** Create a game. */
-        post: operations["CreateGame"];
         delete?: never;
         options?: never;
         head?: never;
@@ -172,6 +154,24 @@ export interface paths {
         /** Update a player. */
         put: operations["UpdatePlayer"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List games. */
+        get: operations["ListGames"];
+        put?: never;
+        /** Create a game. */
+        post: operations["CreateGame"];
         delete?: never;
         options?: never;
         head?: never;
@@ -522,6 +522,25 @@ export interface components {
             entries: components["schemas"]["GetGameEntryResponse"][];
             playerTotals: components["schemas"]["GetGamePlayerTotalResponse"][];
         };
+        GetMyGamesResponse: {
+            /** Format: uuid */
+            id: string;
+            status: components["schemas"]["GameStatus"];
+            /** Format: date-time */
+            playedAtUtc: string;
+            /** Format: double */
+            myBuyInAmount: number | string;
+            /** Format: double */
+            myCashOutAmount: number | string;
+            /** Format: double */
+            myNetAmount: number | string;
+            /** Format: int32 */
+            playerCount: number | string;
+            /** Format: double */
+            totalBuyInAmount: number | string;
+            /** Format: double */
+            totalCashOutAmount: number | string;
+        };
         ListGamesResponse: {
             /** Format: uuid */
             id: string;
@@ -717,11 +736,9 @@ export interface operations {
             };
         };
     };
-    GetMyGameResults: {
+    GetMyGames: {
         parameters: {
-            query?: {
-                gameId?: string;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -734,60 +751,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GameResultResponse"][];
+                    "application/json": components["schemas"]["GetMyGamesResponse"][];
                 };
             };
             /** @description Not Found */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    ListGames: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ListGamesResponse"][];
-                };
-            };
-        };
-    };
-    CreateGame: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CreateGameResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1001,6 +969,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ListGames: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListGamesResponse"][];
+                };
+            };
+        };
+    };
+    CreateGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateGameResponse"];
                 };
             };
             /** @description Conflict */

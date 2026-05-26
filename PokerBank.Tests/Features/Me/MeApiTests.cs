@@ -117,90 +117,81 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task GetMyGameResults_ReturnsLinkedPlayerResults()
+    public async Task GetMyGames_ReturnsGamesForLinkedPlayer()
     {
         using var ownerClient = factory.CreateHttpsClient();
 
         var lorenzo = await CreatePlayer(ownerClient, "Lorenzo");
         var maya = await CreatePlayer(ownerClient, "Maya");
 
-        var game = await CreateGame(ownerClient);
-        await AddBuyIn(ownerClient, game.Id, lorenzo.Id, 100m);
-        await AddBuyIn(ownerClient, game.Id, maya.Id, 100m);
-        await AddCashOut(ownerClient, game.Id, lorenzo.Id, 160m);
-        await AddCashOut(ownerClient, game.Id, maya.Id, 40m);
-        await CloseGame(ownerClient, game.Id);
+        var olderGame = await CreateGame(ownerClient);
+        await AddBuyIn(ownerClient, olderGame.Id, lorenzo.Id, 100m);
+        await AddBuyIn(ownerClient, olderGame.Id, maya.Id, 50m);
+        await AddCashOut(ownerClient, olderGame.Id, lorenzo.Id, 40m);
+        await AddCashOut(ownerClient, olderGame.Id, maya.Id, 110m);
+        await CloseGame(ownerClient, olderGame.Id);
+
+        await Task.Delay(10);
+
+        var unrelatedGame = await CreateGame(ownerClient);
+        await AddBuyIn(ownerClient, unrelatedGame.Id, maya.Id, 75m);
+        await AddCashOut(ownerClient, unrelatedGame.Id, maya.Id, 75m);
+        await CloseGame(ownerClient, unrelatedGame.Id);
+
+        await Task.Delay(10);
+
+        var newerGame = await CreateGame(ownerClient);
+        await AddBuyIn(ownerClient, newerGame.Id, lorenzo.Id, 80m);
+        await AddCashOut(ownerClient, newerGame.Id, lorenzo.Id, 25m);
 
         await factory.LinkDefaultAdminToPlayerAsync(lorenzo.Id);
         await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
 
         using var memberClient = factory.CreateHttpsClient();
 
-        var response = await memberClient.GetAsync("/me/game-results");
+        var response = await memberClient.GetAsync("/me/games");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var results = await response.Content.ReadFromJsonAsync<GameResultResponse[]>();
+        var games = await response.Content.ReadFromJsonAsync<MyGameResponse[]>();
 
-        Assert.NotNull(results);
-        var result = Assert.Single(results);
-        Assert.Equal(lorenzo.Id, result.PlayerId);
-        Assert.Equal("Lorenzo", result.PlayerName);
-        Assert.Equal(game.Id, result.GameId);
-        AssertCloseTo(game.CreatedAtUtc, result.PlayedAtUtc);
-        Assert.Equal(100m, result.BuyInAmount);
-        Assert.Equal(160m, result.CashOutAmount);
-        Assert.Equal(60m, result.NetAmount);
+        Assert.NotNull(games);
+        Assert.Collection(
+            games,
+            game =>
+            {
+                Assert.Equal(newerGame.Id, game.Id);
+                Assert.Equal("Open", game.Status);
+                AssertCloseTo(newerGame.CreatedAtUtc, game.PlayedAtUtc);
+                Assert.Equal(80m, game.MyBuyInAmount);
+                Assert.Equal(25m, game.MyCashOutAmount);
+                Assert.Equal(-55m, game.MyNetAmount);
+                Assert.Equal(1, game.PlayerCount);
+                Assert.Equal(80m, game.TotalBuyInAmount);
+                Assert.Equal(25m, game.TotalCashOutAmount);
+            },
+            game =>
+            {
+                Assert.Equal(olderGame.Id, game.Id);
+                Assert.Equal("Closed", game.Status);
+                AssertCloseTo(olderGame.CreatedAtUtc, game.PlayedAtUtc);
+                Assert.Equal(100m, game.MyBuyInAmount);
+                Assert.Equal(40m, game.MyCashOutAmount);
+                Assert.Equal(-60m, game.MyNetAmount);
+                Assert.Equal(2, game.PlayerCount);
+                Assert.Equal(150m, game.TotalBuyInAmount);
+                Assert.Equal(150m, game.TotalCashOutAmount);
+            });
     }
 
     [Fact]
-    public async Task GetMyGameResults_FiltersByGame()
-    {
-        using var ownerClient = factory.CreateHttpsClient();
-
-        var lorenzo = await CreatePlayer(ownerClient, "Lorenzo");
-        var maya = await CreatePlayer(ownerClient, "Maya");
-
-        var firstGame = await CreateGame(ownerClient);
-        await AddBuyIn(ownerClient, firstGame.Id, lorenzo.Id, 100m);
-        await AddBuyIn(ownerClient, firstGame.Id, maya.Id, 100m);
-        await AddCashOut(ownerClient, firstGame.Id, lorenzo.Id, 160m);
-        await AddCashOut(ownerClient, firstGame.Id, maya.Id, 40m);
-        await CloseGame(ownerClient, firstGame.Id);
-
-        var secondGame = await CreateGame(ownerClient);
-        await AddBuyIn(ownerClient, secondGame.Id, lorenzo.Id, 50m);
-        await AddBuyIn(ownerClient, secondGame.Id, maya.Id, 50m);
-        await AddCashOut(ownerClient, secondGame.Id, lorenzo.Id, 25m);
-        await AddCashOut(ownerClient, secondGame.Id, maya.Id, 75m);
-        await CloseGame(ownerClient, secondGame.Id);
-
-        await factory.LinkDefaultAdminToPlayerAsync(lorenzo.Id);
-        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
-
-        using var memberClient = factory.CreateHttpsClient();
-
-        var response = await memberClient.GetAsync($"/me/game-results?gameId={secondGame.Id}");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var results = await response.Content.ReadFromJsonAsync<GameResultResponse[]>();
-
-        Assert.NotNull(results);
-        var result = Assert.Single(results);
-        Assert.Equal(lorenzo.Id, result.PlayerId);
-        Assert.Equal(secondGame.Id, result.GameId);
-        Assert.Equal(-25m, result.NetAmount);
-    }
-
-    [Fact]
-    public async Task GetMyGameResults_ReturnsNotFound_WhenUserIsNotLinkedToPlayer()
+    public async Task GetMyGames_ReturnsNotFound_WhenUserIsNotLinkedToPlayer()
     {
         await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
 
         using var client = factory.CreateHttpsClient();
 
-        var response = await client.GetAsync("/me/game-results");
+        var response = await client.GetAsync("/me/games");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -237,6 +228,18 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         using var client = factory.CreateHttpsClient();
 
         var response = await client.GetAsync("/game-results");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ListGames_ReturnsForbidden_ForMember()
+    {
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.GetAsync("/games");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -311,6 +314,17 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
 
     private sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
 
+    private sealed record MyGameResponse(
+        Guid Id,
+        string Status,
+        DateTime PlayedAtUtc,
+        decimal MyBuyInAmount,
+        decimal MyCashOutAmount,
+        decimal MyNetAmount,
+        int PlayerCount,
+        decimal TotalBuyInAmount,
+        decimal TotalCashOutAmount);
+
     private sealed record PaymentResponse(
         Guid Id,
         Guid PlayerId,
@@ -318,15 +332,6 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         string Direction,
         string Method,
         DateTimeOffset RecordedAtUtc);
-
-    private sealed record GameResultResponse(
-        Guid PlayerId,
-        string PlayerName,
-        Guid GameId,
-        DateTime PlayedAtUtc,
-        decimal BuyInAmount,
-        decimal CashOutAmount,
-        decimal NetAmount);
 
     private sealed record BalanceResponse(
         Guid PlayerId,

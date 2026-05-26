@@ -50,8 +50,7 @@ var viewGroup = app.MapGroup("")
 
 viewGroup.MapGetMyBalance();
 viewGroup.MapGetMyPayments();
-viewGroup.MapGetMyGameResults();
-viewGroup.MapListGames();
+viewGroup.MapGetMyGames();
 viewGroup.MapGetGame();
 viewGroup.MapListPlayers();
 viewGroup.MapGetPlayer();
@@ -75,5 +74,6 @@ manageGroup.MapCreatePlayer();
 manageGroup.MapUpdatePlayer();
 manageGroup.MapArchivePlayer();
 manageGroup.MapSendBalanceUpdates();
+manageGroup.MapListGames();
 
 app.Run();
