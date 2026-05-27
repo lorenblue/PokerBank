@@ -72,6 +72,47 @@ public sealed class PokerGame
         return Result.Ok();
     }
 
+    public Result<GameEntry> UpdateEntryAmount(Guid entryId, Money amount)
+    {
+        if (IsClosed())
+        {
+            return Result.Fail<GameEntry>(PokerGameErrors.GameClosed());
+        }
+
+        if (!amount.IsPositive)
+        {
+            return Result.Fail<GameEntry>(PokerGameErrors.InvalidAmount());
+        }
+
+        var entry = _entries.SingleOrDefault(entry => entry.Id == entryId);
+
+        if (entry is null)
+        {
+            return Result.Fail<GameEntry>(PokerGameErrors.EntryNotFound());
+        }
+
+        var updatedBuyIns = TotalBuyIns;
+        var updatedCashOuts = TotalCashOuts;
+
+        if (entry.Type == GameEntryType.BuyIn)
+        {
+            updatedBuyIns = updatedBuyIns - entry.Amount + amount;
+        }
+        else
+        {
+            updatedCashOuts = updatedCashOuts - entry.Amount + amount;
+        }
+
+        if (updatedCashOuts > updatedBuyIns)
+        {
+            return Result.Fail<GameEntry>(PokerGameErrors.CashOutsExceedBuyIns());
+        }
+
+        entry.UpdateAmount(amount);
+
+        return Result.Ok(entry);
+    }
+
     public Result Close()
     {
         if (IsClosed())

@@ -49,4 +49,14 @@ public sealed class GameEntry
     public GameEntryType Type { get; private set; }
 
     public DateTimeOffset RecordedAtUtc { get; private set; }
+
+    internal void UpdateAmount(Money amount)
+    {
+        if (!amount.IsPositive)
+        {
+            throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
+        }
+
+        Amount = amount;
+    }
 }

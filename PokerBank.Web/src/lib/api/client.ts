@@ -17,6 +17,7 @@ export type UpdatePlayerRequest = Schemas['UpdatePlayerRequest'];
 export type RecordPaymentRequest = Schemas['RecordPaymentRequest'];
 export type AddBuyInRequest = Schemas['AddBuyInRequest'];
 export type AddCashOutRequest = Schemas['AddCashOutRequest'];
+export type UpdateGameEntryRequest = Schemas['UpdateGameEntryRequest'];
 export type SendBalanceUpdatesResponse = Schemas['SendBalanceUpdatesResponse'];
 
 type ApiFetch = (request: Request) => Promise<Response>;
@@ -97,6 +98,14 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 			unwrap(
 				client.POST('/games/{gameId}/cash-outs', {
 					params: { path: { gameId } },
+					body
+				})
+			),
+
+		updateGameEntry: (gameId: string, entryId: string, body: UpdateGameEntryRequest) =>
+			unwrap(
+				client.PUT('/games/{gameId}/entries/{entryId}', {
+					params: { path: { gameId, entryId } },
 					body
 				})
 			),

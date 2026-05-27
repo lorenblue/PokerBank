@@ -78,6 +78,29 @@ export const actions: Actions = {
 		}
 	},
 
+	updateEntry: async ({ fetch, params, request }) => {
+		const data = await request.formData();
+		const entryId = data.get('entryId')?.toString();
+		const amount = Number(data.get('amount'));
+
+		if (!entryId || !Number.isFinite(amount)) {
+			return fail(400, { error: 'Entry and amount are required.' });
+		}
+
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
+
+		try {
+			await api.updateGameEntry(params.id, entryId, { amount });
+			return { success: true };
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return fail(error.status, { error: error.message });
+			}
+
+			throw error;
+		}
+	},
+
 	deleteGame: async ({ fetch, params, request }) => {
 		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 

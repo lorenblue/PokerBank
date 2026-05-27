@@ -189,6 +189,112 @@ public sealed class PokerGameTests
     }
 
     [Fact]
+    public void UpdateEntryAmount_UpdatesBuyInAmount()
+    {
+        var game = PokerGame.Create(PokerGroupId);
+        var playerId = Guid.NewGuid();
+        var entry = game.AddBuyIn(playerId, new Money(50m)).Value;
+
+        var result = game.UpdateEntryAmount(entry.Id, new Money(75m));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(new Money(75m), result.Value.Amount);
+        Assert.Equal(new Money(75m), game.TotalBuyIns);
+    }
+
+    [Fact]
+    public void UpdateEntryAmount_UpdatesCashOutAmount()
+    {
+        var game = PokerGame.Create(PokerGroupId);
+        var playerId = Guid.NewGuid();
+        Assert.True(game.AddBuyIn(playerId, new Money(100m)).IsSuccess);
+        var entry = game.AddCashOut(playerId, new Money(50m)).Value;
+
+        var result = game.UpdateEntryAmount(entry.Id, new Money(75m));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(new Money(75m), result.Value.Amount);
+        Assert.Equal(new Money(75m), game.TotalCashOuts);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-10)]
+    public void UpdateEntryAmount_RequiresPositiveAmount(decimal amount)
+    {
+        var game = PokerGame.Create(PokerGroupId);
+        var entry = game.AddBuyIn(Guid.NewGuid(), new Money(50m)).Value;
+
+        var result = game.UpdateEntryAmount(entry.Id, new Money(amount));
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.InvalidAmount, error.Code);
+        Assert.Equal(new Money(50m), entry.Amount);
+    }
+
+    [Fact]
+    public void UpdateEntryAmount_Fails_WhenEntryDoesNotExist()
+    {
+        var game = PokerGame.Create(PokerGroupId);
+
+        var result = game.UpdateEntryAmount(Guid.NewGuid(), new Money(50m));
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.EntryNotFound, error.Code);
+    }
+
+    [Fact]
+    public void UpdateEntryAmount_Fails_WhenGameIsClosed()
+    {
+        var game = PokerGame.Create(PokerGroupId);
+        var playerId = Guid.NewGuid();
+        var entry = game.AddBuyIn(playerId, new Money(50m)).Value;
+        Assert.True(game.AddCashOut(playerId, new Money(50m)).IsSuccess);
+        Assert.True(game.Close().IsSuccess);
+
+        var result = game.UpdateEntryAmount(entry.Id, new Money(75m));
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.GameClosed, error.Code);
+        Assert.Equal(new Money(50m), entry.Amount);
+    }
+
+    [Fact]
+    public void UpdateEntryAmount_Fails_WhenCashOutsWouldExceedBuyIns()
+    {
+        var game = PokerGame.Create(PokerGroupId);
+        var playerId = Guid.NewGuid();
+        Assert.True(game.AddBuyIn(playerId, new Money(100m)).IsSuccess);
+        var cashOut = game.AddCashOut(playerId, new Money(75m)).Value;
+
+        var result = game.UpdateEntryAmount(cashOut.Id, new Money(100.01m));
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.CashOutsExceedBuyIns, error.Code);
+        Assert.Equal(new Money(75m), cashOut.Amount);
+    }
+
+    [Fact]
+    public void UpdateEntryAmount_Fails_WhenReducedBuyInWouldMakeCashOutsExceedBuyIns()
+    {
+        var game = PokerGame.Create(PokerGroupId);
+        var playerId = Guid.NewGuid();
+        var buyIn = game.AddBuyIn(playerId, new Money(100m)).Value;
+        Assert.True(game.AddCashOut(playerId, new Money(75m)).IsSuccess);
+
+        var result = game.UpdateEntryAmount(buyIn.Id, new Money(74.99m));
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.CashOutsExceedBuyIns, error.Code);
+        Assert.Equal(new Money(100m), buyIn.Amount);
+    }
+
+    [Fact]
     public void Close_Fails_WhenBuyInsDoNotEqualCashOuts()
     {
         var game = PokerGame.Create(PokerGroupId);

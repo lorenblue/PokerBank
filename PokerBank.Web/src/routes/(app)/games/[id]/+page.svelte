@@ -12,6 +12,7 @@
 	let isDeleteGameOpen = $state(false);
 	let isCloseGameOpen = $state(false);
 	let selectedEntryPlayerId = $state('');
+	let entryToEdit = $state<PageData['game']['entries'][number] | null>(null);
 	let entryToDelete = $state<PageData['game']['entries'][number] | null>(null);
 
 	const isManager = $derived(data.isManager);
@@ -58,6 +59,10 @@
 
 	function closeDeleteEntry() {
 		entryToDelete = null;
+	}
+
+	function closeEditEntry() {
+		entryToEdit = null;
 	}
 
 	function openAddBuyIn(playerId = '') {
@@ -213,6 +218,9 @@
 								{money(entry.amount)}
 							</strong>
 							{#if isManager && isOpen}
+								<button type="button" class="btn btn-ghost" onclick={() => (entryToEdit = entry)}>
+									Edit
+								</button>
 								<button type="button" class="btn btn-subtle-danger" onclick={() => (entryToDelete = entry)}>
 									Delete
 								</button>
@@ -246,6 +254,38 @@
 		hint="Only players with a buy-in can cash out."
 		onClose={() => (isAddCashOutOpen = false)}
 	/>
+{/if}
+
+{#if isManager && entryToEdit}
+	<Modal title={`Edit ${entryLabel(entryToEdit.type).toLowerCase()}`} onClose={closeEditEntry}>
+		<form method="POST" action="?/updateEntry" class="form-grid">
+			<input type="hidden" name="entryId" value={entryToEdit.id} />
+
+			<div class="empty-state">
+				<strong>{playerNames.get(entryToEdit.playerId) ?? entryToEdit.playerId}</strong>
+				<p>
+					{entryLabel(entryToEdit.type)} · {formatGameEntryDateTime(entryToEdit.recordedAtUtc, data.game.createdAtUtc)}
+				</p>
+			</div>
+
+			<label class="field">
+				Amount
+				<input
+					name="amount"
+					type="number"
+					min="0.01"
+					step="0.01"
+					required
+					value={Number(entryToEdit.amount).toFixed(2)}
+				/>
+			</label>
+
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick={closeEditEntry}>Cancel</button>
+				<button type="submit" class="btn btn-primary">Save entry</button>
+			</div>
+		</form>
+	</Modal>
 {/if}
 
 {#if isManager && entryToDelete}

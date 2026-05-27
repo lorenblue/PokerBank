@@ -60,6 +60,7 @@ manageGroup.MapCreateGame();
 manageGroup.MapDeleteGame();
 manageGroup.MapAddBuyIn();
 manageGroup.MapAddCashOut();
+manageGroup.MapUpdateGameEntry();
 manageGroup.MapDeleteGameEntry();
 manageGroup.MapCloseGame();
 manageGroup.MapRecordPayment();

@@ -659,6 +659,136 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task UpdateGameEntry_ReturnsUpdatedEntry_WhenEntryExistsInOpenGame()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        var buyIn = await AddBuyIn(client, game.Id, player.Id, 50m);
+
+        var response = await client.PutAsJsonAsync(
+            $"/games/{game.Id}/entries/{buyIn.Id}",
+            new { Amount = 75m });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var entry = await response.Content.ReadFromJsonAsync<GameEntryResponse>();
+
+        Assert.NotNull(entry);
+        Assert.Equal(buyIn.Id, entry.Id);
+        Assert.Equal(game.Id, entry.GameId);
+        Assert.Equal(player.Id, entry.PlayerId);
+        Assert.Equal(75m, entry.Amount);
+        Assert.Equal("BuyIn", entry.Type);
+
+        var getResponse = await client.GetAsync($"/games/{game.Id}");
+        getResponse.EnsureSuccessStatusCode();
+
+        var gameDetails = await getResponse.Content.ReadFromJsonAsync<GameDetailsResponse>();
+
+        Assert.NotNull(gameDetails);
+        Assert.Equal(75m, gameDetails.TotalBuyInAmount);
+        Assert.Equal(75m, gameDetails.RemainingCashOutAmount);
+    }
+
+    [Fact]
+    public async Task UpdateGameEntry_ReturnsNotFound_WhenGameDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.PutAsJsonAsync(
+            $"/games/{Guid.NewGuid()}/entries/{Guid.NewGuid()}",
+            new { Amount = 50m });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateGameEntry_ReturnsNotFound_WhenEntryDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+
+        var response = await client.PutAsJsonAsync(
+            $"/games/{game.Id}/entries/{Guid.NewGuid()}",
+            new { Amount = 50m });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-10)]
+    public async Task UpdateGameEntry_ReturnsBadRequest_WhenAmountIsNotPositive(decimal amount)
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        var buyIn = await AddBuyIn(client, game.Id, player.Id, 50m);
+
+        var response = await client.PutAsJsonAsync(
+            $"/games/{game.Id}/entries/{buyIn.Id}",
+            new { Amount = amount });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateGameEntry_ReturnsConflict_WhenGameIsClosed()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        var buyIn = await AddBuyIn(client, game.Id, player.Id, 50m);
+        await AddCashOut(client, game.Id, player.Id, 50m);
+        await CloseGame(client, game.Id);
+
+        var response = await client.PutAsJsonAsync(
+            $"/games/{game.Id}/entries/{buyIn.Id}",
+            new { Amount = 75m });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateGameEntry_ReturnsConflict_WhenCashOutsWouldExceedBuyIns()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 100m);
+        var cashOut = await AddCashOut(client, game.Id, player.Id, 75m);
+
+        var response = await client.PutAsJsonAsync(
+            $"/games/{game.Id}/entries/{cashOut.Id}",
+            new { Amount = 100.01m });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateGameEntry_ReturnsConflict_WhenReducedBuyInWouldMakeCashOutsExceedBuyIns()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        var buyIn = await AddBuyIn(client, game.Id, player.Id, 100m);
+        await AddCashOut(client, game.Id, player.Id, 75m);
+
+        var response = await client.PutAsJsonAsync(
+            $"/games/{game.Id}/entries/{buyIn.Id}",
+            new { Amount = 74.99m });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CloseGame_ReturnsOk_WhenGameIsBalanced()
     {
         using var client = factory.CreateHttpsClient();
