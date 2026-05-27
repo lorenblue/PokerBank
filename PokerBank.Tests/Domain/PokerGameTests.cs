@@ -312,6 +312,19 @@ public sealed class PokerGameTests
     }
 
     [Fact]
+    public void Close_Fails_WhenGameHasNoEntries()
+    {
+        var game = PokerGame.Create(PokerGroupId);
+
+        var result = game.Close();
+
+        Assert.True(result.IsFailed);
+        var error = Assert.Single(result.Errors.OfType<PokerGameError>());
+        Assert.Equal(PokerGameErrorCode.EmptyGame, error.Code);
+        Assert.Equal(GameStatus.Open, game.Status);
+    }
+
+    [Fact]
     public void Close_Succeeds_WhenBuyInsEqualCashOuts()
     {
         var game = PokerGame.Create(PokerGroupId);

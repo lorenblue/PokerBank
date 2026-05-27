@@ -65,8 +65,11 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     public async Task ListGames_ReturnsGamesNewestFirst()
     {
         using var client = factory.CreateHttpsClient();
+        var player = await CreatePlayer(client, "Lorenzo");
 
         var olderGame = await CreateGame(client);
+        await AddBuyIn(client, olderGame.Id, player.Id, 50m);
+        await AddCashOut(client, olderGame.Id, player.Id, 50m);
         await CloseGame(client, olderGame.Id);
         await Task.Delay(10);
         var newerGame = await CreateGame(client);
@@ -119,11 +122,16 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     public async Task ListGames_ReturnsRequestedPage()
     {
         using var client = factory.CreateHttpsClient();
+        var player = await CreatePlayer(client, "Lorenzo");
 
         var oldestGame = await CreateGame(client);
+        await AddBuyIn(client, oldestGame.Id, player.Id, 50m);
+        await AddCashOut(client, oldestGame.Id, player.Id, 50m);
         await CloseGame(client, oldestGame.Id);
         await Task.Delay(10);
         var middleGame = await CreateGame(client);
+        await AddBuyIn(client, middleGame.Id, player.Id, 50m);
+        await AddCashOut(client, middleGame.Id, player.Id, 50m);
         await CloseGame(client, middleGame.Id);
         await Task.Delay(10);
         var newestGame = await CreateGame(client);
@@ -210,6 +218,9 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         using var client = factory.CreateHttpsClient();
 
         var game = await CreateGame(client);
+        var player = await CreatePlayer(client, "Lorenzo");
+        await AddBuyIn(client, game.Id, player.Id, 50m);
+        await AddCashOut(client, game.Id, player.Id, 50m);
         await CloseGame(client, game.Id);
 
         var response = await client.DeleteAsync($"/games/{game.Id}");
@@ -911,6 +922,22 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         var response = await client.PostAsync($"/games/{game.Id}/close", content: null);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CloseGame_ReturnsConflict_WhenGameHasNoActivity()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var game = await CreateGame(client);
+
+        var response = await client.PostAsync($"/games/{game.Id}/close", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal("Cannot close a game with no activity.", error?.Error);
     }
 
     [Fact]

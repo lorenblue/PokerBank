@@ -8,5 +8,6 @@ public enum PokerGameErrorCode
     CashOutsExceedBuyIns = 4,
     BuyInsMustEqualCashOuts = 5,
     PlayerHasNoBuyIns = 6,
-    EntryNotFound = 7
+    EntryNotFound = 7,
+    EmptyGame = 8
 }

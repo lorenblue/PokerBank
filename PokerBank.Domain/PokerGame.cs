@@ -120,6 +120,11 @@ public sealed class PokerGame
             return Result.Fail(PokerGameErrors.GameClosed());
         }
 
+        if (_entries.Count == 0)
+        {
+            return Result.Fail(PokerGameErrors.EmptyGame());
+        }
+
         if (TotalBuyIns != TotalCashOuts)
         {
             return Result.Fail(PokerGameErrors.BuyInsMustEqualCashOuts());

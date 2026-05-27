@@ -27,7 +27,7 @@
 			.filter((total) => Number(total.buyInAmount) > 0)
 			.map((total) => ({ id: total.playerId, name: total.playerName }))
 	);
-	const canCloseGame = $derived(Number(data.game.remainingCashOutAmount) === 0);
+	const canCloseGame = $derived(data.game.entries.length > 0 && Number(data.game.remainingCashOutAmount) === 0);
 	const isOpen = $derived(data.game.status === 'Open');
 
 	function money(value: number | string) {
