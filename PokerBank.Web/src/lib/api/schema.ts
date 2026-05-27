@@ -549,7 +549,14 @@ export interface components {
             /** Format: date-time */
             createdAtUtc: string;
         };
-        ListPaymentsResponse: {
+        LoginRequest: {
+            email: null | string;
+            password: null | string;
+        };
+        LoginResponse: {
+            email: string;
+        };
+        PagedResponseOfPaymentResponse: {
             items: components["schemas"]["PaymentResponse"][];
             /** Format: int32 */
             page: number | string;
@@ -559,13 +566,6 @@ export interface components {
             totalCount: number | string;
             /** Format: int32 */
             totalPages: number | string;
-        };
-        LoginRequest: {
-            email: null | string;
-            password: null | string;
-        };
-        LoginResponse: {
-            email: string;
         };
         /** @enum {unknown} */
         PaymentDirection: "MadeByPlayer" | "ReceivedByPlayer";
@@ -1363,7 +1363,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListPaymentsResponse"];
+                    "application/json": components["schemas"]["PagedResponseOfPaymentResponse"];
                 };
             };
             /** @description Bad Request */

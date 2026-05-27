@@ -1,14 +1,13 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
+using PokerBank.Api.Pagination;
 
 namespace PokerBank.Api.Features.Payments;
 
 public static class ListPayments
 {
-    private const int DefaultPage = 1;
     private const int DefaultPageSize = 25;
-    private const int MaxPageSize = 100;
 
     public static IEndpointRouteBuilder MapListPayments(this IEndpointRouteBuilder app)
     {
@@ -20,7 +19,7 @@ public static class ListPayments
         return app;
     }
 
-    private static async Task<Results<Ok<Response>, BadRequest<ErrorResponse>>> Handle(
+    private static async Task<Results<Ok<PagedResponse<PaymentResponse>>, BadRequest<ErrorResponse>>> Handle(
         Guid? playerId,
         int? page,
         int? pageSize,
@@ -28,17 +27,9 @@ public static class ListPayments
         PokerBankDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var requestedPage = page ?? DefaultPage;
-        var requestedPageSize = pageSize ?? DefaultPageSize;
-
-        if (requestedPage < 1)
+        if (!PageRequest.TryCreate(page, pageSize, DefaultPageSize, out var pageRequest, out var error))
         {
-            return TypedResults.BadRequest(new ErrorResponse("Page must be greater than or equal to 1."));
-        }
-
-        if (requestedPageSize is < 1 or > MaxPageSize)
-        {
-            return TypedResults.BadRequest(new ErrorResponse($"Page size must be between 1 and {MaxPageSize}."));
+            return TypedResults.BadRequest(error!);
         }
 
         var query = dbContext.Payments
@@ -50,37 +41,18 @@ public static class ListPayments
             query = query.Where(payment => payment.PlayerId == playerId);
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        var payments = await query
+        var payments = query
             .OrderByDescending(payment => payment.RecordedAtUtc)
-            .Skip((requestedPage - 1) * requestedPageSize)
-            .Take(requestedPageSize)
             .Select(payment => new PaymentResponse(
                 payment.Id,
                 payment.PlayerId,
                 payment.Amount.Amount,
                 payment.Direction,
                 payment.Method,
-                payment.RecordedAtUtc))
-            .ToArrayAsync(cancellationToken);
+                payment.RecordedAtUtc));
 
-        var totalPages = totalCount == 0
-            ? 0
-            : (int)Math.Ceiling((double)totalCount / requestedPageSize);
+        var response = await payments.ToPagedResponseAsync(pageRequest, cancellationToken);
 
-        return TypedResults.Ok(new Response(
-            payments,
-            requestedPage,
-            requestedPageSize,
-            totalCount,
-            totalPages));
+        return TypedResults.Ok(response);
     }
-
-    private sealed record Response(
-        PaymentResponse[] Items,
-        int Page,
-        int PageSize,
-        int TotalCount,
-        int TotalPages);
 }
