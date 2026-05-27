@@ -10,15 +10,6 @@ public sealed record PaymentResponse(
     PaymentMethod Method,
     DateTimeOffset RecordedAtUtc)
 {
-    public static PaymentResponse From(PaymentRow row) =>
-        new(
-            row.Id,
-            row.PlayerId,
-            row.Amount,
-            row.Direction,
-            row.Method,
-            row.RecordedAtUtc);
-
     public static PaymentResponse From(Payment payment) =>
         new(
             payment.Id,

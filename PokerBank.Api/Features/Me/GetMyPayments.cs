@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using PokerBank.Api.Data;
 using PokerBank.Api.Features.Payments;
 
@@ -29,14 +30,21 @@ public static class GetMyPayments
             return TypedResults.NotFound(new ErrorResponse("Player profile was not found."));
         }
 
-        var payments = await PaymentQuery.ListAsync(
-            dbContext,
-            groupContext.Id,
-            currentPlayer.Id,
-            cancellationToken);
+        var payments = await dbContext.Payments
+            .AsNoTracking()
+            .Where(payment =>
+                payment.PokerGroupId == groupContext.Id &&
+                payment.PlayerId == currentPlayer.Id)
+            .OrderByDescending(payment => payment.RecordedAtUtc)
+            .Select(payment => new PaymentResponse(
+                payment.Id,
+                payment.PlayerId,
+                payment.Amount.Amount,
+                payment.Direction,
+                payment.Method,
+                payment.RecordedAtUtc))
+            .ToArrayAsync(cancellationToken);
 
-        return TypedResults.Ok(payments
-            .Select(PaymentResponse.From)
-            .ToArray());
+        return TypedResults.Ok(payments);
     }
 }

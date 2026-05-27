@@ -11,6 +11,7 @@ export type MyGame = Schemas['GetMyGamesResponse'];
 export type Player = Schemas['PlayerResponse'];
 export type PlayerDetails = Schemas['PlayerResponse'];
 export type Payment = Schemas['PaymentResponse'];
+export type PaymentPage = Schemas['ListPaymentsResponse'];
 export type CreateGameResponse = Schemas['CreateGameResponse'];
 export type CreatePlayerRequest = Schemas['CreatePlayerRequest'];
 export type UpdatePlayerRequest = Schemas['UpdatePlayerRequest'];
@@ -50,10 +51,10 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 				client.POST('/balances/updates/send')
 			),
 
-		listPayments: (playerId?: string) =>
-			unwrap<Payment[]>(
+		listPayments: (playerId?: string, page?: number, pageSize?: number) =>
+			unwrap<PaymentPage>(
 				client.GET('/payments', {
-					params: { query: { playerId } }
+					params: { query: { playerId, page, pageSize } }
 				})
 			),
 

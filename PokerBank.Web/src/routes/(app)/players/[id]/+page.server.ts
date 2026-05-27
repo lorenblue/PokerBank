@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ fetch, params, parent, request }) =
 	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 	try {
-		const [player, balances, gameResults, payments] = await Promise.all([
+		const [player, balances, gameResults, paymentPage] = await Promise.all([
 			api.getPlayer(params.id),
 			api.listBalances(params.id),
 			api.listGameResults(undefined, params.id),
@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ fetch, params, parent, request }) =
 			player,
 			balance: balances[0],
 			gameResults,
-			payments
+			payments: paymentPage.items
 		};
 	} catch (caught) {
 		if (caught instanceof ApiError && caught.status === 404) {

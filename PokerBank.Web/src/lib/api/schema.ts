@@ -549,6 +549,17 @@ export interface components {
             /** Format: date-time */
             createdAtUtc: string;
         };
+        ListPaymentsResponse: {
+            items: components["schemas"]["PaymentResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            totalPages: number | string;
+        };
         LoginRequest: {
             email: null | string;
             password: null | string;
@@ -1337,6 +1348,8 @@ export interface operations {
         parameters: {
             query?: {
                 playerId?: string;
+                page?: number | string;
+                pageSize?: number | string;
             };
             header?: never;
             path?: never;
@@ -1350,7 +1363,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentResponse"][];
+                    "application/json": components["schemas"]["ListPaymentsResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

@@ -14,8 +14,14 @@
 
 	const players = $derived(data.players ?? []);
 	const payments = $derived(data.payments ?? []);
+	const paymentPage = $derived(data.paymentPage);
 	const activePlayers = $derived(players.filter((player) => player.isActive));
 	const playerNames = $derived(new Map(players.map((player) => [player.id, player.name] as const)));
+	const currentPage = $derived(Number(paymentPage?.page ?? 1));
+	const pageSize = $derived(Number(paymentPage?.pageSize ?? 10));
+	const totalPages = $derived(Number(paymentPage?.totalPages ?? 0));
+	const hasPreviousPage = $derived(currentPage > 1);
+	const hasNextPage = $derived(totalPages > currentPage);
 
 	function unsignedMoney(value: number | string) {
 		return `$${Math.abs(Number(value)).toFixed(2)}`;
@@ -37,6 +43,15 @@
 
 	function closeDeletePayment() {
 		paymentToDelete = null;
+	}
+
+	function pageHref(page: number) {
+		const params = new URLSearchParams({
+			page: page.toString(),
+			pageSize: pageSize.toString()
+		});
+
+		return `/payments?${params.toString()}`;
 	}
 </script>
 
@@ -71,7 +86,7 @@
 	<div class="section-head">
 		<div>
 			<h2 class="section-title">Payment history</h2>
-			<p class="row-meta">{payments.length} recorded payments</p>
+			<p class="row-meta">{paymentPage?.totalCount ?? payments.length} recorded payments</p>
 		</div>
 	</div>
 
@@ -117,6 +132,24 @@
 					{/each}
 				</tbody>
 			</table>
+		</div>
+	{/if}
+
+	{#if paymentPage}
+		<div class="section-head mt-5">
+			<p class="row-meta">Page {totalPages === 0 ? 0 : currentPage} of {totalPages}</p>
+			<div class="row-actions">
+				{#if hasPreviousPage}
+					<a href={pageHref(currentPage - 1)} class="btn btn-secondary">Previous</a>
+				{:else}
+					<button type="button" class="btn btn-secondary" disabled>Previous</button>
+				{/if}
+				{#if hasNextPage}
+					<a href={pageHref(currentPage + 1)} class="btn btn-secondary">Next</a>
+				{:else}
+					<button type="button" class="btn btn-secondary" disabled>Next</button>
+				{/if}
+			</div>
 		</div>
 	{/if}
 </section>

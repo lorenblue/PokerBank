@@ -24,11 +24,11 @@ export const load: PageServerLoad = async ({ fetch, parent, request }) => {
 		};
 	}
 
-	const [balances, games, players, payments] = await Promise.all([
+	const [balances, games, players, paymentPage] = await Promise.all([
 		api.listBalances(),
 		api.listGames(),
 		api.listPlayers(),
-		api.listPayments()
+		api.listPayments(undefined, 1, 4)
 	]);
 
 	return {
@@ -36,7 +36,7 @@ export const load: PageServerLoad = async ({ fetch, parent, request }) => {
 		balances,
 		games,
 		players,
-		payments
+		payments: paymentPage.items
 	};
 };
 

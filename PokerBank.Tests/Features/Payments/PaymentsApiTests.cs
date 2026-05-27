@@ -84,11 +84,15 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var payments = await response.Content.ReadFromJsonAsync<PaymentResponse[]>();
+        var page = await response.Content.ReadFromJsonAsync<ListPaymentsResponse>();
 
-        Assert.NotNull(payments);
+        Assert.NotNull(page);
+        Assert.Equal(1, page.Page);
+        Assert.Equal(25, page.PageSize);
+        Assert.Equal(2, page.TotalCount);
+        Assert.Equal(1, page.TotalPages);
         Assert.Collection(
-            payments,
+            page.Items,
             payment =>
             {
                 Assert.Equal(newerPayment.Id, payment.Id);
@@ -121,15 +125,81 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var payments = await response.Content.ReadFromJsonAsync<PaymentResponse[]>();
+        var page = await response.Content.ReadFromJsonAsync<ListPaymentsResponse>();
 
-        Assert.NotNull(payments);
-        var payment = Assert.Single(payments);
+        Assert.NotNull(page);
+        Assert.Equal(1, page.Page);
+        Assert.Equal(25, page.PageSize);
+        Assert.Equal(1, page.TotalCount);
+        Assert.Equal(1, page.TotalPages);
+        var payment = Assert.Single(page.Items);
         Assert.Equal(lorenzoPayment.Id, payment.Id);
         Assert.Equal(lorenzo.Id, payment.PlayerId);
         Assert.Equal(40m, payment.Amount);
         Assert.Equal("MadeByPlayer", payment.Direction);
         Assert.Equal("ETransfer", payment.Method);
+    }
+
+    [Fact]
+    public async Task ListPayments_ReturnsRequestedPage()
+    {
+        using var client = factory.CreateHttpsClient();
+        var player = await CreatePlayer(client, "Lorenzo");
+
+        var oldestPayment = await RecordPayment(client, player.Id, 10m, "MadeByPlayer");
+        await Task.Delay(10);
+        await RecordPayment(client, player.Id, 20m, "MadeByPlayer");
+        await Task.Delay(10);
+        var newestPayment = await RecordPayment(client, player.Id, 30m, "MadeByPlayer");
+
+        var firstResponse = await client.GetAsync("/payments?page=1&pageSize=2");
+        var secondResponse = await client.GetAsync("/payments?page=2&pageSize=2");
+
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+
+        var firstPage = await firstResponse.Content.ReadFromJsonAsync<ListPaymentsResponse>();
+        var secondPage = await secondResponse.Content.ReadFromJsonAsync<ListPaymentsResponse>();
+
+        Assert.NotNull(firstPage);
+        Assert.Equal(1, firstPage.Page);
+        Assert.Equal(2, firstPage.PageSize);
+        Assert.Equal(3, firstPage.TotalCount);
+        Assert.Equal(2, firstPage.TotalPages);
+        Assert.Collection(
+            firstPage.Items,
+            payment => Assert.Equal(newestPayment.Id, payment.Id),
+            payment => Assert.Equal(20m, payment.Amount));
+
+        Assert.NotNull(secondPage);
+        Assert.Equal(2, secondPage.Page);
+        Assert.Equal(2, secondPage.PageSize);
+        Assert.Equal(3, secondPage.TotalCount);
+        Assert.Equal(2, secondPage.TotalPages);
+        var payment = Assert.Single(secondPage.Items);
+        Assert.Equal(oldestPayment.Id, payment.Id);
+    }
+
+    [Theory]
+    [InlineData(0, 25, "Page must be greater than or equal to 1.")]
+    [InlineData(-1, 25, "Page must be greater than or equal to 1.")]
+    [InlineData(1, 0, "Page size must be between 1 and 100.")]
+    [InlineData(1, -1, "Page size must be between 1 and 100.")]
+    [InlineData(1, 101, "Page size must be between 1 and 100.")]
+    public async Task ListPayments_ReturnsBadRequest_WhenPagingIsInvalid(
+        int page,
+        int pageSize,
+        string expectedError)
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.GetAsync($"/payments?page={page}&pageSize={pageSize}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal(expectedError, error?.Error);
     }
 
     [Fact]
@@ -289,6 +359,15 @@ public sealed class PaymentsApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         string Direction,
         string Method,
         DateTimeOffset RecordedAtUtc);
+
+    private sealed record ListPaymentsResponse(
+        PaymentResponse[] Items,
+        int Page,
+        int PageSize,
+        int TotalCount,
+        int TotalPages);
+
+    private sealed record ErrorResponse(string Error);
 
     private sealed record BalanceResponse(
         Guid PlayerId,
