@@ -272,6 +272,53 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Theory]
+    [MemberData(nameof(ManagerOnlyEndpointCases))]
+    public async Task ManagerOnlyEndpoint_ReturnsForbidden_ForMember(
+        HttpMethod method,
+        string path,
+        object? body)
+    {
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var client = factory.CreateHttpsClient();
+        using var request = new HttpRequestMessage(method, path);
+
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body);
+        }
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    public static TheoryData<HttpMethod, string, object?> ManagerOnlyEndpointCases()
+    {
+        var playerId = Guid.NewGuid();
+        var gameId = Guid.NewGuid();
+        var entryId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        return new TheoryData<HttpMethod, string, object?>
+        {
+            { HttpMethod.Post, "/games", null },
+            { HttpMethod.Delete, $"/games/{gameId}", null },
+            { HttpMethod.Post, $"/games/{gameId}/buy-ins", new { PlayerId = playerId, Amount = 50m } },
+            { HttpMethod.Post, $"/games/{gameId}/cash-outs", new { PlayerId = playerId, Amount = 50m } },
+            { HttpMethod.Post, $"/games/{gameId}/close", null },
+            { HttpMethod.Delete, $"/games/{gameId}/entries/{entryId}", null },
+            { HttpMethod.Post, "/players", new { Name = "Lorenzo" } },
+            { HttpMethod.Put, $"/players/{playerId}", new { Name = "Lorenzo", EmailAddress = "lorenzo@example.com" } },
+            { HttpMethod.Post, $"/players/{playerId}/archive", null },
+            { HttpMethod.Post, $"/players/{playerId}/payments/made", new { Amount = 20m, Method = "ETransfer" } },
+            { HttpMethod.Post, $"/players/{playerId}/payments/received", new { Amount = 20m, Method = "ETransfer" } },
+            { HttpMethod.Get, $"/payments/{paymentId}", null },
+            { HttpMethod.Delete, $"/payments/{paymentId}", null }
+        };
+    }
+
     private static async Task<PlayerResponse> CreatePlayer(HttpClient client, string name)
     {
         var response = await client.PostAsJsonAsync("/players", new { Name = name });
