@@ -16,69 +16,72 @@
 
 		return `${sign}$${Math.abs(amount).toFixed(2)}`;
 	}
+
+	function amountClass(value: number | string) {
+		const amount = Number(value);
+
+		if (amount > 0) return 'amount-positive';
+		if (amount < 0) return 'amount-negative';
+
+		return 'amount-neutral';
+	}
 </script>
 
 <svelte:head>
 	<title>My Games | PokerBank</title>
 </svelte:head>
 
-<section class="mb-6">
-	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">My Games</h1>
+<section class="page-header">
+	<div>
+		<h1 class="page-title">My Games</h1>
+	</div>
 </section>
 
-<section class="grid gap-4 lg:grid-cols-2">
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<h2 class="mb-4 text-base font-bold">Open</h2>
+<section class="grid-two">
+	<div class="card card-pad">
+		<div class="section-head">
+			<h2 class="section-title">Open</h2>
+			<span class="badge badge-open">{openGames.length}</span>
+		</div>
 
 		{#if openGames.length === 0}
-			<p class="text-sm text-slate-500">No open games.</p>
+			<p class="empty-state">No open games.</p>
 		{:else}
-			<div class="grid gap-3">
+			<div class="data-list">
 				{#each openGames as game}
-					<a
-						href={`/games/${game.id}`}
-						class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3 hover:bg-slate-50"
-					>
+					<a href={`/games/${game.id}`} class="data-row">
 						<div>
-							<span class="text-sm text-slate-500">{formatDateTime(game.playedAtUtc)}</span>
-							<p class="mt-1 text-xs text-slate-500">
+							<strong class="row-title">{formatDateTime(game.playedAtUtc)}</strong>
+							<p class="row-meta">
 								{game.playerCount} {Number(game.playerCount) === 1 ? 'player' : 'players'}
 							</p>
 						</div>
-						<strong
-							class={`text-right ${Number(game.myNetAmount) > 0 ? 'text-emerald-700' : Number(game.myNetAmount) < 0 ? 'text-red-700' : ''}`}
-						>
-							{money(game.myNetAmount)}
-						</strong>
+						<strong class={`amount ${amountClass(game.myNetAmount)}`}>{money(game.myNetAmount)}</strong>
 					</a>
 				{/each}
 			</div>
 		{/if}
 	</div>
 
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<h2 class="mb-4 text-base font-bold">Closed</h2>
+	<div class="card card-pad">
+		<div class="section-head">
+			<h2 class="section-title">Closed</h2>
+			<span class="badge badge-closed">{closedGames.length}</span>
+		</div>
 
 		{#if closedGames.length === 0}
-			<p class="text-sm text-slate-500">No closed games.</p>
+			<p class="empty-state">No closed games.</p>
 		{:else}
-			<div class="grid gap-3">
+			<div class="data-list">
 				{#each closedGames as game}
-					<a
-						href={`/games/${game.id}`}
-						class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3 hover:bg-slate-50"
-					>
+					<a href={`/games/${game.id}`} class="data-row">
 						<div>
-							<span class="text-sm text-slate-500">{formatDateTime(game.playedAtUtc)}</span>
-							<p class="mt-1 text-xs text-slate-500">
+							<strong class="row-title">{formatDateTime(game.playedAtUtc)}</strong>
+							<p class="row-meta">
 								{game.playerCount} {Number(game.playerCount) === 1 ? 'player' : 'players'}
 							</p>
 						</div>
-						<strong
-							class={`text-right ${Number(game.myNetAmount) > 0 ? 'text-emerald-700' : Number(game.myNetAmount) < 0 ? 'text-red-700' : ''}`}
-						>
-							{money(game.myNetAmount)}
-						</strong>
+						<strong class={`amount ${amountClass(game.myNetAmount)}`}>{money(game.myNetAmount)}</strong>
 					</a>
 				{/each}
 			</div>

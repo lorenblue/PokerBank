@@ -14,30 +14,22 @@
 	} = $props();
 </script>
 
-<div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4">
-	<div
-		class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl"
-		role="dialog"
-		aria-modal="true"
-		aria-label={title}
-	>
-		<div class="mb-4 flex items-start justify-between gap-4">
+<div class="modal-backdrop">
+	<div class="modal-panel" role="dialog" aria-modal="true" aria-label={title}>
+		<div class="modal-header">
 			<div>
-				<h2 class="text-lg font-bold text-slate-950">{title}</h2>
+				<h2 class="modal-title">{title}</h2>
 				{#if subtitle}
-					<p class="mt-1 text-sm text-slate-500">{subtitle}</p>
+					<p class="modal-subtitle">{subtitle}</p>
 				{/if}
 			</div>
-			<button
-				type="button"
-				class="rounded-md px-2 py-1 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-				aria-label="Close"
-				onclick={onClose}
-			>
+			<button type="button" class="btn btn-ghost" aria-label="Close" onclick={onClose}>
 				Close
 			</button>
 		</div>
 
-		{@render children()}
+		<div class="modal-body">
+			{@render children()}
+		</div>
 	</div>
 </div>

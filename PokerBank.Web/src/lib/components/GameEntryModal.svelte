@@ -35,21 +35,14 @@
 </script>
 
 <Modal {title} {onClose}>
-	<form method="POST" {action} class="grid gap-4">
+	<form method="POST" {action} class="form-grid">
 		{#if hint}
-			<p class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-				{hint}
-			</p>
+			<p class="empty-state">{hint}</p>
 		{/if}
 
-		<label class="grid gap-1 text-sm font-bold text-slate-700">
+		<label class="field">
 			Player
-			<select
-				name="playerId"
-				required
-				bind:value={playerId}
-				class="rounded-md border border-slate-300 px-3 py-2"
-			>
+			<select name="playerId" required bind:value={playerId}>
 				<option value="">Choose player</option>
 				{#each players as player}
 					<option value={player.id}>{player.name}</option>
@@ -57,7 +50,7 @@
 			</select>
 		</label>
 
-		<label class="grid gap-2 text-sm font-bold text-slate-700">
+		<label class="field">
 			Amount
 			<input
 				name="amount"
@@ -66,13 +59,12 @@
 				step="0.01"
 				required
 				bind:value={amount}
-				class="rounded-md border border-slate-300 px-3 py-2"
 			/>
-			<div class="flex flex-wrap gap-2">
+			<div class="quick-amounts">
 				{#each quickAmounts as quickAmount}
 					<button
 						type="button"
-						class="rounded-md border border-slate-200 px-3 py-1 text-xs font-bold text-slate-700 hover:bg-slate-50"
+						class="quick-chip"
 						onclick={() => (amount = quickAmount.toFixed(2))}
 					>
 						${quickAmount}
@@ -81,18 +73,11 @@
 			</div>
 		</label>
 
-		<div class="flex justify-end gap-2">
-			<button
-				type="button"
-				class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-				onclick={onClose}
-			>
+		<div class="form-actions">
+			<button type="button" class="btn btn-secondary" onclick={onClose}>
 				Cancel
 			</button>
-			<button
-				type="submit"
-				class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-			>
+			<button type="submit" class="btn btn-primary">
 				{submitLabel}
 			</button>
 		</div>

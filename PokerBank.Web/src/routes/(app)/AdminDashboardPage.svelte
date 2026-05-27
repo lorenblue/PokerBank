@@ -30,6 +30,9 @@
 	const payments = $derived(managerData.payments);
 	const openGame = $derived(games.find((game) => game.status === 'Open'));
 	const activePlayers = $derived(players.filter((player) => player.isActive));
+	const unsettledBalances = $derived(
+		balances.filter((balance) => balance.isActive && Number(balance.balanceAmount) !== 0)
+	);
 	const playerNames = $derived(new Map(players.map((player) => [player.id, player.name] as const)));
 
 	function money(value: number | string) {
@@ -50,6 +53,15 @@
 		if (amount < 0) return 'owes';
 
 		return 'settled';
+	}
+
+	function amountClass(value: number | string) {
+		const amount = Number(value);
+
+		if (amount > 0) return 'amount-positive';
+		if (amount < 0) return 'amount-negative';
+
+		return 'amount-neutral';
 	}
 
 	function paymentLabel(direction: string) {
@@ -83,36 +95,28 @@
 	<title>Dashboard | PokerBank</title>
 </svelte:head>
 
-<section class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">Dashboard</h1>
+<section class="page-header">
+	<div>
+		<h1 class="page-title">Dashboard</h1>
+	</div>
 
-	{#if openGame}
-		<a
-			href={`/games/${openGame.id}`}
-			class="inline-flex rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950"
-		>
-			Continue open game
-		</a>
-	{:else}
-		<form method="POST" action="?/createGame">
-			<button
-				type="submit"
-				class="rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950"
-			>
-				New game
-			</button>
-		</form>
-	{/if}
+	<div class="page-actions">
+		{#if openGame}
+			<a href={`/games/${openGame.id}`} class="btn btn-primary">Continue open game</a>
+		{:else}
+			<form method="POST" action="?/createGame">
+				<button type="submit" class="btn btn-primary">New game</button>
+			</form>
+		{/if}
+	</div>
 </section>
 
 {#if form?.error}
-	<p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">{form.error}</p>
+	<p class="alert alert-error">{form.error}</p>
 {:else if form?.paymentRecorded}
-	<p class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-		Payment recorded.
-	</p>
+	<p class="alert alert-success">Payment recorded.</p>
 {:else if form?.balanceUpdates}
-	<div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+	<div class="alert alert-success">
 		<p>Sent {form.balanceUpdates.sent} balance update emails.</p>
 		{#if form.balanceUpdates.skipped.length > 0}
 			<ul class="mt-2 grid gap-1 text-sm">
@@ -124,96 +128,129 @@
 	</div>
 {/if}
 
-<section class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-			<h2 class="text-base font-bold">Current balances</h2>
-			<div class="flex flex-wrap gap-2">
-				<button
-					type="button"
-					class="rounded-md px-3 py-2 text-sm font-bold text-emerald-900 hover:bg-emerald-50"
-					onclick={() => (isSendUpdatesOpen = true)}
-				>
+<section class="stat-grid">
+	<div class="stat-card">
+		<span class="stat-label">Open game</span>
+		<strong class="stat-value">{openGame ? 'Active' : 'None'}</strong>
+		<p class="stat-detail">{openGame ? formatDateTime(openGame.createdAtUtc) : 'Ready when the next game starts'}</p>
+	</div>
+	<div class="stat-card">
+		<span class="stat-label">Active players</span>
+		<strong class="stat-value">{activePlayers.length}</strong>
+		<p class="stat-detail">Available for games and payments</p>
+	</div>
+	<div class="stat-card">
+		<span class="stat-label">Unsettled</span>
+		<strong class="stat-value">{unsettledBalances.length}</strong>
+		<p class="stat-detail">Players with non-zero balances</p>
+	</div>
+</section>
+
+<section class="grid-main">
+	<div class="card card-pad">
+		<div class="section-head">
+			<div>
+				<h2 class="section-title">Current balances</h2>
+				<p class="row-meta">Positive means the player should receive money.</p>
+			</div>
+			<div class="row-actions">
+				<button type="button" class="btn btn-secondary" onclick={() => (isSendUpdatesOpen = true)}>
 					Send updates
 				</button>
-				<a href="/payments" class="rounded-md px-3 py-2 text-sm font-bold text-emerald-900 hover:bg-emerald-50">
-					Record payment
-				</a>
+				<a href="/payments" class="btn btn-ghost">Record payment</a>
 			</div>
 		</div>
 
 		{#if balances.length === 0}
-			<p class="text-sm text-slate-500">No players yet.</p>
+			<p class="empty-state">No players yet.</p>
 		{:else}
-			<div class="grid gap-3">
-				{#each balances as balance}
-					<div
-						class={`flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-4 hover:bg-slate-50 ${balance.isActive ? '' : 'opacity-55'}`}
-					>
-						<div>
-							<a href={`/players/${balance.playerId}`} class="font-bold hover:text-emerald-900">
-								{balance.playerName}
-							</a>
-							<p class="mt-1 text-sm text-slate-500">{balanceLabel(balance.balanceAmount)}</p>
-						</div>
-						<div class="flex shrink-0 items-center gap-3">
-							{#if balance.isActive && Number(balance.balanceAmount) !== 0}
-								<button
-									type="button"
-									class="rounded-md px-3 py-2 text-sm font-bold text-emerald-900 hover:bg-emerald-50"
-									onclick={() => (balanceToSettle = balance)}
-								>
-									Settle
-								</button>
-							{/if}
-							<strong
-								class={`text-right text-2xl font-extrabold ${Number(balance.balanceAmount) > 0 ? 'text-emerald-700' : Number(balance.balanceAmount) < 0 ? 'text-red-700' : ''}`}
-							>
-								{money(balance.balanceAmount)}
-							</strong>
-						</div>
-					</div>
-				{/each}
+			<div class="table-wrap">
+				<table class="data-table">
+					<thead>
+						<tr>
+							<th>Player</th>
+							<th>State</th>
+							<th class="text-right">Game net</th>
+							<th class="text-right">Payments</th>
+							<th class="text-right">Balance</th>
+							<th class="text-right">Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each balances as balance}
+							<tr class={balance.isActive ? '' : 'opacity-55'}>
+								<td>
+									<a href={`/players/${balance.playerId}`} class="row-title">{balance.playerName}</a>
+								</td>
+								<td><span class="badge">{balanceLabel(balance.balanceAmount)}</span></td>
+								<td class={`text-right amount ${amountClass(balance.gameNetAmount)}`}>
+									{money(balance.gameNetAmount)}
+								</td>
+								<td class={`text-right amount ${amountClass(balance.paymentNetAmount)}`}>
+									{money(balance.paymentNetAmount)}
+								</td>
+								<td class={`text-right amount ${amountClass(balance.balanceAmount)}`}>
+									{money(balance.balanceAmount)}
+								</td>
+								<td class="text-right">
+									{#if balance.isActive && Number(balance.balanceAmount) !== 0}
+										<button
+											type="button"
+											class="btn btn-ghost"
+											onclick={() => (balanceToSettle = balance)}
+										>
+											Settle
+										</button>
+									{/if}
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		{/if}
 	</div>
 
-	<div class="grid gap-4">
-		<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-			<h2 class="mb-3 text-base font-bold">Open game</h2>
+	<div class="data-list">
+		<div class="card card-pad">
+			<div class="section-head">
+				<h2 class="section-title">Open game</h2>
+				<a href="/games" class="section-link">All games</a>
+			</div>
 
 			{#if openGame}
-				<a href={`/games/${openGame.id}`} class="block rounded-lg border border-slate-100 p-3 hover:bg-slate-50">
-					<strong>{formatDateTime(openGame.createdAtUtc)}</strong>
-					<p class="mt-1 text-sm text-slate-500">In progress</p>
+				<a href={`/games/${openGame.id}`} class="data-row">
+					<div>
+						<strong class="row-title">{formatDateTime(openGame.createdAtUtc)}</strong>
+						<p class="row-meta">In progress</p>
+					</div>
+					<span class="badge badge-open">Open</span>
 				</a>
 			{:else}
-				<p class="text-sm text-slate-500">No open game.</p>
+				<p class="empty-state">No open game.</p>
 			{/if}
 		</div>
 
-		<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-			<div class="mb-3 flex items-center justify-between">
-				<h2 class="text-base font-bold">Recent payments</h2>
-				<a href="/payments" class="text-sm font-bold text-emerald-900 hover:text-emerald-950">View all</a>
+		<div class="card card-pad">
+			<div class="section-head">
+				<h2 class="section-title">Recent payments</h2>
+				<a href="/payments" class="section-link">View all</a>
 			</div>
 
 			{#if payments.length === 0}
-				<p class="text-sm text-slate-500">No payments recorded yet.</p>
+				<p class="empty-state">No payments recorded yet.</p>
 			{:else}
-				<div class="grid gap-3">
-					{#each payments.slice(0, 3) as payment}
-						<div class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 p-3">
+				<div class="data-list">
+					{#each payments.slice(0, 4) as payment}
+						<div class="data-row">
 							<div>
-								<a href={`/players/${payment.playerId}`} class="text-sm font-bold hover:text-emerald-900">
+								<a href={`/players/${payment.playerId}`} class="row-title">
 									{playerNames.get(payment.playerId) ?? payment.playerId}
 								</a>
-								<p class="mt-1 text-xs text-slate-500">
-									{paymentLabel(payment.direction)} · {methodLabel(payment.method)}
-								</p>
+								<p class="row-meta">{paymentLabel(payment.direction)} · {methodLabel(payment.method)}</p>
 							</div>
 							<strong
-								class={`text-right font-bold ${payment.direction === 'ReceivedByPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
+								class={`amount ${payment.direction === 'ReceivedByPlayer' ? 'amount-positive' : 'amount-negative'}`}
 							>
 								{payment.direction === 'ReceivedByPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
 							</strong>
@@ -241,26 +278,17 @@
 		subtitle="Emails will be sent to active players with email addresses."
 		onClose={() => (isSendUpdatesOpen = false)}
 	>
-		<form method="POST" action="?/sendBalanceUpdates" class="grid gap-4">
-			<p class="text-sm leading-6 text-slate-600">
+		<form method="POST" action="?/sendBalanceUpdates" class="form-grid">
+			<p class="empty-state">
 				Players without email addresses will be skipped. In development, emails are logged by the API
 				instead of being sent through a real provider.
 			</p>
 
-			<div class="flex justify-end gap-2">
-				<button
-					type="button"
-					class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-					onclick={() => (isSendUpdatesOpen = false)}
-				>
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick={() => (isSendUpdatesOpen = false)}>
 					Cancel
 				</button>
-				<button
-					type="submit"
-					class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-				>
-					Send updates
-				</button>
+				<button type="submit" class="btn btn-primary">Send updates</button>
 			</div>
 		</form>
 	</Modal>

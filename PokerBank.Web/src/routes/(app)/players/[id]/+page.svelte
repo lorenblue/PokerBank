@@ -40,6 +40,15 @@
 		return 'neutral';
 	}
 
+	function amountClass(value: number | string) {
+		const amount = Number(value);
+
+		if (amount > 0) return 'amount-positive';
+		if (amount < 0) return 'amount-negative';
+
+		return 'amount-neutral';
+	}
+
 	function paymentLabel(direction: string) {
 		if (direction === 'MadeByPlayer') return 'Player made payment';
 		if (direction === 'ReceivedByPlayer') return 'Player received payment';
@@ -63,21 +72,19 @@
 	<title>{data.player.name} | PokerBank</title>
 </svelte:head>
 
-<a href="/players" class="mb-4 inline-block font-bold text-emerald-900">Back to players</a>
+<a href="/players" class="back-link">Back to players</a>
 
-<section class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+<section class="page-header">
 	<div>
-		<p class="text-xs font-extrabold tracking-wider text-emerald-900 uppercase">
-			{data.player.isActive ? 'Active player' : 'Archived player'}
-		</p>
-		<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">{data.player.name}</h1>
-		<p class="mt-2 text-sm text-slate-500">{data.player.emailAddress ?? 'No email address'}</p>
+		<span class="eyebrow">{data.player.isActive ? 'Active player' : 'Archived player'}</span>
+		<h1 class="page-title">{data.player.name}</h1>
+		<p class="page-subtitle">{data.player.emailAddress ?? 'No email address'}</p>
 	</div>
 
 	<button
 		type="button"
 		disabled={!data.player.isActive}
-		class="rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+		class="btn btn-primary"
 		onclick={() => (isRecordPaymentOpen = true)}
 	>
 		Record payment
@@ -85,14 +92,12 @@
 </section>
 
 {#if form?.error}
-	<p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">{form.error}</p>
+	<p class="alert alert-error">{form.error}</p>
 {:else if form?.success}
-	<p class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-		Payment recorded.
-	</p>
+	<p class="alert alert-success">Payment recorded.</p>
 {/if}
 
-<section class="my-4 grid gap-4 md:grid-cols-3">
+<section class="stat-grid">
 	<StatCard
 		label="Balance"
 		value={money(data.balance?.balanceAmount ?? 0)}
@@ -111,63 +116,56 @@
 	/>
 </section>
 
-<section class="mt-4 grid gap-4 lg:grid-cols-2">
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<div class="mb-4 flex items-center justify-between gap-3">
-			<h2 class="text-base font-bold">Game results</h2>
-			<a href="/games" class="text-sm font-bold text-emerald-900 hover:text-emerald-950">View games</a>
+<section class="grid-two">
+	<div class="card card-pad">
+		<div class="section-head">
+			<div>
+				<h2 class="section-title">Game results</h2>
+				<p class="row-meta">Closed-game results for this player.</p>
+			</div>
+			<a href="/games" class="section-link">View games</a>
 		</div>
 
 		{#if data.gameResults.length === 0}
-			<p class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-				No closed-game results yet.
-			</p>
+			<p class="empty-state">No closed-game results yet.</p>
 		{:else}
-			<div class="grid gap-3">
+			<div class="data-list">
 				{#each data.gameResults as result}
-					<a
-						href={`/games/${result.gameId}`}
-						class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3 hover:bg-slate-50"
-					>
-						<div class="min-w-0">
-							<strong>{formatDateTime(result.playedAtUtc)}</strong>
-							<span class="mt-1 block text-sm text-slate-500">
+					<a href={`/games/${result.gameId}`} class="data-row">
+						<div>
+							<strong class="row-title">{formatDateTime(result.playedAtUtc)}</strong>
+							<p class="row-meta">
 								Buy-ins {unsignedMoney(result.buyInAmount)} · Cash-outs {unsignedMoney(result.cashOutAmount)}
-							</span>
+							</p>
 						</div>
-						<strong
-							class={`shrink-0 text-right ${Number(result.netAmount) > 0 ? 'text-emerald-700' : Number(result.netAmount) < 0 ? 'text-red-700' : ''}`}
-						>
-							{money(result.netAmount)}
-						</strong>
+						<strong class={`amount ${amountClass(result.netAmount)}`}>{money(result.netAmount)}</strong>
 					</a>
 				{/each}
 			</div>
 		{/if}
 	</div>
 
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<div class="mb-4 flex items-center justify-between gap-3">
-			<h2 class="text-base font-bold">Payments</h2>
-			<a href="/payments" class="text-sm font-bold text-emerald-900 hover:text-emerald-950">View ledger</a>
+	<div class="card card-pad">
+		<div class="section-head">
+			<div>
+				<h2 class="section-title">Payments</h2>
+				<p class="row-meta">Settlement history for this player.</p>
+			</div>
+			<a href="/payments" class="section-link">View ledger</a>
 		</div>
 
 		{#if data.payments.length === 0}
-			<p class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-				No payments recorded for this player.
-			</p>
+			<p class="empty-state">No payments recorded for this player.</p>
 		{:else}
-			<div class="grid gap-3">
+			<div class="data-list">
 				{#each data.payments as payment}
-					<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
-						<div class="min-w-0">
-							<strong>{formatDateTime(payment.recordedAtUtc)}</strong>
-							<span class="mt-1 block text-sm text-slate-500">
-								{paymentLabel(payment.direction)} · {methodLabel(payment.method)}
-							</span>
+					<div class="data-row">
+						<div>
+							<strong class="row-title">{formatDateTime(payment.recordedAtUtc)}</strong>
+							<p class="row-meta">{paymentLabel(payment.direction)} · {methodLabel(payment.method)}</p>
 						</div>
 						<strong
-							class={`shrink-0 text-right ${payment.direction === 'ReceivedByPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
+							class={`amount ${payment.direction === 'ReceivedByPlayer' ? 'amount-positive' : 'amount-negative'}`}
 						>
 							{paymentAmount(payment.direction, payment.amount)}
 						</strong>

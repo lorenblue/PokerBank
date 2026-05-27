@@ -27,6 +27,15 @@
 		return `$${Math.abs(Number(value)).toFixed(2)}`;
 	}
 
+	function amountClass(value: number | string) {
+		const amount = Number(value);
+
+		if (amount > 0) return 'amount-positive';
+		if (amount < 0) return 'amount-negative';
+
+		return 'amount-neutral';
+	}
+
 	function balanceLabel(value: number | string) {
 		const amount = Number(value);
 
@@ -55,77 +64,68 @@
 	<title>My Summary | PokerBank</title>
 </svelte:head>
 
-<section class="mb-6">
-	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">My Summary</h1>
+<section class="page-header">
+	<div>
+		<h1 class="page-title">My Summary</h1>
+	</div>
 </section>
 
-<section class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<h2 class="mb-4 text-base font-bold">My balance</h2>
-		<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-4">
-			<div>
-				<p class="text-sm text-slate-500">{balanceLabel(balance.balanceAmount)}</p>
-				<p class="mt-1 text-sm text-slate-500">
-					Games {money(balance.gameNetAmount)} · Payments {money(balance.paymentNetAmount)}
-				</p>
-			</div>
-			<strong
-				class={`text-right text-3xl font-extrabold ${Number(balance.balanceAmount) > 0 ? 'text-emerald-700' : Number(balance.balanceAmount) < 0 ? 'text-red-700' : ''}`}
-			>
-				{money(balance.balanceAmount)}
-			</strong>
+<section class="grid-main">
+	<div class="card card-pad">
+		<div class="section-head">
+			<h2 class="section-title">My balance</h2>
+			<span class="badge">{balanceLabel(balance.balanceAmount)}</span>
 		</div>
+
+		<strong class={`stat-value ${amountClass(balance.balanceAmount)}`}>{money(balance.balanceAmount)}</strong>
+		<p class="stat-detail">
+			Games {money(balance.gameNetAmount)} · Payments {money(balance.paymentNetAmount)}
+		</p>
 	</div>
 
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<div class="mb-3 flex items-center justify-between">
-			<h2 class="text-base font-bold">My games</h2>
-			<a href="/games" class="text-sm font-bold text-emerald-900 hover:text-emerald-950">View all</a>
+	<div class="card card-pad">
+		<div class="section-head">
+			<h2 class="section-title">My games</h2>
+			<a href="/games" class="section-link">View all</a>
 		</div>
 
 		{#if games.length === 0}
-			<p class="text-sm text-slate-500">No games yet.</p>
+			<p class="empty-state">No games yet.</p>
 		{:else}
-			<div class="grid gap-3">
+			<div class="data-list">
 				{#each games.slice(0, 4) as game}
-					<a href={`/games/${game.id}`} class="block rounded-lg border border-slate-100 p-3 hover:bg-slate-50">
-						<div class="flex items-center justify-between gap-3">
-							<strong>{formatDateTime(game.playedAtUtc)}</strong>
-							<span
-								class={`font-bold ${Number(game.myNetAmount) > 0 ? 'text-emerald-700' : Number(game.myNetAmount) < 0 ? 'text-red-700' : ''}`}
-							>
-								{money(game.myNetAmount)}
-							</span>
+					<a href={`/games/${game.id}`} class="data-row">
+						<div>
+							<strong class="row-title">{formatDateTime(game.playedAtUtc)}</strong>
+							<p class="row-meta">
+								{game.status} · {game.playerCount} {Number(game.playerCount) === 1 ? 'player' : 'players'}
+							</p>
 						</div>
-						<p class="mt-1 text-sm text-slate-500">
-							{game.status} · {game.playerCount} {Number(game.playerCount) === 1 ? 'player' : 'players'}
-						</p>
+						<strong class={`amount ${amountClass(game.myNetAmount)}`}>{money(game.myNetAmount)}</strong>
 					</a>
 				{/each}
 			</div>
 		{/if}
 	</div>
 
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs lg:col-span-2">
-		<div class="mb-3 flex items-center justify-between">
-			<h2 class="text-base font-bold">My payments</h2>
-			<a href="/payments" class="text-sm font-bold text-emerald-900 hover:text-emerald-950">View all</a>
+	<div class="card card-pad lg:col-span-2">
+		<div class="section-head">
+			<h2 class="section-title">My payments</h2>
+			<a href="/payments" class="section-link">View all</a>
 		</div>
 
 		{#if payments.length === 0}
-			<p class="text-sm text-slate-500">No payments recorded yet.</p>
+			<p class="empty-state">No payments recorded yet.</p>
 		{:else}
-			<div class="grid gap-3 sm:grid-cols-2">
+			<div class="data-list">
 				{#each payments.slice(0, 4) as payment}
-					<div class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 p-3">
+					<div class="data-row">
 						<div>
-							<p class="text-sm font-bold">{paymentLabel(payment.direction)}</p>
-							<p class="mt-1 text-xs text-slate-500">
-								{methodLabel(payment.method)} · {formatDateTime(payment.recordedAtUtc)}
-							</p>
+							<strong class="row-title">{paymentLabel(payment.direction)}</strong>
+							<p class="row-meta">{methodLabel(payment.method)} · {formatDateTime(payment.recordedAtUtc)}</p>
 						</div>
 						<strong
-							class={`text-right font-bold ${payment.direction === 'ReceivedByPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
+							class={`amount ${payment.direction === 'ReceivedByPlayer' ? 'amount-positive' : 'amount-negative'}`}
 						>
 							{payment.direction === 'ReceivedByPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
 						</strong>

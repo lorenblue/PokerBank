@@ -8,44 +8,33 @@
 	<title>Sign in | PokerBank</title>
 </svelte:head>
 
-<section class="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
-	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-5xl">Sign in</h1>
+<section class="mx-auto grid min-h-screen max-w-md content-center px-4 py-12">
+	<div class="mb-6">
+		<a href="/" class="brand">
+			<span class="brand-mark">PB</span>
+			<span>PokerBank</span>
+		</a>
+	</div>
 
-	{#if form?.error}
-		<p class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-			{form.error}
-		</p>
-	{/if}
+	<div class="card card-pad">
+		<h1 class="page-title">Sign in</h1>
 
-	<form method="POST" class="mt-6 grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
-		<label class="grid gap-1 text-sm font-bold text-slate-700">
-			Email
-			<input
-				name="email"
-				type="email"
-				autocomplete="email"
-				required
-				value={form?.email ?? ''}
-				class="rounded-md border border-slate-300 px-3 py-2"
-			/>
-		</label>
+		{#if form?.error}
+			<p class="alert alert-error mt-4">{form.error}</p>
+		{/if}
 
-		<label class="grid gap-1 text-sm font-bold text-slate-700">
-			Password
-			<input
-				name="password"
-				type="password"
-				autocomplete="current-password"
-				required
-				class="rounded-md border border-slate-300 px-3 py-2"
-			/>
-		</label>
+		<form method="POST" class="form-grid mt-6">
+			<label class="field">
+				Email
+				<input name="email" type="email" autocomplete="email" required value={form?.email ?? ''} />
+			</label>
 
-		<button
-			type="submit"
-			class="rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950"
-		>
-			Sign in
-		</button>
-	</form>
+			<label class="field">
+				Password
+				<input name="password" type="password" autocomplete="current-password" required />
+			</label>
+
+			<button type="submit" class="btn btn-primary">Sign in</button>
+		</form>
+	</div>
 </section>

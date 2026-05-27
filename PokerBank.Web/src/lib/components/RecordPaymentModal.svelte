@@ -24,16 +24,11 @@
 </script>
 
 <Modal title="Record payment" subtitle={playerName} {onClose}>
-	<form method="POST" action="?/createPayment" class="grid gap-4">
+	<form method="POST" action="?/createPayment" class="form-grid">
 		{#if players.length > 0}
-			<label class="grid gap-1 text-sm font-bold text-slate-700">
+			<label class="field">
 				Player
-				<select
-					name="playerId"
-					required
-					value={selectedPlayerId}
-					class="rounded-md border border-slate-300 px-3 py-2"
-				>
+				<select name="playerId" required value={selectedPlayerId}>
 					<option value="">Choose a player</option>
 					{#each players as player}
 						<option value={player.id}>{player.name}</option>
@@ -42,7 +37,7 @@
 			</label>
 		{/if}
 
-		<label class="grid gap-1 text-sm font-bold text-slate-700">
+		<label class="field">
 			Amount
 			<input
 				name="amount"
@@ -51,45 +46,32 @@
 				step="0.01"
 				required
 				value={amount}
-				class="rounded-md border border-slate-300 px-3 py-2"
 			/>
 		</label>
 
-		<label class="grid gap-1 text-sm font-bold text-slate-700">
+		<label class="field">
 			Direction
-			<select
-				name="direction"
-				required
-				value={selectedDirection}
-				class="rounded-md border border-slate-300 px-3 py-2"
-			>
+			<select name="direction" required value={selectedDirection}>
 				<option value="">Choose direction</option>
 				<option value="MadeByPlayer">Player made payment</option>
 				<option value="ReceivedByPlayer">Player received payment</option>
 			</select>
 		</label>
 
-		<label class="grid gap-1 text-sm font-bold text-slate-700">
+		<label class="field">
 			Method
-			<select name="method" required class="rounded-md border border-slate-300 px-3 py-2">
+			<select name="method" required>
 				<option value="">Choose method</option>
 				<option value="ETransfer">e-transfer</option>
 				<option value="Cash">cash</option>
 			</select>
 		</label>
 
-		<div class="flex justify-end gap-2">
-			<button
-				type="button"
-				class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-				onclick={onClose}
-			>
+		<div class="form-actions">
+			<button type="button" class="btn btn-secondary" onclick={onClose}>
 				Cancel
 			</button>
-			<button
-				type="submit"
-				class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-			>
+			<button type="submit" class="btn btn-primary">
 				Record payment
 			</button>
 		</div>

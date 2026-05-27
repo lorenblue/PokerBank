@@ -29,36 +29,35 @@
 	<title>My Payments | PokerBank</title>
 </svelte:head>
 
-<section class="mb-6">
-	<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">My Payments</h1>
+<section class="page-header">
+	<div>
+		<h1 class="page-title">My Payments</h1>
+	</div>
 </section>
 
-<section>
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<h2 class="mb-4 text-base font-bold">My payment history</h2>
-
-		{#if payments.length === 0}
-			<p class="text-sm text-slate-500">No payments recorded yet.</p>
-		{:else}
-			<div class="grid gap-3">
-				{#each payments as payment}
-					<article class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
-						<div>
-							<p class="text-sm font-bold">You</p>
-							<p class="mt-1 text-xs text-slate-500">
-								{paymentLabel(payment.direction)} · {methodLabel(payment.method)} · {formatDateTime(
-									payment.recordedAtUtc
-								)}
-							</p>
-						</div>
-						<strong
-							class={`text-right font-bold ${payment.direction === 'ReceivedByPlayer' ? 'text-emerald-700' : 'text-red-700'}`}
-						>
-							{payment.direction === 'ReceivedByPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
-						</strong>
-					</article>
-				{/each}
-			</div>
-		{/if}
+<section class="card card-pad">
+	<div class="section-head">
+		<h2 class="section-title">My payment history</h2>
+		<span class="badge">{payments.length}</span>
 	</div>
+
+	{#if payments.length === 0}
+		<p class="empty-state">No payments recorded yet.</p>
+	{:else}
+		<div class="data-list">
+			{#each payments as payment}
+				<article class="data-row">
+					<div>
+						<strong class="row-title">{paymentLabel(payment.direction)}</strong>
+						<p class="row-meta">{methodLabel(payment.method)} · {formatDateTime(payment.recordedAtUtc)}</p>
+					</div>
+					<strong
+						class={`amount ${payment.direction === 'ReceivedByPlayer' ? 'amount-positive' : 'amount-negative'}`}
+					>
+						{payment.direction === 'ReceivedByPlayer' ? '+' : '-'}{unsignedMoney(payment.amount)}
+					</strong>
+				</article>
+			{/each}
+		</div>
+	{/if}
 </section>

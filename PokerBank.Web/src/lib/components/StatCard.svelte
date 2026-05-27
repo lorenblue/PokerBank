@@ -12,14 +12,14 @@
 	} = $props();
 
 	const valueClass = $derived(
-		tone === 'positive' ? 'text-emerald-700' : tone === 'negative' ? 'text-red-700' : ''
+		tone === 'positive' ? 'amount-positive' : tone === 'negative' ? 'amount-negative' : 'amount-neutral'
 	);
 </script>
 
-<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-	<span class="mb-1 block text-sm text-slate-500">{label}</span>
-	<strong class={`text-2xl ${valueClass}`}>{value}</strong>
+<div class="stat-card">
+	<span class="stat-label">{label}</span>
+	<strong class={`stat-value ${valueClass}`}>{value}</strong>
 	{#if detail}
-		<p class="mt-1 text-sm text-slate-500">{detail}</p>
+		<p class="stat-detail">{detail}</p>
 	{/if}
 </div>

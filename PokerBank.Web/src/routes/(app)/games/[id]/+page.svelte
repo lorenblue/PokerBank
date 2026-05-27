@@ -27,6 +27,7 @@
 			.map((total) => ({ id: total.playerId, name: total.playerName }))
 	);
 	const canCloseGame = $derived(Number(data.game.remainingCashOutAmount) === 0);
+	const isOpen = $derived(data.game.status === 'Open');
 
 	function money(value: number | string) {
 		return `$${Number(value).toFixed(2)}`;
@@ -37,6 +38,15 @@
 		const sign = amount > 0 ? '+' : amount < 0 ? '-' : '';
 
 		return `${sign}$${Math.abs(amount).toFixed(2)}`;
+	}
+
+	function amountClass(value: number | string) {
+		const amount = Number(value);
+
+		if (amount > 0) return 'amount-positive';
+		if (amount < 0) return 'amount-negative';
+
+		return 'amount-neutral';
 	}
 
 	function entryLabel(type: string) {
@@ -65,159 +75,148 @@
 	<title>Game | PokerBank</title>
 </svelte:head>
 
-<a href={isManager ? '/' : '/games'} class="mb-4 inline-block font-bold text-emerald-900">
+<a href={isManager ? '/' : '/games'} class="back-link">
 	{isManager ? 'Back to dashboard' : 'Back to my games'}
 </a>
 
-<section class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+<section class="page-header">
 	<div>
-		<p class="text-xs font-extrabold tracking-wider text-emerald-900 uppercase">Game</p>
-		<h1 class="mt-1 text-4xl leading-none font-bold tracking-normal sm:text-6xl">{data.game.status}</h1>
-		<p class="mt-2 text-slate-500">{formatDateTime(data.game.createdAtUtc)}</p>
+		<h1 class="page-title">{data.game.status}</h1>
+		<p class="page-subtitle">{formatDateTime(data.game.createdAtUtc)}</p>
 	</div>
 
-	{#if isManager && data.game.status === 'Open'}
-		<div class="flex flex-wrap justify-end gap-3">
-			<button
-				type="button"
-				disabled={data.players.length === 0}
-				class="rounded-md border border-slate-300 px-4 py-3 font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-				onclick={() => openAddBuyIn()}
-			>
+	{#if isManager && isOpen}
+		<div class="page-actions">
+			<button type="button" disabled={data.players.length === 0} class="btn btn-secondary" onclick={() => openAddBuyIn()}>
 				Add buy-in
 			</button>
 			<button
 				type="button"
 				disabled={cashOutPlayers.length === 0}
 				title={cashOutPlayers.length === 0 ? 'A player needs a buy-in before cashing out.' : 'Add cash-out'}
-				class="rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+				class="btn btn-primary"
 				onclick={() => openAddCashOut()}
 			>
 				Add cash-out
 			</button>
-			<button
-				type="button"
-				class="rounded-md bg-red-700 px-4 py-3 font-bold text-white hover:bg-red-800"
-				onclick={() => (isDeleteGameOpen = true)}
-			>
-				Delete game
-			</button>
-
-			<button
-				type="button"
-				disabled={!canCloseGame}
-				title={canCloseGame ? 'Close game' : 'Buy-ins must equal cash-outs before closing.'}
-				class="rounded-md bg-emerald-900 px-4 py-3 font-bold text-white hover:bg-emerald-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-				onclick={() => (isCloseGameOpen = true)}
-			>
+			<button type="button" class="btn btn-secondary" onclick={() => (isCloseGameOpen = true)} disabled={!canCloseGame}>
 				Close game
+			</button>
+			<button type="button" class="btn btn-subtle-danger" onclick={() => (isDeleteGameOpen = true)}>
+				Delete
 			</button>
 		</div>
 	{/if}
 </section>
 
 {#if form?.error}
-	<p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">{form.error}</p>
+	<p class="alert alert-error">{form.error}</p>
 {/if}
 
-<section class="my-4 grid gap-4 md:grid-cols-3">
+<section class="stat-grid">
 	<StatCard label="Buy-ins" value={money(data.game.totalBuyInAmount)} />
 	<StatCard label="Cash-outs" value={money(data.game.totalCashOutAmount)} />
-	<StatCard label="Remaining" value={money(data.game.remainingCashOutAmount)} />
+	<StatCard
+		label="Remaining"
+		value={money(data.game.remainingCashOutAmount)}
+		detail={canCloseGame ? 'Ready to close' : 'Buy-ins must equal cash-outs'}
+		tone={canCloseGame ? 'positive' : 'negative'}
+	/>
 </section>
 
-<section class="mt-4 grid gap-4 lg:grid-cols-2">
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<h2 class="mb-4 text-base font-bold">Entries</h2>
+<section class="grid-main">
+	<div class="card card-pad">
+		<div class="section-head">
+			<div>
+				<h2 class="section-title">Player totals</h2>
+				<p class="row-meta">Current position for each player in this game.</p>
+			</div>
+		</div>
 
-		{#if data.game.entries.length === 0}
-			<p class="text-sm text-slate-500">No entries yet.</p>
+		{#if data.game.playerTotals.length === 0}
+			<p class="empty-state">Player totals appear after entries are added.</p>
 		{:else}
-			<div class="grid gap-3">
-				{#each data.game.entries as entry}
-					<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
-						<div class="min-w-0">
-							{#if isManager}
-								<a href={`/players/${entry.playerId}`} class="font-bold hover:text-emerald-900">
-									{playerNames.get(entry.playerId) ?? entry.playerId}
-								</a>
-							{:else}
-								<p class="font-bold">{playerNames.get(entry.playerId) ?? entry.playerId}</p>
+			<div class="table-wrap">
+				<table class="data-table">
+					<thead>
+						<tr>
+							<th>Player</th>
+							<th class="text-right">Buy-ins</th>
+							<th class="text-right">Cash-outs</th>
+							<th class="text-right">Net</th>
+							{#if isManager && isOpen}
+								<th class="text-right">Action</th>
 							{/if}
-							<span class="mt-1 block text-sm text-slate-500">
-								{entryLabel(entry.type)} · {formatGameEntryDateTime(
-									entry.recordedAtUtc,
-									data.game.createdAtUtc
-								)}
-							</span>
-						</div>
-						<div class="flex shrink-0 items-center gap-3">
-							<span
-								class={`font-bold ${entry.type === 'CashOut' ? 'text-emerald-700' : 'text-slate-950'}`}
-							>
-								{money(entry.amount)}
-							</span>
-							{#if isManager && data.game.status === 'Open'}
-								<button
-									type="button"
-									class="rounded-md px-2 py-1 text-xs font-bold text-red-700 hover:bg-red-50"
-									onclick={() => (entryToDelete = entry)}
-								>
-									Delete
-								</button>
-							{/if}
-						</div>
-					</div>
-				{/each}
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.game.playerTotals as total}
+							<tr>
+								<td>
+									{#if isManager}
+										<a href={`/players/${total.playerId}`} class="row-title">{total.playerName}</a>
+									{:else}
+										<strong class="row-title">{total.playerName}</strong>
+									{/if}
+								</td>
+								<td class="text-right amount">{money(total.buyInAmount)}</td>
+								<td class="text-right amount">{money(total.cashOutAmount)}</td>
+								<td class={`text-right amount ${amountClass(total.netAmount)}`}>{signedMoney(total.netAmount)}</td>
+								{#if isManager && isOpen}
+									<td>
+										<div class="row-actions">
+											<button type="button" class="btn btn-ghost" onclick={() => openAddBuyIn(total.playerId)}>
+												Buy-in
+											</button>
+											<button type="button" class="btn btn-ghost" onclick={() => openAddCashOut(total.playerId)}>
+												Cash-out
+											</button>
+										</div>
+									</td>
+								{/if}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		{/if}
 	</div>
 
-	<div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-		<h2 class="mb-4 text-base font-bold">Player totals</h2>
+	<div class="card card-pad">
+		<div class="section-head">
+			<div>
+				<h2 class="section-title">Entry history</h2>
+				<p class="row-meta">Chronological ledger for this game.</p>
+			</div>
+		</div>
 
-		{#if data.game.playerTotals.length === 0}
-			<p class="text-sm text-slate-500">Player totals appear after entries are added.</p>
+		{#if data.game.entries.length === 0}
+			<p class="empty-state">No entries yet.</p>
 		{:else}
-			<div class="grid gap-3">
-				{#each data.game.playerTotals as total}
-					<div class="flex items-center justify-between gap-4 rounded-lg border border-slate-100 p-3">
-						<div class="min-w-0">
+			<div class="data-list">
+				{#each data.game.entries as entry}
+					<div class="data-row">
+						<div>
 							{#if isManager}
-								<a href={`/players/${total.playerId}`} class="font-bold hover:text-emerald-900">
-									{total.playerName}
+								<a href={`/players/${entry.playerId}`} class="row-title">
+									{playerNames.get(entry.playerId) ?? entry.playerId}
 								</a>
 							{:else}
-								<p class="font-bold">{total.playerName}</p>
+								<strong class="row-title">{playerNames.get(entry.playerId) ?? entry.playerId}</strong>
 							{/if}
-							<span class="mt-1 block text-sm text-slate-500">
-								Buy-ins {money(total.buyInAmount)} · Cash-outs {money(total.cashOutAmount)}
-							</span>
+							<p class="row-meta">
+								{entryLabel(entry.type)} · {formatGameEntryDateTime(entry.recordedAtUtc, data.game.createdAtUtc)}
+							</p>
 						</div>
-						<div class="flex shrink-0 items-center gap-3">
-							{#if isManager && data.game.status === 'Open'}
-								<div class="flex gap-1">
-									<button
-										type="button"
-										class="rounded-md px-2 py-1 text-xs font-bold text-slate-700 hover:bg-slate-50"
-										onclick={() => openAddBuyIn(total.playerId)}
-									>
-										Buy-in
-									</button>
-									<button
-										type="button"
-										class="rounded-md px-2 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-50"
-										onclick={() => openAddCashOut(total.playerId)}
-									>
-										Cash-out
-									</button>
-								</div>
+						<div class="row-actions">
+							<strong class={`amount ${entry.type === 'CashOut' ? 'amount-positive' : 'amount-neutral'}`}>
+								{money(entry.amount)}
+							</strong>
+							{#if isManager && isOpen}
+								<button type="button" class="btn btn-subtle-danger" onclick={() => (entryToDelete = entry)}>
+									Delete
+								</button>
 							{/if}
-							<span
-								class={`font-bold ${Number(total.netAmount) > 0 ? 'text-emerald-700' : Number(total.netAmount) < 0 ? 'text-red-700' : ''}`}
-							>
-								{signedMoney(total.netAmount)}
-							</span>
 						</div>
 					</div>
 				{/each}
@@ -251,83 +250,56 @@
 
 {#if isManager && entryToDelete}
 	<Modal title="Delete entry?" onClose={closeDeleteEntry}>
-		<p class="mt-2 text-sm leading-6 text-slate-600">
-			This removes the {entryLabel(entryToDelete.type).toLowerCase()} from the open game. This
-			is only intended for entries recorded by mistake.
+		<p class="page-subtitle">
+			This removes the {entryLabel(entryToDelete.type).toLowerCase()} from the open game. This is only intended
+			for entries recorded by mistake.
 		</p>
 
-		<div class="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
-			<p class="font-bold text-slate-950">
-				{playerNames.get(entryToDelete.playerId) ?? entryToDelete.playerId}
-			</p>
-			<p class="mt-1 text-slate-600">
-				{entryLabel(entryToDelete.type)} · {money(entryToDelete.amount)}
-			</p>
+		<div class="empty-state mt-4">
+			<strong>{playerNames.get(entryToDelete.playerId) ?? entryToDelete.playerId}</strong>
+			<p>{entryLabel(entryToDelete.type)} · {money(entryToDelete.amount)}</p>
 		</div>
 
-		<form method="POST" action="?/deleteEntry" class="mt-5 flex justify-end gap-2">
+		<form method="POST" action="?/deleteEntry" class="form-grid mt-5">
 			<input type="hidden" name="entryId" value={entryToDelete.id} />
-			<button
-				type="button"
-				class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-				onclick={closeDeleteEntry}
-			>
-				Cancel
-			</button>
-			<button
-				type="submit"
-				class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
-			>
-				Delete entry
-			</button>
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick={closeDeleteEntry}>Cancel</button>
+				<button type="submit" class="btn btn-danger">Delete entry</button>
+			</div>
 		</form>
 	</Modal>
 {/if}
 
 {#if isManager && isDeleteGameOpen}
 	<Modal title="Delete game?" onClose={() => (isDeleteGameOpen = false)}>
-		<p class="mt-2 text-sm leading-6 text-slate-600">
+		<p class="page-subtitle">
 			This removes the open game and its entries. This is only intended for games created by mistake.
 		</p>
 
-		<form method="POST" action="?/deleteGame" class="mt-5 flex justify-end gap-2">
-			<button
-				type="button"
-				class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-				onclick={() => (isDeleteGameOpen = false)}
-			>
-				Cancel
-			</button>
-			<button
-				type="submit"
-				class="rounded-md bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
-			>
-				Delete game
-			</button>
+		<form method="POST" action="?/deleteGame" class="form-grid mt-5">
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick={() => (isDeleteGameOpen = false)}>
+					Cancel
+				</button>
+				<button type="submit" class="btn btn-danger">Delete game</button>
+			</div>
 		</form>
 	</Modal>
 {/if}
 
 {#if isManager && isCloseGameOpen}
 	<Modal title="Close game?" onClose={() => (isCloseGameOpen = false)}>
-		<p class="mt-2 text-sm leading-6 text-slate-600">
+		<p class="page-subtitle">
 			Closed games cannot be changed. Make sure every buy-in and cash-out has been recorded.
 		</p>
 
-		<form method="POST" action="?/closeGame" class="mt-5 flex justify-end gap-2">
-			<button
-				type="button"
-				class="rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-				onclick={() => (isCloseGameOpen = false)}
-			>
-				Cancel
-			</button>
-			<button
-				type="submit"
-				class="rounded-md bg-emerald-900 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-950"
-			>
-				Close game
-			</button>
+		<form method="POST" action="?/closeGame" class="form-grid mt-5">
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick={() => (isCloseGameOpen = false)}>
+					Cancel
+				</button>
+				<button type="submit" class="btn btn-primary">Close game</button>
+			</div>
 		</form>
 	</Modal>
 {/if}
