@@ -24,9 +24,9 @@ export const load: PageServerLoad = async ({ fetch, parent, request }) => {
 		};
 	}
 
-	const [balances, games, players, paymentPage] = await Promise.all([
+	const [balances, gamePage, players, paymentPage] = await Promise.all([
 		api.listBalances(),
-		api.listGames(),
+		api.listGames(1, 4),
 		api.listPlayers(),
 		api.listPayments(undefined, 1, 4)
 	]);
@@ -34,7 +34,7 @@ export const load: PageServerLoad = async ({ fetch, parent, request }) => {
 	return {
 		view: 'manager' as const,
 		balances,
-		games,
+		games: gamePage.items,
 		players,
 		payments: paymentPage.items
 	};

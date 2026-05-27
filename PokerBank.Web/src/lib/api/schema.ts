@@ -556,6 +556,17 @@ export interface components {
         LoginResponse: {
             email: string;
         };
+        PagedResponseOfListGamesResponse: {
+            items: components["schemas"]["ListGamesResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            totalPages: number | string;
+        };
         PagedResponseOfPaymentResponse: {
             items: components["schemas"]["PaymentResponse"][];
             /** Format: int32 */
@@ -865,7 +876,10 @@ export interface operations {
     };
     ListGames: {
         parameters: {
-            query?: never;
+            query?: {
+                page?: number | string;
+                pageSize?: number | string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -878,7 +892,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListGamesResponse"][];
+                    "application/json": components["schemas"]["PagedResponseOfListGamesResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

@@ -5,6 +5,7 @@ type Schemas = components['schemas'];
 
 export type Balance = Schemas['BalanceResponse'];
 export type GameSummary = Schemas['ListGamesResponse'];
+export type GamePage = Schemas['PagedResponseOfListGamesResponse'];
 export type GameDetails = Schemas['GetGameResponse'];
 export type GameResult = Schemas['GameResultResponse'];
 export type MyGame = Schemas['GetMyGamesResponse'];
@@ -60,7 +61,12 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 
 		getMyPayments: () => unwrap<Payment[]>(client.GET('/me/payments')),
 
-		listGames: () => unwrap<GameSummary[]>(client.GET('/games')),
+		listGames: (page?: number, pageSize?: number) =>
+			unwrap<GamePage>(
+				client.GET('/games', {
+					params: { query: { page, pageSize } }
+				})
+			),
 
 		getMyGames: () => unwrap<MyGame[]>(client.GET('/me/games')),
 

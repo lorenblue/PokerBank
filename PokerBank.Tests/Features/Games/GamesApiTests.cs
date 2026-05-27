@@ -75,11 +75,15 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var games = await response.Content.ReadFromJsonAsync<GameResponse[]>();
+        var page = await response.Content.ReadFromJsonAsync<ListGamesResponse>();
 
-        Assert.NotNull(games);
+        Assert.NotNull(page);
+        Assert.Equal(1, page.Page);
+        Assert.Equal(25, page.PageSize);
+        Assert.Equal(2, page.TotalCount);
+        Assert.Equal(1, page.TotalPages);
         Assert.Collection(
-            games,
+            page.Items,
             game => Assert.Equal(newerGame.Id, game.Id),
             game => Assert.Equal(olderGame.Id, game.Id));
     }
@@ -100,11 +104,78 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var games = await response.Content.ReadFromJsonAsync<GameResponse[]>();
+        var page = await response.Content.ReadFromJsonAsync<ListGamesResponse>();
 
-        Assert.NotNull(games);
-        var game = Assert.Single(games);
+        Assert.NotNull(page);
+        Assert.Equal(1, page.Page);
+        Assert.Equal(25, page.PageSize);
+        Assert.Equal(1, page.TotalCount);
+        Assert.Equal(1, page.TotalPages);
+        var game = Assert.Single(page.Items);
         Assert.Equal(currentGroupGame.Id, game.Id);
+    }
+
+    [Fact]
+    public async Task ListGames_ReturnsRequestedPage()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var oldestGame = await CreateGame(client);
+        await CloseGame(client, oldestGame.Id);
+        await Task.Delay(10);
+        var middleGame = await CreateGame(client);
+        await CloseGame(client, middleGame.Id);
+        await Task.Delay(10);
+        var newestGame = await CreateGame(client);
+
+        var firstResponse = await client.GetAsync("/games?page=1&pageSize=2");
+        var secondResponse = await client.GetAsync("/games?page=2&pageSize=2");
+
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+
+        var firstPage = await firstResponse.Content.ReadFromJsonAsync<ListGamesResponse>();
+        var secondPage = await secondResponse.Content.ReadFromJsonAsync<ListGamesResponse>();
+
+        Assert.NotNull(firstPage);
+        Assert.Equal(1, firstPage.Page);
+        Assert.Equal(2, firstPage.PageSize);
+        Assert.Equal(3, firstPage.TotalCount);
+        Assert.Equal(2, firstPage.TotalPages);
+        Assert.Collection(
+            firstPage.Items,
+            game => Assert.Equal(newestGame.Id, game.Id),
+            game => Assert.Equal("Closed", game.Status));
+
+        Assert.NotNull(secondPage);
+        Assert.Equal(2, secondPage.Page);
+        Assert.Equal(2, secondPage.PageSize);
+        Assert.Equal(3, secondPage.TotalCount);
+        Assert.Equal(2, secondPage.TotalPages);
+        var game = Assert.Single(secondPage.Items);
+        Assert.Equal(oldestGame.Id, game.Id);
+    }
+
+    [Theory]
+    [InlineData(0, 25, "Page must be greater than or equal to 1.")]
+    [InlineData(-1, 25, "Page must be greater than or equal to 1.")]
+    [InlineData(1, 0, "Page size must be between 1 and 100.")]
+    [InlineData(1, -1, "Page size must be between 1 and 100.")]
+    [InlineData(1, 101, "Page size must be between 1 and 100.")]
+    public async Task ListGames_ReturnsBadRequest_WhenPagingIsInvalid(
+        int page,
+        int pageSize,
+        string expectedError)
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.GetAsync($"/games?page={page}&pageSize={pageSize}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal(expectedError, error?.Error);
     }
 
 
@@ -973,6 +1044,13 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     }
 
     private sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
+
+    private sealed record ListGamesResponse(
+        GameResponse[] Items,
+        int Page,
+        int PageSize,
+        int TotalCount,
+        int TotalPages);
 
     private sealed record GameDetailsResponse(
         Guid Id,

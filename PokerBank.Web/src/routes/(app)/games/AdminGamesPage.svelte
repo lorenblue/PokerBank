@@ -7,9 +7,24 @@
 	let { data, form }: { data: PageData; form: { error?: string } | null } = $props();
 
 	const games = $derived(data.games.filter((game): game is AdminGame => 'createdAtUtc' in game));
-	const openGames = $derived(games.filter((game) => game.status === 'Open'));
+	const gamePage = $derived(data.gamePage);
+	const openGame = $derived(data.openGame);
+	const openGames = $derived(openGame ? [openGame] : []);
 	const closedGames = $derived(games.filter((game) => game.status !== 'Open'));
-	const openGame = $derived(openGames[0]);
+	const currentPage = $derived(Number(gamePage?.page ?? 1));
+	const pageSize = $derived(Number(gamePage?.pageSize ?? 10));
+	const totalPages = $derived(Number(gamePage?.totalPages ?? 0));
+	const hasPreviousPage = $derived(currentPage > 1);
+	const hasNextPage = $derived(totalPages > currentPage);
+
+	function pageHref(page: number) {
+		const params = new URLSearchParams({
+			page: page.toString(),
+			pageSize: pageSize.toString()
+		});
+
+		return `/games?${params.toString()}`;
+	}
 </script>
 
 <svelte:head>
@@ -83,3 +98,21 @@
 		{/if}
 	</div>
 </section>
+
+{#if gamePage}
+	<div class="section-head mt-5">
+		<p class="row-meta">Page {totalPages === 0 ? 0 : currentPage} of {totalPages}</p>
+		<div class="row-actions">
+			{#if hasPreviousPage}
+				<a href={pageHref(currentPage - 1)} class="btn btn-secondary">Previous</a>
+			{:else}
+				<button type="button" class="btn btn-secondary" disabled>Previous</button>
+			{/if}
+			{#if hasNextPage}
+				<a href={pageHref(currentPage + 1)} class="btn btn-secondary">Next</a>
+			{:else}
+				<button type="button" class="btn btn-secondary" disabled>Next</button>
+			{/if}
+		</div>
+	</div>
+{/if}
