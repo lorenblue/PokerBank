@@ -13,6 +13,9 @@ namespace PokerBank.Tests.TestSupport;
 
 public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
 {
+    public const string TestAdminEmail = "admin@pokerbank.local";
+    public const string TestAdminPassword = "PokerBank123!";
+
     private readonly RecordingEmailSender _emailSender = new();
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18-alpine")
@@ -83,7 +86,7 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
         command.Parameters.AddWithValue("id", id);
         command.Parameters.AddWithValue("name", name);
         command.Parameters.AddWithValue("role", GroupRole.Owner.ToString());
-        command.Parameters.AddWithValue("normalizedEmail", DevelopmentAuthSeed.DefaultAdminEmail.ToUpperInvariant());
+        command.Parameters.AddWithValue("normalizedEmail", TestAdminEmail.ToUpperInvariant());
 
         await command.ExecuteNonQueryAsync();
     }
@@ -108,7 +111,7 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
             """;
         command.Parameters.AddWithValue("ownerRole", GroupRole.Owner.ToString());
         command.Parameters.AddWithValue("defaultPokerGroupId", DefaultPokerGroup.Id);
-        command.Parameters.AddWithValue("normalizedEmail", DevelopmentAuthSeed.DefaultAdminEmail.ToUpperInvariant());
+        command.Parameters.AddWithValue("normalizedEmail", TestAdminEmail.ToUpperInvariant());
 
         await command.ExecuteNonQueryAsync();
         _emailSender.Clear();
@@ -132,7 +135,7 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
             """;
         command.Parameters.AddWithValue("role", role.ToString());
         command.Parameters.AddWithValue("defaultPokerGroupId", DefaultPokerGroup.Id);
-        command.Parameters.AddWithValue("normalizedEmail", DevelopmentAuthSeed.DefaultAdminEmail.ToUpperInvariant());
+        command.Parameters.AddWithValue("normalizedEmail", TestAdminEmail.ToUpperInvariant());
 
         await command.ExecuteNonQueryAsync();
     }
@@ -152,7 +155,7 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
             )
             WHERE "Id" = @playerId;
             """;
-        command.Parameters.AddWithValue("normalizedEmail", DevelopmentAuthSeed.DefaultAdminEmail.ToUpperInvariant());
+        command.Parameters.AddWithValue("normalizedEmail", TestAdminEmail.ToUpperInvariant());
         command.Parameters.AddWithValue("playerId", playerId);
 
         await command.ExecuteNonQueryAsync();
@@ -162,6 +165,8 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:PokerBank", _postgres.GetConnectionString());
+        builder.UseSetting("Authentication:AdminEmail", TestAdminEmail);
+        builder.UseSetting("Authentication:AdminPassword", TestAdminPassword);
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IEmailSender>();
@@ -221,8 +226,8 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
             "/auth/login",
             new
             {
-                Email = DevelopmentAuthSeed.DefaultAdminEmail,
-                Password = DevelopmentAuthSeed.DefaultAdminPassword
+                Email = TestAdminEmail,
+                Password = TestAdminPassword
             });
 
         response.EnsureSuccessStatusCode();

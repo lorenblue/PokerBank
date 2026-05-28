@@ -7,12 +7,8 @@ namespace PokerBank.Api.Data;
 
 public static class DevelopmentAuthSeed
 {
-    public const string DefaultAdminEmail = "admin@pokerbank.local";
-    public const string DefaultAdminPassword = "PokerBank123!";
-
     public static async Task SeedAsync(IServiceProvider services)
     {
-        var environment = services.GetRequiredService<IHostEnvironment>();
         var configuration = services.GetRequiredService<IConfiguration>();
 
         var email = configuration["Authentication:AdminEmail"];
@@ -20,13 +16,7 @@ public static class DevelopmentAuthSeed
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            if (!environment.IsDevelopment() && !environment.IsEnvironment("Testing"))
-            {
-                return;
-            }
-
-            email = DefaultAdminEmail;
-            password = DefaultAdminPassword;
+            return;
         }
 
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();

@@ -24,6 +24,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__PokerBank: Host=pokerbank.postgres;Port=5432;Database=pokerbank;Username=pokerbank;Password=pokerbank
+      Authentication__AdminEmail: ${AUTHENTICATION__ADMINEMAIL:-admin@pokerbank.local}
+      Authentication__AdminPassword: ${AUTHENTICATION__ADMINPASSWORD:-PokerBank123!}
       Email__Smtp__Enabled: ${EMAIL__SMTP__ENABLED:-false}
       Email__Smtp__Host: ${EMAIL__SMTP__HOST:-}
       Email__Smtp__Port: ${EMAIL__SMTP__PORT:-587}

@@ -21,8 +21,8 @@ public sealed class AuthApiTests(PokerBankApiFactory factory) : IAsyncLifetime
             "/auth/login",
             new
             {
-                Email = DevelopmentAuthSeed.DefaultAdminEmail,
-                Password = DevelopmentAuthSeed.DefaultAdminPassword
+                Email = PokerBankApiFactory.TestAdminEmail,
+                Password = PokerBankApiFactory.TestAdminPassword
             });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -38,7 +38,7 @@ public sealed class AuthApiTests(PokerBankApiFactory factory) : IAsyncLifetime
             "/auth/login",
             new
             {
-                Email = DevelopmentAuthSeed.DefaultAdminEmail,
+                Email = PokerBankApiFactory.TestAdminEmail,
                 Password = "wrong-password"
             });
 
@@ -57,7 +57,7 @@ public sealed class AuthApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         var user = await response.Content.ReadFromJsonAsync<CurrentUserResponse>();
 
         Assert.NotNull(user);
-        Assert.Equal(DevelopmentAuthSeed.DefaultAdminEmail, user.Email);
+        Assert.Equal(PokerBankApiFactory.TestAdminEmail, user.Email);
         Assert.Equal("Owner", user.GroupRole);
     }
 
