@@ -1,8 +1,8 @@
 # PokerBank
 
-PokerBank tracks friendly poker games where players do not need to bring cash to the table. It records buy-ins, cash-outs, and real-money settlement payments so the group can reconcile who owes money and who should receive money later.
+PokerBank helps small poker groups play without cash on hand. It records buy-ins, cash-outs, and real-money settlement payments so everyone can see what they owe or are owed after each game.
 
-The project is also a .NET portfolio app: the backend uses a vertical-slice API style, a small domain model, EF Core with PostgreSQL, integration tests, OpenAPI/Scalar, Docker Compose, and OpenTelemetry through the Aspire dashboard.
+The app is built around a feature-oriented ASP.NET Core API, a small domain model, EF Core with PostgreSQL, integration tests, OpenAPI/Scalar, Docker Compose, and OpenTelemetry through the Aspire dashboard.
 
 ## Features
 
@@ -12,7 +12,8 @@ The project is also a .NET portfolio app: the backend uses a vertical-slice API 
 - Track settlement payments made by or received by players
 - View balances across game results and payments
 - Manage players, including optional contact email addresses
-- Use a Svelte frontend backed by generated OpenAPI types
+- Sign in with group-scoped manager/member access
+- Send balance update emails to players
 
 ## Tech Stack
 
@@ -38,6 +39,8 @@ The domain project contains the core business objects:
 - `Money`
 
 The domain handles local rules such as valid money amounts, game close rules, player email validation, and payment direction. Query-heavy screens such as balances and game results are projected with EF Core so the database does the aggregation work.
+
+Authentication uses ASP.NET Core Identity. Access is scoped to a poker group, with group roles used to separate manager workflows from member-facing views.
 
 ## Run Locally
 
@@ -66,6 +69,17 @@ Password: pokerbank
 ```
 
 EF Core migrations are applied by the API on startup.
+
+### Development Login
+
+Docker Compose configures a default owner account for local development:
+
+```txt
+Email: admin@pokerbank.local
+Password: PokerBank123!
+```
+
+Override `AUTHENTICATION__ADMINEMAIL` and `AUTHENTICATION__ADMINPASSWORD` in `.env` if you want different local credentials. The API only seeds an owner account when both values are configured.
 
 ### Email
 
@@ -103,6 +117,7 @@ Run frontend checks:
 
 ```sh
 cd PokerBank.Web
+npm ci
 npm run check
 npm run build
 ```
@@ -113,7 +128,3 @@ Regenerate frontend API types while the API is running:
 cd PokerBank.Web
 npm run generate:api
 ```
-
-## Current Direction
-
-The app is focused on the core poker-night workflow first: record games, compute results, track settlement payments, and make balances obvious. Future work will likely include authentication/RBAC, better settlement communication, pagination/filtering where it becomes useful, and a more polished frontend.
