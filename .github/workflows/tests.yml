@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  test:
-    name: Build and test
+  backend:
+    name: Backend
     runs-on: ubuntu-latest
 
     steps:
@@ -30,3 +30,31 @@ jobs:
 
       - name: Test
         run: dotnet test PokerBank.slnx --configuration Release --no-build
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: PokerBank.Web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: npm
+          cache-dependency-path: PokerBank.Web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Check
+        run: npm run check
+
+      - name: Build
+        run: npm run build
