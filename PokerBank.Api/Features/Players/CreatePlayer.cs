@@ -42,6 +42,15 @@ public static class CreatePlayer
                 return TypedResults.Conflict(new ErrorResponse("An active player with this name already exists."));
             }
 
+            if (player.EmailAddress is not null && await dbContext.Players.ActivePlayerEmailExistsAsync(
+                    groupContext.Id,
+                    player.EmailAddress,
+                    excludingPlayerId: null,
+                    cancellationToken))
+            {
+                return TypedResults.Conflict(new ErrorResponse("An active player with this email address already exists."));
+            }
+
             dbContext.Players.Add(player);
             await dbContext.SaveChangesAsync(cancellationToken);
 

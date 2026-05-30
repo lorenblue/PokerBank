@@ -41,6 +41,14 @@ public sealed class PlayerTests
         Assert.Equal("lorenzo@example.com", player.EmailAddress);
     }
 
+    [Fact]
+    public void NewPlayer_NormalizesEmailAddressCasing()
+    {
+        var player = new Player(PokerGroupId, "Lorenzo", "Lorenzo@Example.com");
+
+        Assert.Equal("lorenzo@example.com", player.EmailAddress);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -142,6 +150,16 @@ public sealed class PlayerTests
         var player = new Player(PokerGroupId, "Lorenzo");
 
         player.UpdateEmailAddress("  enzo@example.com  ");
+
+        Assert.Equal("enzo@example.com", player.EmailAddress);
+    }
+
+    [Fact]
+    public void UpdateEmailAddress_NormalizesEmailAddressCasing()
+    {
+        var player = new Player(PokerGroupId, "Lorenzo");
+
+        player.UpdateEmailAddress("Enzo@Example.com");
 
         Assert.Equal("enzo@example.com", player.EmailAddress);
     }

@@ -114,6 +114,6 @@ public sealed class Player
             throw new ArgumentException("Player email address is invalid.", exception);
         }
 
-        return normalizedEmailAddress;
+        return normalizedEmailAddress.ToLowerInvariant();
     }
 }

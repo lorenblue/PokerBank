@@ -73,6 +73,10 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
             player.Property(p => p.EmailAddress)
                 .HasMaxLength(Player.MaxEmailAddressLength);
 
+            player.HasIndex(p => new { p.PokerGroupId, p.EmailAddress })
+                .IsUnique()
+                .HasFilter("\"EmailAddress\" IS NOT NULL AND \"IsActive\" = TRUE");
+
             player.Property(p => p.UserId);
 
             player.HasOne<ApplicationUser>()

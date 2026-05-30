@@ -49,6 +49,24 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task CreatePlayer_ReturnsConflict_WhenActivePlayerEmailAlreadyExists()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+
+        var response = await client.PostAsJsonAsync(
+            "/players",
+            new { Name = "Enzo", EmailAddress = "Lorenzo@Example.com" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal("An active player with this email address already exists.", error?.Error);
+    }
+
+    [Fact]
     public async Task ListPlayers_ReturnsActivePlayersOrderedByName()
     {
         using var client = factory.CreateHttpsClient();
@@ -106,6 +124,39 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         await CreatePlayer(otherGroupClient, "Lorenzo");
 
         var response = await client.PostAsJsonAsync("/players", new { Name = "Lorenzo" });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreatePlayer_AllowsSameEmailInDifferentPokerGroups()
+    {
+        var otherGroupId = Guid.NewGuid();
+        await factory.CreatePokerGroupAsync(otherGroupId);
+
+        using var client = factory.CreateHttpsClient();
+        using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
+
+        await CreatePlayer(otherGroupClient, "Maya", "lorenzo@example.com");
+
+        var response = await client.PostAsJsonAsync(
+            "/players",
+            new { Name = "Lorenzo", EmailAddress = "lorenzo@example.com" });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreatePlayer_AllowsSameEmailAsArchivedPlayer()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var archivedPlayer = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+        await ArchivePlayer(client, archivedPlayer.Id);
+
+        var response = await client.PostAsJsonAsync(
+            "/players",
+            new { Name = "Enzo", EmailAddress = "lorenzo@example.com" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
@@ -238,6 +289,25 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
             new { Name = "Enzo", EmailAddress = "lorenzo@example.com" });
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdatePlayer_ReturnsConflict_WhenActivePlayerEmailAlreadyExists()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var lorenzo = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+        await CreatePlayer(client, "Enzo", "enzo@example.com");
+
+        var response = await client.PutAsJsonAsync(
+            $"/players/{lorenzo.Id}",
+            new { Name = "Lorenzo", EmailAddress = "Enzo@Example.com" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal("An active player with this email address already exists.", error?.Error);
     }
 
     [Fact]

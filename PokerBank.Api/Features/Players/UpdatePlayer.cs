@@ -56,6 +56,15 @@ public static class UpdatePlayer
             player.Rename(request.Name);
             player.UpdateEmailAddress(request.EmailAddress);
 
+            if (player is { IsActive: true, EmailAddress: not null } && await dbContext.Players.ActivePlayerEmailExistsAsync(
+                    groupContext.Id,
+                    player.EmailAddress,
+                    excludingPlayerId: player.Id,
+                    cancellationToken))
+            {
+                return TypedResults.Conflict(new ErrorResponse("An active player with this email address already exists."));
+            }
+
             await dbContext.SaveChangesAsync(cancellationToken);
 
             return TypedResults.Ok(PlayerResponse.From(player));
