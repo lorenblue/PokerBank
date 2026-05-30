@@ -74,6 +74,7 @@ manageGroup.MapGetPlayer();
 manageGroup.MapCreatePlayer();
 manageGroup.MapUpdatePlayer();
 manageGroup.MapArchivePlayer();
+manageGroup.MapInvitePlayer();
 manageGroup.MapSendBalanceUpdates();
 manageGroup.MapListGames();
 

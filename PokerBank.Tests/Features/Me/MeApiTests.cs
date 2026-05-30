@@ -313,6 +313,7 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
             { HttpMethod.Post, "/players", new { Name = "Lorenzo" } },
             { HttpMethod.Put, $"/players/{playerId}", new { Name = "Lorenzo", EmailAddress = "lorenzo@example.com" } },
             { HttpMethod.Post, $"/players/{playerId}/archive", null },
+            { HttpMethod.Post, $"/players/{playerId}/invite", null },
             { HttpMethod.Post, $"/players/{playerId}/payments/made", new { Amount = 20m, Method = "ETransfer" } },
             { HttpMethod.Post, $"/players/{playerId}/payments/received", new { Amount = 20m, Method = "ETransfer" } },
             { HttpMethod.Get, $"/payments/{paymentId}", null },

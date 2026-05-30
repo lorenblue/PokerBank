@@ -328,6 +328,135 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         Assert.False(player.IsActive);
     }
 
+    [Fact]
+    public async Task InvitePlayer_SendsInviteEmailAndCreatesInvitation()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var player = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+
+        var response = await client.PostAsync($"/players/{player.Id}/invite", content: null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var invitation = await response.Content.ReadFromJsonAsync<InvitePlayerResponse>();
+
+        Assert.NotNull(invitation);
+        Assert.NotEqual(Guid.Empty, invitation.Id);
+        Assert.Equal(player.Id, invitation.PlayerId);
+        Assert.Equal("lorenzo@example.com", invitation.EmailAddress);
+        Assert.True(invitation.ExpiresAtUtc > DateTimeOffset.UtcNow);
+        Assert.Equal(1, await factory.CountPlayerInvitationsAsync(player.Id));
+
+        var email = Assert.Single(factory.SentEmails);
+        Assert.Equal("lorenzo@example.com", email.To);
+        Assert.Equal("PokerBank invitation", email.Subject);
+        Assert.Contains("Hi Lorenzo", email.Body);
+        Assert.Contains("/accept-invite?token=", email.Body);
+    }
+
+    [Fact]
+    public async Task InvitePlayer_ReturnsNotFound_WhenPlayerDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.PostAsync($"/players/{Guid.NewGuid()}/invite", content: null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Empty(factory.SentEmails);
+    }
+
+    [Fact]
+    public async Task InvitePlayer_ReturnsNotFound_WhenPlayerIsInDifferentPokerGroup()
+    {
+        var otherGroupId = Guid.NewGuid();
+        await factory.CreatePokerGroupAsync(otherGroupId);
+
+        using var client = factory.CreateHttpsClient();
+        using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
+
+        var otherGroupPlayer = await CreatePlayer(otherGroupClient, "Lorenzo", "lorenzo@example.com");
+
+        var response = await client.PostAsync($"/players/{otherGroupPlayer.Id}/invite", content: null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Empty(factory.SentEmails);
+    }
+
+    [Fact]
+    public async Task InvitePlayer_ReturnsConflict_WhenPlayerIsArchived()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var player = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+        await ArchivePlayer(client, player.Id);
+
+        var response = await client.PostAsync($"/players/{player.Id}/invite", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal("Archived players cannot be invited.", error?.Error);
+        Assert.Empty(factory.SentEmails);
+    }
+
+    [Fact]
+    public async Task InvitePlayer_ReturnsConflict_WhenPlayerHasNoEmailAddress()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var player = await CreatePlayer(client, "Lorenzo");
+
+        var response = await client.PostAsync($"/players/{player.Id}/invite", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal("Player must have an email address before they can be invited.", error?.Error);
+        Assert.Empty(factory.SentEmails);
+    }
+
+    [Fact]
+    public async Task InvitePlayer_ReturnsConflict_WhenPlayerIsAlreadyLinkedToUser()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var player = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+        await factory.LinkDefaultAdminToPlayerAsync(player.Id);
+
+        var response = await client.PostAsync($"/players/{player.Id}/invite", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal("Player is already linked to a user account.", error?.Error);
+        Assert.Empty(factory.SentEmails);
+    }
+
+    [Fact]
+    public async Task InvitePlayer_ReturnsConflict_WhenPlayerAlreadyHasPendingInvitation()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var player = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+
+        var firstResponse = await client.PostAsync($"/players/{player.Id}/invite", content: null);
+        firstResponse.EnsureSuccessStatusCode();
+
+        var secondResponse = await client.PostAsync($"/players/{player.Id}/invite", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, secondResponse.StatusCode);
+
+        var error = await secondResponse.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal("Player already has a pending invitation.", error?.Error);
+        Assert.Equal(1, await factory.CountPlayerInvitationsAsync(player.Id));
+        Assert.Single(factory.SentEmails);
+    }
+
     private static async Task<PlayerResponse> CreatePlayer(
         HttpClient client,
         string name,
@@ -348,6 +477,12 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     }
 
     private sealed record PlayerResponse(Guid Id, string Name, string? EmailAddress, bool IsActive);
+
+    private sealed record InvitePlayerResponse(
+        Guid Id,
+        Guid PlayerId,
+        string EmailAddress,
+        DateTimeOffset ExpiresAtUtc);
 
     private sealed record ErrorResponse(string Error);
 }

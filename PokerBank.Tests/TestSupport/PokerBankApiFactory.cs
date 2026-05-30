@@ -98,7 +98,7 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
 
         await using var command = connection.CreateCommand();
         command.CommandText = """
-            TRUNCATE TABLE "GameEntries", "Payments", "Games", "Players" RESTART IDENTITY CASCADE;
+            TRUNCATE TABLE "GameEntries", "Payments", "Games", "PlayerInvitations", "Players" RESTART IDENTITY CASCADE;
 
             UPDATE "GroupMemberships"
             SET "Role" = @ownerRole
@@ -159,6 +159,22 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
         command.Parameters.AddWithValue("playerId", playerId);
 
         await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<int> CountPlayerInvitationsAsync(Guid playerId)
+    {
+        await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM "PlayerInvitations"
+            WHERE "PlayerId" = @playerId;
+            """;
+        command.Parameters.AddWithValue("playerId", playerId);
+
+        return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

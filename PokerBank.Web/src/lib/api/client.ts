@@ -14,6 +14,7 @@ export type PlayerDetails = Schemas['PlayerResponse'];
 export type Payment = Schemas['PaymentResponse'];
 export type PaymentPage = Schemas['PagedResponseOfPaymentResponse'];
 export type CreateGameResponse = Schemas['CreateGameResponse'];
+export type InvitePlayerResponse = Schemas['InvitePlayerResponse'];
 export type CreatePlayerRequest = Schemas['CreatePlayerRequest'];
 export type UpdatePlayerRequest = Schemas['UpdatePlayerRequest'];
 export type RecordPaymentRequest = Schemas['RecordPaymentRequest'];
@@ -152,6 +153,13 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 				client.PUT('/players/{id}', {
 					params: { path: { id } },
 					body
+				})
+			),
+
+		invitePlayer: (id: string) =>
+			unwrap<InvitePlayerResponse>(
+				client.POST('/players/{id}/invite', {
+					params: { path: { id } }
 				})
 			),
 
