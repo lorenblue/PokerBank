@@ -15,6 +15,8 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 
     public DbSet<Player> Players => Set<Player>();
 
+    public DbSet<PlayerInvitation> PlayerInvitations => Set<PlayerInvitation>();
+
     public DbSet<PokerGame> Games => Set<PokerGame>();
 
     public DbSet<Payment> Payments => Set<Payment>();
@@ -90,6 +92,50 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 
             player.Property(p => p.IsActive)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<PlayerInvitation>(invitation =>
+        {
+            invitation.HasKey(i => i.Id);
+
+            invitation.Property(i => i.PokerGroupId)
+                .IsRequired();
+
+            invitation.HasOne<PokerGroup>()
+                .WithMany()
+                .HasForeignKey(i => i.PokerGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            invitation.Property(i => i.PlayerId)
+                .IsRequired();
+
+            invitation.HasOne<Player>()
+                .WithMany()
+                .HasForeignKey(i => i.PlayerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            invitation.Property(i => i.EmailAddress)
+                .HasMaxLength(PlayerInvitation.MaxEmailAddressLength)
+                .IsRequired();
+
+            invitation.Property(i => i.TokenHash)
+                .HasMaxLength(PlayerInvitation.MaxTokenHashLength)
+                .IsRequired();
+
+            invitation.Property(i => i.CreatedAtUtc)
+                .IsRequired();
+
+            invitation.Property(i => i.ExpiresAtUtc)
+                .IsRequired();
+
+            invitation.Property(i => i.AcceptedAtUtc);
+
+            invitation.Ignore(i => i.IsAccepted);
+
+            invitation.HasIndex(i => i.TokenHash)
+                .IsUnique();
+
+            invitation.HasIndex(i => new { i.PokerGroupId, i.PlayerId });
         });
 
         modelBuilder.Entity<PokerGame>(game =>
