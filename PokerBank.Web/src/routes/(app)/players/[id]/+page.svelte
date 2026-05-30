@@ -7,9 +7,14 @@
 	let {
 		data,
 		form
-	}: { data: PageData; form: { error?: string; success?: boolean } | null } = $props();
+	}: {
+		data: PageData;
+		form: { error?: string; invitedEmailAddress?: string; success?: boolean } | null;
+	} = $props();
 
 	let isRecordPaymentOpen = $state(false);
+
+	const canInvitePlayer = $derived(Boolean(data.player.isActive && data.player.emailAddress));
 
 	function money(value: number | string) {
 		const amount = Number(value);
@@ -81,18 +86,26 @@
 		<p class="page-subtitle">{data.player.emailAddress ?? 'No email address'}</p>
 	</div>
 
-	<button
-		type="button"
-		disabled={!data.player.isActive}
-		class="btn btn-primary"
-		onclick={() => (isRecordPaymentOpen = true)}
-	>
-		Record payment
-	</button>
+	<div class="row-actions">
+		<form method="POST" action="?/invitePlayer">
+			<button type="submit" disabled={!canInvitePlayer} class="btn btn-secondary">Invite player</button>
+		</form>
+
+		<button
+			type="button"
+			disabled={!data.player.isActive}
+			class="btn btn-primary"
+			onclick={() => (isRecordPaymentOpen = true)}
+		>
+			Record payment
+		</button>
+	</div>
 </section>
 
 {#if form?.error}
 	<p class="alert alert-error">{form.error}</p>
+{:else if form?.invitedEmailAddress}
+	<p class="alert alert-success">Invitation sent to {form.invitedEmailAddress}.</p>
 {:else if form?.success}
 	<p class="alert alert-success">Payment recorded.</p>
 {/if}
