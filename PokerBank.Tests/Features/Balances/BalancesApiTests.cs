@@ -16,22 +16,22 @@ public sealed class BalancesApiTests(PokerBankApiFactory factory) : IAsyncLifeti
     {
         using var client = factory.CreateHttpsClient();
 
-        var alice = await CreatePlayer(client, "Alice");
-        var lorenzo = await CreatePlayer(client, "Lorenzo");
-        var maya = await CreatePlayer(client, "Maya");
+        var alice = await client.CreatePlayerAsync("Alice");
+        var lorenzo = await client.CreatePlayerAsync("Lorenzo");
+        var maya = await client.CreatePlayerAsync("Maya");
 
-        var closedGame = await CreateGame(client);
-        await AddBuyIn(client, closedGame.Id, lorenzo.Id, 100m);
-        await AddBuyIn(client, closedGame.Id, maya.Id, 100m);
-        await AddCashOut(client, closedGame.Id, lorenzo.Id, 160m);
-        await AddCashOut(client, closedGame.Id, maya.Id, 40m);
-        await CloseGame(client, closedGame.Id);
+        var closedGame = await client.CreateGameAsync();
+        await client.AddBuyInAsync(closedGame.Id, lorenzo.Id, 100m);
+        await client.AddBuyInAsync(closedGame.Id, maya.Id, 100m);
+        await client.AddCashOutAsync(closedGame.Id, lorenzo.Id, 160m);
+        await client.AddCashOutAsync(closedGame.Id, maya.Id, 40m);
+        await client.CloseGameAsync(closedGame.Id);
 
-        var openGame = await CreateGame(client);
-        await AddBuyIn(client, openGame.Id, lorenzo.Id, 999m);
+        var openGame = await client.CreateGameAsync();
+        await client.AddBuyInAsync(openGame.Id, lorenzo.Id, 999m);
 
-        await RecordPayment(client, lorenzo.Id, 20m, "ReceivedByPlayer");
-        await RecordPayment(client, maya.Id, 10m, "MadeByPlayer");
+        await client.RecordPaymentAsync(lorenzo.Id, 20m, "ReceivedByPlayer");
+        await client.RecordPaymentAsync(maya.Id, 10m, "MadeByPlayer");
 
         var response = await client.GetAsync("/balances");
 
@@ -76,8 +76,8 @@ public sealed class BalancesApiTests(PokerBankApiFactory factory) : IAsyncLifeti
     {
         using var client = factory.CreateHttpsClient();
 
-        var player = await CreatePlayer(client, "Lorenzo");
-        await ArchivePlayer(client, player.Id);
+        var player = await client.CreatePlayerAsync("Lorenzo");
+        await client.ArchivePlayerAsync(player.Id);
 
         var response = await client.GetAsync("/balances");
 
@@ -96,18 +96,18 @@ public sealed class BalancesApiTests(PokerBankApiFactory factory) : IAsyncLifeti
     {
         using var client = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(client, "Lorenzo");
-        var maya = await CreatePlayer(client, "Maya");
+        var lorenzo = await client.CreatePlayerAsync("Lorenzo");
+        var maya = await client.CreatePlayerAsync("Maya");
 
-        var game = await CreateGame(client);
-        await AddBuyIn(client, game.Id, lorenzo.Id, 100m);
-        await AddBuyIn(client, game.Id, maya.Id, 100m);
-        await AddCashOut(client, game.Id, lorenzo.Id, 160m);
-        await AddCashOut(client, game.Id, maya.Id, 40m);
-        await CloseGame(client, game.Id);
+        var game = await client.CreateGameAsync();
+        await client.AddBuyInAsync(game.Id, lorenzo.Id, 100m);
+        await client.AddBuyInAsync(game.Id, maya.Id, 100m);
+        await client.AddCashOutAsync(game.Id, lorenzo.Id, 160m);
+        await client.AddCashOutAsync(game.Id, maya.Id, 40m);
+        await client.CloseGameAsync(game.Id);
 
-        await RecordPayment(client, lorenzo.Id, 20m, "ReceivedByPlayer");
-        await RecordPayment(client, maya.Id, 10m, "MadeByPlayer");
+        await client.RecordPaymentAsync(lorenzo.Id, 20m, "ReceivedByPlayer");
+        await client.RecordPaymentAsync(maya.Id, 10m, "MadeByPlayer");
 
         var response = await client.GetAsync($"/balances?playerId={lorenzo.Id}");
 
@@ -125,79 +125,4 @@ public sealed class BalancesApiTests(PokerBankApiFactory factory) : IAsyncLifeti
         Assert.Equal(40m, balance.BalanceAmount);
     }
 
-    private static async Task<PlayerResponse> CreatePlayer(HttpClient client, string name)
-    {
-        var response = await client.PostAsJsonAsync("/players", new { Name = name });
-        response.EnsureSuccessStatusCode();
-
-        var player = await response.Content.ReadFromJsonAsync<PlayerResponse>();
-
-        return player ?? throw new InvalidOperationException("Create player response was empty.");
-    }
-
-    private static async Task<GameResponse> CreateGame(HttpClient client)
-    {
-        var response = await client.PostAsync("/games", content: null);
-        response.EnsureSuccessStatusCode();
-
-        var game = await response.Content.ReadFromJsonAsync<GameResponse>();
-
-        return game ?? throw new InvalidOperationException("Create game response was empty.");
-    }
-
-    private static async Task AddBuyIn(HttpClient client, Guid gameId, Guid playerId, decimal amount)
-    {
-        var response = await client.PostAsJsonAsync(
-            $"/games/{gameId}/buy-ins",
-            new { PlayerId = playerId, Amount = amount });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task AddCashOut(HttpClient client, Guid gameId, Guid playerId, decimal amount)
-    {
-        var response = await client.PostAsJsonAsync(
-            $"/games/{gameId}/cash-outs",
-            new { PlayerId = playerId, Amount = amount });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task CloseGame(HttpClient client, Guid gameId)
-    {
-        var response = await client.PostAsync($"/games/{gameId}/close", content: null);
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task RecordPayment(HttpClient client, Guid playerId, decimal amount, string direction)
-    {
-        var response = await client.PostAsJsonAsync(
-            PaymentUrl(playerId, direction),
-            new { Amount = amount, Method = "ETransfer" });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static string PaymentUrl(Guid playerId, string direction) =>
-        direction switch
-        {
-            "MadeByPlayer" => $"/players/{playerId}/payments/made",
-            "ReceivedByPlayer" => $"/players/{playerId}/payments/received",
-            _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, "Unknown payment direction.")
-        };
-
-    private static async Task ArchivePlayer(HttpClient client, Guid playerId)
-    {
-        var response = await client.PostAsync($"/players/{playerId}/archive", content: null);
-        response.EnsureSuccessStatusCode();
-    }
-
-    private sealed record PlayerResponse(Guid Id, string Name, bool IsActive);
-
-    private sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
-
-    private sealed record BalanceResponse(
-        Guid PlayerId,
-        string PlayerName,
-        bool IsActive,
-        decimal GameNetAmount,
-        decimal PaymentNetAmount,
-        decimal BalanceAmount);
 }

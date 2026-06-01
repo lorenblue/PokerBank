@@ -53,7 +53,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+        await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
 
         var response = await client.PostAsJsonAsync(
             "/players",
@@ -71,9 +71,9 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var charlie = await CreatePlayer(client, "Charlie");
-        var alice = await CreatePlayer(client, "Alice");
-        await ArchivePlayer(client, charlie.Id);
+        var charlie = await client.CreatePlayerAsync("Charlie");
+        var alice = await client.CreatePlayerAsync("Alice");
+        await client.ArchivePlayerAsync(charlie.Id);
 
         var response = await client.GetAsync("/players");
 
@@ -97,8 +97,8 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         using var client = factory.CreateHttpsClient();
         using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
 
-        var currentGroupPlayer = await CreatePlayer(client, "Lorenzo");
-        await CreatePlayer(otherGroupClient, "Maya");
+        var currentGroupPlayer = await client.CreatePlayerAsync("Lorenzo");
+        await otherGroupClient.CreatePlayerAsync("Maya");
 
         var response = await client.GetAsync("/players");
 
@@ -121,7 +121,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         using var client = factory.CreateHttpsClient();
         using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
 
-        await CreatePlayer(otherGroupClient, "Lorenzo");
+        await otherGroupClient.CreatePlayerAsync("Lorenzo");
 
         var response = await client.PostAsJsonAsync("/players", new { Name = "Lorenzo" });
 
@@ -137,7 +137,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         using var client = factory.CreateHttpsClient();
         using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
 
-        await CreatePlayer(otherGroupClient, "Maya", "lorenzo@example.com");
+        await otherGroupClient.CreatePlayerAsync("Maya", "lorenzo@example.com");
 
         var response = await client.PostAsJsonAsync(
             "/players",
@@ -151,8 +151,8 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var archivedPlayer = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
-        await ArchivePlayer(client, archivedPlayer.Id);
+        var archivedPlayer = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
+        await client.ArchivePlayerAsync(archivedPlayer.Id);
 
         var response = await client.PostAsJsonAsync(
             "/players",
@@ -166,9 +166,9 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var archivedPlayer = await CreatePlayer(client, "Charlie");
-        var activePlayer = await CreatePlayer(client, "Alice");
-        await ArchivePlayer(client, archivedPlayer.Id);
+        var archivedPlayer = await client.CreatePlayerAsync("Charlie");
+        var activePlayer = await client.CreatePlayerAsync("Alice");
+        await client.ArchivePlayerAsync(archivedPlayer.Id);
 
         var response = await client.GetAsync("/players?includeArchived=true");
 
@@ -196,7 +196,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var createdPlayer = await CreatePlayer(client, "Lorenzo");
+        var createdPlayer = await client.CreatePlayerAsync("Lorenzo");
 
         var response = await client.GetAsync($"/players/{createdPlayer.Id}");
 
@@ -222,7 +222,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var createdPlayer = await CreatePlayer(client, "Lorenzo");
+        var createdPlayer = await client.CreatePlayerAsync("Lorenzo");
 
         var response = await client.PutAsJsonAsync(
             $"/players/{createdPlayer.Id}",
@@ -244,7 +244,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var createdPlayer = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+        var createdPlayer = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
 
         var response = await client.PutAsJsonAsync(
             $"/players/{createdPlayer.Id}",
@@ -263,7 +263,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var createdPlayer = await CreatePlayer(client, "Lorenzo");
+        var createdPlayer = await client.CreatePlayerAsync("Lorenzo");
 
         var response = await client.PutAsJsonAsync(
             $"/players/{createdPlayer.Id}",
@@ -281,8 +281,8 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(client, "Lorenzo");
-        await CreatePlayer(client, "Enzo");
+        var lorenzo = await client.CreatePlayerAsync("Lorenzo");
+        await client.CreatePlayerAsync("Enzo");
 
         var response = await client.PutAsJsonAsync(
             $"/players/{lorenzo.Id}",
@@ -296,8 +296,8 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
-        await CreatePlayer(client, "Enzo", "enzo@example.com");
+        var lorenzo = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
+        await client.CreatePlayerAsync("Enzo", "enzo@example.com");
 
         var response = await client.PutAsJsonAsync(
             $"/players/{lorenzo.Id}",
@@ -315,7 +315,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var createdPlayer = await CreatePlayer(client, "Lorenzo");
+        var createdPlayer = await client.CreatePlayerAsync("Lorenzo");
 
         var response = await client.PostAsync($"/players/{createdPlayer.Id}/archive", content: null);
 
@@ -333,7 +333,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var player = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+        var player = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
 
         var response = await client.PostAsync($"/players/{player.Id}/invite", content: null);
 
@@ -375,7 +375,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         using var client = factory.CreateHttpsClient();
         using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
 
-        var otherGroupPlayer = await CreatePlayer(otherGroupClient, "Lorenzo", "lorenzo@example.com");
+        var otherGroupPlayer = await otherGroupClient.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
 
         var response = await client.PostAsync($"/players/{otherGroupPlayer.Id}/invite", content: null);
 
@@ -388,8 +388,8 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var player = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
-        await ArchivePlayer(client, player.Id);
+        var player = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
+        await client.ArchivePlayerAsync(player.Id);
 
         var response = await client.PostAsync($"/players/{player.Id}/invite", content: null);
 
@@ -406,7 +406,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var player = await CreatePlayer(client, "Lorenzo");
+        var player = await client.CreatePlayerAsync("Lorenzo");
 
         var response = await client.PostAsync($"/players/{player.Id}/invite", content: null);
 
@@ -423,7 +423,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var player = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+        var player = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
         await factory.LinkDefaultAdminToPlayerAsync(player.Id);
 
         var response = await client.PostAsync($"/players/{player.Id}/invite", content: null);
@@ -441,10 +441,9 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     {
         using var client = factory.CreateHttpsClient();
 
-        var player = await CreatePlayer(client, "Lorenzo", "lorenzo@example.com");
+        var player = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
 
-        var firstResponse = await client.PostAsync($"/players/{player.Id}/invite", content: null);
-        firstResponse.EnsureSuccessStatusCode();
+        await client.InvitePlayerAsync(player.Id);
 
         var secondResponse = await client.PostAsync($"/players/{player.Id}/invite", content: null);
 
@@ -457,32 +456,4 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         Assert.Single(factory.SentEmails);
     }
 
-    private static async Task<PlayerResponse> CreatePlayer(
-        HttpClient client,
-        string name,
-        string? emailAddress = null)
-    {
-        var response = await client.PostAsJsonAsync("/players", new { Name = name, EmailAddress = emailAddress });
-        response.EnsureSuccessStatusCode();
-
-        var player = await response.Content.ReadFromJsonAsync<PlayerResponse>();
-
-        return player ?? throw new InvalidOperationException("Create player response was empty.");
-    }
-
-    private static async Task ArchivePlayer(HttpClient client, Guid playerId)
-    {
-        var response = await client.PostAsync($"/players/{playerId}/archive", content: null);
-        response.EnsureSuccessStatusCode();
-    }
-
-    private sealed record PlayerResponse(Guid Id, string Name, string? EmailAddress, bool IsActive);
-
-    private sealed record InvitePlayerResponse(
-        Guid Id,
-        Guid PlayerId,
-        string EmailAddress,
-        DateTimeOffset ExpiresAtUtc);
-
-    private sealed record ErrorResponse(string Error);
 }

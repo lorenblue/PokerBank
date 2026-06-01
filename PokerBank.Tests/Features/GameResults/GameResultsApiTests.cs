@@ -16,18 +16,18 @@ public sealed class GameResultsApiTests(PokerBankApiFactory factory) : IAsyncLif
     {
         using var client = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(client, "Lorenzo");
-        var maya = await CreatePlayer(client, "Maya");
+        var lorenzo = await client.CreatePlayerAsync("Lorenzo");
+        var maya = await client.CreatePlayerAsync("Maya");
 
-        var game = await CreateGame(client);
-        await AddBuyIn(client, game.Id, lorenzo.Id, 100m);
-        await AddBuyIn(client, game.Id, maya.Id, 100m);
-        await AddCashOut(client, game.Id, lorenzo.Id, 160m);
-        await AddCashOut(client, game.Id, maya.Id, 40m);
-        await CloseGame(client, game.Id);
+        var game = await client.CreateGameAsync();
+        await client.AddBuyInAsync(game.Id, lorenzo.Id, 100m);
+        await client.AddBuyInAsync(game.Id, maya.Id, 100m);
+        await client.AddCashOutAsync(game.Id, lorenzo.Id, 160m);
+        await client.AddCashOutAsync(game.Id, maya.Id, 40m);
+        await client.CloseGameAsync(game.Id);
 
-        var openGame = await CreateGame(client);
-        await AddBuyIn(client, openGame.Id, lorenzo.Id, 999m);
+        var openGame = await client.CreateGameAsync();
+        await client.AddBuyInAsync(openGame.Id, lorenzo.Id, 999m);
 
         var response = await client.GetAsync("/game-results");
 
@@ -65,26 +65,26 @@ public sealed class GameResultsApiTests(PokerBankApiFactory factory) : IAsyncLif
     {
         using var client = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(client, "Lorenzo");
-        var maya = await CreatePlayer(client, "Maya");
+        var lorenzo = await client.CreatePlayerAsync("Lorenzo");
+        var maya = await client.CreatePlayerAsync("Maya");
 
-        var winningGame = await CreateGame(client);
-        await AddBuyIn(client, winningGame.Id, lorenzo.Id, 100m);
-        await AddBuyIn(client, winningGame.Id, maya.Id, 100m);
-        await AddCashOut(client, winningGame.Id, lorenzo.Id, 160m);
-        await AddCashOut(client, winningGame.Id, maya.Id, 40m);
-        await CloseGame(client, winningGame.Id);
+        var winningGame = await client.CreateGameAsync();
+        await client.AddBuyInAsync(winningGame.Id, lorenzo.Id, 100m);
+        await client.AddBuyInAsync(winningGame.Id, maya.Id, 100m);
+        await client.AddCashOutAsync(winningGame.Id, lorenzo.Id, 160m);
+        await client.AddCashOutAsync(winningGame.Id, maya.Id, 40m);
+        await client.CloseGameAsync(winningGame.Id);
 
         await Task.Delay(10);
 
-        var losingGame = await CreateGame(client);
-        await AddBuyIn(client, losingGame.Id, lorenzo.Id, 75m);
-        await AddBuyIn(client, losingGame.Id, lorenzo.Id, 25m);
-        await AddBuyIn(client, losingGame.Id, maya.Id, 25m);
-        await AddCashOut(client, losingGame.Id, lorenzo.Id, 20m);
-        await AddCashOut(client, losingGame.Id, lorenzo.Id, 30m);
-        await AddCashOut(client, losingGame.Id, maya.Id, 75m);
-        await CloseGame(client, losingGame.Id);
+        var losingGame = await client.CreateGameAsync();
+        await client.AddBuyInAsync(losingGame.Id, lorenzo.Id, 75m);
+        await client.AddBuyInAsync(losingGame.Id, lorenzo.Id, 25m);
+        await client.AddBuyInAsync(losingGame.Id, maya.Id, 25m);
+        await client.AddCashOutAsync(losingGame.Id, lorenzo.Id, 20m);
+        await client.AddCashOutAsync(losingGame.Id, lorenzo.Id, 30m);
+        await client.AddCashOutAsync(losingGame.Id, maya.Id, 75m);
+        await client.CloseGameAsync(losingGame.Id);
 
         var response = await client.GetAsync($"/game-results?playerId={lorenzo.Id}");
 
@@ -122,22 +122,22 @@ public sealed class GameResultsApiTests(PokerBankApiFactory factory) : IAsyncLif
     {
         using var client = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(client, "Lorenzo");
-        var maya = await CreatePlayer(client, "Maya");
+        var lorenzo = await client.CreatePlayerAsync("Lorenzo");
+        var maya = await client.CreatePlayerAsync("Maya");
 
-        var firstGame = await CreateGame(client);
-        await AddBuyIn(client, firstGame.Id, lorenzo.Id, 100m);
-        await AddBuyIn(client, firstGame.Id, maya.Id, 100m);
-        await AddCashOut(client, firstGame.Id, lorenzo.Id, 160m);
-        await AddCashOut(client, firstGame.Id, maya.Id, 40m);
-        await CloseGame(client, firstGame.Id);
+        var firstGame = await client.CreateGameAsync();
+        await client.AddBuyInAsync(firstGame.Id, lorenzo.Id, 100m);
+        await client.AddBuyInAsync(firstGame.Id, maya.Id, 100m);
+        await client.AddCashOutAsync(firstGame.Id, lorenzo.Id, 160m);
+        await client.AddCashOutAsync(firstGame.Id, maya.Id, 40m);
+        await client.CloseGameAsync(firstGame.Id);
 
-        var secondGame = await CreateGame(client);
-        await AddBuyIn(client, secondGame.Id, lorenzo.Id, 50m);
-        await AddBuyIn(client, secondGame.Id, maya.Id, 50m);
-        await AddCashOut(client, secondGame.Id, lorenzo.Id, 25m);
-        await AddCashOut(client, secondGame.Id, maya.Id, 75m);
-        await CloseGame(client, secondGame.Id);
+        var secondGame = await client.CreateGameAsync();
+        await client.AddBuyInAsync(secondGame.Id, lorenzo.Id, 50m);
+        await client.AddBuyInAsync(secondGame.Id, maya.Id, 50m);
+        await client.AddCashOutAsync(secondGame.Id, lorenzo.Id, 25m);
+        await client.AddCashOutAsync(secondGame.Id, maya.Id, 75m);
+        await client.CloseGameAsync(secondGame.Id);
 
         var response = await client.GetAsync($"/game-results?gameId={secondGame.Id}");
 
@@ -175,15 +175,15 @@ public sealed class GameResultsApiTests(PokerBankApiFactory factory) : IAsyncLif
     {
         using var client = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(client, "Lorenzo");
-        var maya = await CreatePlayer(client, "Maya");
+        var lorenzo = await client.CreatePlayerAsync("Lorenzo");
+        var maya = await client.CreatePlayerAsync("Maya");
 
-        var game = await CreateGame(client);
-        await AddBuyIn(client, game.Id, lorenzo.Id, 100m);
-        await AddBuyIn(client, game.Id, maya.Id, 100m);
-        await AddCashOut(client, game.Id, lorenzo.Id, 160m);
-        await AddCashOut(client, game.Id, maya.Id, 40m);
-        await CloseGame(client, game.Id);
+        var game = await client.CreateGameAsync();
+        await client.AddBuyInAsync(game.Id, lorenzo.Id, 100m);
+        await client.AddBuyInAsync(game.Id, maya.Id, 100m);
+        await client.AddCashOutAsync(game.Id, lorenzo.Id, 160m);
+        await client.AddCashOutAsync(game.Id, maya.Id, 40m);
+        await client.CloseGameAsync(game.Id);
 
         var response = await client.GetAsync($"/game-results?playerId={maya.Id}&gameId={game.Id}");
 
@@ -202,63 +202,8 @@ public sealed class GameResultsApiTests(PokerBankApiFactory factory) : IAsyncLif
         Assert.Equal(-60m, result.NetAmount);
     }
 
-    private static async Task<PlayerResponse> CreatePlayer(HttpClient client, string name)
-    {
-        var response = await client.PostAsJsonAsync("/players", new { Name = name });
-        response.EnsureSuccessStatusCode();
-
-        var player = await response.Content.ReadFromJsonAsync<PlayerResponse>();
-
-        return player ?? throw new InvalidOperationException("Create player response was empty.");
-    }
-
-    private static async Task<GameResponse> CreateGame(HttpClient client)
-    {
-        var response = await client.PostAsync("/games", content: null);
-        response.EnsureSuccessStatusCode();
-
-        var game = await response.Content.ReadFromJsonAsync<GameResponse>();
-
-        return game ?? throw new InvalidOperationException("Create game response was empty.");
-    }
-
-    private static async Task AddBuyIn(HttpClient client, Guid gameId, Guid playerId, decimal amount)
-    {
-        var response = await client.PostAsJsonAsync(
-            $"/games/{gameId}/buy-ins",
-            new { PlayerId = playerId, Amount = amount });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task AddCashOut(HttpClient client, Guid gameId, Guid playerId, decimal amount)
-    {
-        var response = await client.PostAsJsonAsync(
-            $"/games/{gameId}/cash-outs",
-            new { PlayerId = playerId, Amount = amount });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task CloseGame(HttpClient client, Guid gameId)
-    {
-        var response = await client.PostAsync($"/games/{gameId}/close", content: null);
-        response.EnsureSuccessStatusCode();
-    }
-
     private static void AssertCloseTo(DateTime expected, DateTime actual)
     {
         Assert.InRange((actual - expected).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
     }
-
-    private sealed record PlayerResponse(Guid Id, string Name, bool IsActive);
-
-    private sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
-
-    private sealed record GameResultResponse(
-        Guid PlayerId,
-        string PlayerName,
-        Guid GameId,
-        DateTime PlayedAtUtc,
-        decimal BuyInAmount,
-        decimal CashOutAmount,
-        decimal NetAmount);
 }

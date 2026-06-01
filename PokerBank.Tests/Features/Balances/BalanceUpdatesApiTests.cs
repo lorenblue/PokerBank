@@ -17,17 +17,17 @@ public sealed class BalanceUpdatesApiTests(PokerBankApiFactory factory) : IAsync
     {
         using var client = factory.CreateHttpsClient();
 
-        var alice = await CreatePlayer(client, "Alice", "alice@example.com");
-        var maya = await CreatePlayer(client, "Maya", emailAddress: null);
+        var alice = await client.CreatePlayerAsync("Alice", "alice@example.com");
+        var maya = await client.CreatePlayerAsync("Maya", emailAddress: null);
 
-        var game = await CreateGame(client);
-        await AddBuyIn(client, game.Id, alice.Id, 100m);
-        await AddBuyIn(client, game.Id, maya.Id, 100m);
-        await AddCashOut(client, game.Id, alice.Id, 160m);
-        await AddCashOut(client, game.Id, maya.Id, 40m);
-        await CloseGame(client, game.Id);
+        var game = await client.CreateGameAsync();
+        await client.AddBuyInAsync(game.Id, alice.Id, 100m);
+        await client.AddBuyInAsync(game.Id, maya.Id, 100m);
+        await client.AddCashOutAsync(game.Id, alice.Id, 160m);
+        await client.AddCashOutAsync(game.Id, maya.Id, 40m);
+        await client.CloseGameAsync(game.Id);
 
-        await RecordPaymentReceivedByPlayer(client, alice.Id, 20m);
+        await client.RecordPaymentReceivedByPlayerAsync(alice.Id, 20m);
 
         var response = await client.PostAsync("/balances/updates/send", content: null);
 
@@ -57,8 +57,8 @@ public sealed class BalanceUpdatesApiTests(PokerBankApiFactory factory) : IAsync
     {
         using var client = factory.CreateHttpsClient();
 
-        var player = await CreatePlayer(client, "Alice", "alice@example.com");
-        await ArchivePlayer(client, player.Id);
+        var player = await client.CreatePlayerAsync("Alice", "alice@example.com");
+        await client.ArchivePlayerAsync(player.Id);
 
         var response = await client.PostAsync("/balances/updates/send", content: null);
 
@@ -94,70 +94,4 @@ public sealed class BalanceUpdatesApiTests(PokerBankApiFactory factory) : IAsync
         Assert.Empty(factory.SentEmails);
     }
 
-    private static async Task<PlayerResponse> CreatePlayer(
-        HttpClient client,
-        string name,
-        string? emailAddress)
-    {
-        var response = await client.PostAsJsonAsync("/players", new { Name = name, EmailAddress = emailAddress });
-        response.EnsureSuccessStatusCode();
-
-        var player = await response.Content.ReadFromJsonAsync<PlayerResponse>();
-
-        return player ?? throw new InvalidOperationException("Create player response was empty.");
-    }
-
-    private static async Task<GameResponse> CreateGame(HttpClient client)
-    {
-        var response = await client.PostAsync("/games", content: null);
-        response.EnsureSuccessStatusCode();
-
-        var game = await response.Content.ReadFromJsonAsync<GameResponse>();
-
-        return game ?? throw new InvalidOperationException("Create game response was empty.");
-    }
-
-    private static async Task AddBuyIn(HttpClient client, Guid gameId, Guid playerId, decimal amount)
-    {
-        var response = await client.PostAsJsonAsync(
-            $"/games/{gameId}/buy-ins",
-            new { PlayerId = playerId, Amount = amount });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task AddCashOut(HttpClient client, Guid gameId, Guid playerId, decimal amount)
-    {
-        var response = await client.PostAsJsonAsync(
-            $"/games/{gameId}/cash-outs",
-            new { PlayerId = playerId, Amount = amount });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task CloseGame(HttpClient client, Guid gameId)
-    {
-        var response = await client.PostAsync($"/games/{gameId}/close", content: null);
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task RecordPaymentReceivedByPlayer(HttpClient client, Guid playerId, decimal amount)
-    {
-        var response = await client.PostAsJsonAsync(
-            $"/players/{playerId}/payments/received",
-            new { Amount = amount, Method = "ETransfer" });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task ArchivePlayer(HttpClient client, Guid playerId)
-    {
-        var response = await client.PostAsync($"/players/{playerId}/archive", content: null);
-        response.EnsureSuccessStatusCode();
-    }
-
-    private sealed record PlayerResponse(Guid Id, string Name, string? EmailAddress, bool IsActive);
-
-    private sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
-
-    private sealed record SendBalanceUpdatesResponse(int Sent, SkippedPlayerResponse[] Skipped);
-
-    private sealed record SkippedPlayerResponse(Guid PlayerId, string PlayerName, string Reason);
 }

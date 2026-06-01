@@ -17,17 +17,17 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     {
         using var ownerClient = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(ownerClient, "Lorenzo");
-        var maya = await CreatePlayer(ownerClient, "Maya");
+        var lorenzo = await ownerClient.CreatePlayerAsync("Lorenzo");
+        var maya = await ownerClient.CreatePlayerAsync("Maya");
 
-        var game = await CreateGame(ownerClient);
-        await AddBuyIn(ownerClient, game.Id, lorenzo.Id, 100m);
-        await AddBuyIn(ownerClient, game.Id, maya.Id, 100m);
-        await AddCashOut(ownerClient, game.Id, lorenzo.Id, 160m);
-        await AddCashOut(ownerClient, game.Id, maya.Id, 40m);
-        await CloseGame(ownerClient, game.Id);
+        var game = await ownerClient.CreateGameAsync();
+        await ownerClient.AddBuyInAsync(game.Id, lorenzo.Id, 100m);
+        await ownerClient.AddBuyInAsync(game.Id, maya.Id, 100m);
+        await ownerClient.AddCashOutAsync(game.Id, lorenzo.Id, 160m);
+        await ownerClient.AddCashOutAsync(game.Id, maya.Id, 40m);
+        await ownerClient.CloseGameAsync(game.Id);
 
-        await RecordPayment(ownerClient, lorenzo.Id, 20m, "ReceivedByPlayer");
+        await ownerClient.RecordPaymentAsync(lorenzo.Id, 20m, "ReceivedByPlayer");
 
         await factory.LinkDefaultAdminToPlayerAsync(lorenzo.Id);
         await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
@@ -65,14 +65,14 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     {
         using var ownerClient = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(ownerClient, "Lorenzo");
-        var maya = await CreatePlayer(ownerClient, "Maya");
+        var lorenzo = await ownerClient.CreatePlayerAsync("Lorenzo");
+        var maya = await ownerClient.CreatePlayerAsync("Maya");
 
-        var olderPayment = await RecordPayment(ownerClient, lorenzo.Id, 20m, "MadeByPlayer");
+        var olderPayment = await ownerClient.RecordPaymentAsync(lorenzo.Id, 20m, "MadeByPlayer");
         await Task.Delay(10);
-        await RecordPayment(ownerClient, maya.Id, 50m, "ReceivedByPlayer");
+        await ownerClient.RecordPaymentAsync(maya.Id, 50m, "ReceivedByPlayer");
         await Task.Delay(10);
-        var newerPayment = await RecordPayment(ownerClient, lorenzo.Id, 15m, "ReceivedByPlayer");
+        var newerPayment = await ownerClient.RecordPaymentAsync(lorenzo.Id, 15m, "ReceivedByPlayer");
 
         await factory.LinkDefaultAdminToPlayerAsync(lorenzo.Id);
         await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
@@ -121,28 +121,28 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     {
         using var ownerClient = factory.CreateHttpsClient();
 
-        var lorenzo = await CreatePlayer(ownerClient, "Lorenzo");
-        var maya = await CreatePlayer(ownerClient, "Maya");
+        var lorenzo = await ownerClient.CreatePlayerAsync("Lorenzo");
+        var maya = await ownerClient.CreatePlayerAsync("Maya");
 
-        var olderGame = await CreateGame(ownerClient);
-        await AddBuyIn(ownerClient, olderGame.Id, lorenzo.Id, 100m);
-        await AddBuyIn(ownerClient, olderGame.Id, maya.Id, 50m);
-        await AddCashOut(ownerClient, olderGame.Id, lorenzo.Id, 40m);
-        await AddCashOut(ownerClient, olderGame.Id, maya.Id, 110m);
-        await CloseGame(ownerClient, olderGame.Id);
-
-        await Task.Delay(10);
-
-        var unrelatedGame = await CreateGame(ownerClient);
-        await AddBuyIn(ownerClient, unrelatedGame.Id, maya.Id, 75m);
-        await AddCashOut(ownerClient, unrelatedGame.Id, maya.Id, 75m);
-        await CloseGame(ownerClient, unrelatedGame.Id);
+        var olderGame = await ownerClient.CreateGameAsync();
+        await ownerClient.AddBuyInAsync(olderGame.Id, lorenzo.Id, 100m);
+        await ownerClient.AddBuyInAsync(olderGame.Id, maya.Id, 50m);
+        await ownerClient.AddCashOutAsync(olderGame.Id, lorenzo.Id, 40m);
+        await ownerClient.AddCashOutAsync(olderGame.Id, maya.Id, 110m);
+        await ownerClient.CloseGameAsync(olderGame.Id);
 
         await Task.Delay(10);
 
-        var newerGame = await CreateGame(ownerClient);
-        await AddBuyIn(ownerClient, newerGame.Id, lorenzo.Id, 80m);
-        await AddCashOut(ownerClient, newerGame.Id, lorenzo.Id, 25m);
+        var unrelatedGame = await ownerClient.CreateGameAsync();
+        await ownerClient.AddBuyInAsync(unrelatedGame.Id, maya.Id, 75m);
+        await ownerClient.AddCashOutAsync(unrelatedGame.Id, maya.Id, 75m);
+        await ownerClient.CloseGameAsync(unrelatedGame.Id);
+
+        await Task.Delay(10);
+
+        var newerGame = await ownerClient.CreateGameAsync();
+        await ownerClient.AddBuyInAsync(newerGame.Id, lorenzo.Id, 80m);
+        await ownerClient.AddCashOutAsync(newerGame.Id, lorenzo.Id, 25m);
 
         await factory.LinkDefaultAdminToPlayerAsync(lorenzo.Id);
         await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
@@ -261,7 +261,7 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     {
         using var ownerClient = factory.CreateHttpsClient();
 
-        var player = await CreatePlayer(ownerClient, "Lorenzo");
+        var player = await ownerClient.CreatePlayerAsync("Lorenzo");
 
         await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
 
@@ -320,103 +320,6 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
             { HttpMethod.Delete, $"/payments/{paymentId}", null }
         };
     }
-
-    private static async Task<PlayerResponse> CreatePlayer(HttpClient client, string name)
-    {
-        var response = await client.PostAsJsonAsync("/players", new { Name = name });
-        response.EnsureSuccessStatusCode();
-
-        var player = await response.Content.ReadFromJsonAsync<PlayerResponse>();
-
-        return player ?? throw new InvalidOperationException("Create player response was empty.");
-    }
-
-    private static async Task<GameResponse> CreateGame(HttpClient client)
-    {
-        var response = await client.PostAsync("/games", content: null);
-        response.EnsureSuccessStatusCode();
-
-        var game = await response.Content.ReadFromJsonAsync<GameResponse>();
-
-        return game ?? throw new InvalidOperationException("Create game response was empty.");
-    }
-
-    private static async Task AddBuyIn(HttpClient client, Guid gameId, Guid playerId, decimal amount)
-    {
-        var response = await client.PostAsJsonAsync(
-            $"/games/{gameId}/buy-ins",
-            new { PlayerId = playerId, Amount = amount });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task AddCashOut(HttpClient client, Guid gameId, Guid playerId, decimal amount)
-    {
-        var response = await client.PostAsJsonAsync(
-            $"/games/{gameId}/cash-outs",
-            new { PlayerId = playerId, Amount = amount });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task CloseGame(HttpClient client, Guid gameId)
-    {
-        var response = await client.PostAsync($"/games/{gameId}/close", content: null);
-        response.EnsureSuccessStatusCode();
-    }
-
-    private static async Task<PaymentResponse> RecordPayment(
-        HttpClient client,
-        Guid playerId,
-        decimal amount,
-        string direction)
-    {
-        var response = await client.PostAsJsonAsync(
-            PaymentUrl(playerId, direction),
-            new { Amount = amount, Method = "ETransfer" });
-        response.EnsureSuccessStatusCode();
-
-        var payment = await response.Content.ReadFromJsonAsync<PaymentResponse>();
-
-        return payment ?? throw new InvalidOperationException("Create payment response was empty.");
-    }
-
-    private static string PaymentUrl(Guid playerId, string direction) =>
-        direction switch
-        {
-            "MadeByPlayer" => $"/players/{playerId}/payments/made",
-            "ReceivedByPlayer" => $"/players/{playerId}/payments/received",
-            _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, "Unknown payment direction.")
-        };
-
-    private sealed record PlayerResponse(Guid Id, string Name, bool IsActive);
-
-    private sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
-
-    private sealed record MyGameResponse(
-        Guid Id,
-        string Status,
-        DateTime PlayedAtUtc,
-        decimal MyBuyInAmount,
-        decimal MyCashOutAmount,
-        decimal MyNetAmount,
-        int PlayerCount,
-        decimal TotalBuyInAmount,
-        decimal TotalCashOutAmount);
-
-    private sealed record PaymentResponse(
-        Guid Id,
-        Guid PlayerId,
-        decimal Amount,
-        string Direction,
-        string Method,
-        DateTimeOffset RecordedAtUtc);
-
-    private sealed record BalanceResponse(
-        Guid PlayerId,
-        string PlayerName,
-        bool IsActive,
-        decimal GameNetAmount,
-        decimal PaymentNetAmount,
-        decimal BalanceAmount);
 
     private static void AssertCloseTo(DateTime expected, DateTime actual)
     {
