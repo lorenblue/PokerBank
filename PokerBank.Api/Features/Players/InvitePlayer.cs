@@ -26,6 +26,7 @@ public static class InvitePlayer
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
         IEmailSender emailSender,
+        IConfiguration configuration,
         CancellationToken cancellationToken)
     {
         var player = await dbContext.Players
@@ -80,7 +81,7 @@ public static class InvitePlayer
 
         dbContext.PlayerInvitations.Add(invitation);
 
-        var inviteUrl = BuildInviteUrl(httpContext.Request, token);
+        var inviteUrl = BuildInviteUrl(httpContext.Request, configuration, token);
 
         await emailSender.SendAsync(
             new EmailMessage(
@@ -98,11 +99,17 @@ public static class InvitePlayer
             invitation.ExpiresAtUtc));
     }
 
-    private static string BuildInviteUrl(HttpRequest request, string token)
+    private static string BuildInviteUrl(HttpRequest request, IConfiguration configuration, string token)
     {
-        var pathBase = request.PathBase.HasValue ? request.PathBase.Value : string.Empty;
+        var baseUrl = configuration["WebApp:BaseUrl"];
 
-        return $"{request.Scheme}://{request.Host}{pathBase}/accept-invite?token={Uri.EscapeDataString(token)}";
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            var pathBase = request.PathBase.HasValue ? request.PathBase.Value : string.Empty;
+            baseUrl = $"{request.Scheme}://{request.Host}{pathBase}";
+        }
+
+        return $"{baseUrl.TrimEnd('/')}/accept-invite?token={Uri.EscapeDataString(token)}";
     }
 
     private static string BuildBody(string playerName, string inviteUrl, DateTimeOffset expiresAtUtc) =>

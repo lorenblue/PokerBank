@@ -26,6 +26,7 @@ services:
       ConnectionStrings__PokerBank: Host=pokerbank.postgres;Port=5432;Database=pokerbank;Username=pokerbank;Password=pokerbank
       Authentication__AdminEmail: ${AUTHENTICATION__ADMINEMAIL:-admin@pokerbank.local}
       Authentication__AdminPassword: ${AUTHENTICATION__ADMINPASSWORD:-PokerBank123!}
+      WebApp__BaseUrl: ${WEBAPP__BASEURL:-http://localhost:5173}
       Email__Smtp__Enabled: ${EMAIL__SMTP__ENABLED:-false}
       Email__Smtp__Host: ${EMAIL__SMTP__HOST:-}
       Email__Smtp__Port: ${EMAIL__SMTP__PORT:-587}

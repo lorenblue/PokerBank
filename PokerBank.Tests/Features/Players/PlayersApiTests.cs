@@ -352,7 +352,7 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         Assert.Equal("lorenzo@example.com", email.To);
         Assert.Equal("PokerBank invitation", email.Subject);
         Assert.Contains("Hi Lorenzo", email.Body);
-        Assert.Contains("/accept-invite?token=", email.Body);
+        Assert.Contains("http://localhost:5173/accept-invite?token=", email.Body);
     }
 
     [Fact]
