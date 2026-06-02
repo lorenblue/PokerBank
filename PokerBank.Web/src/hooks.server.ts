@@ -1,7 +1,7 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { getCurrentUser } from '$lib/server/auth';
 
-const publicPaths = new Set(['/login', '/logout']);
+const publicPaths = new Set(['/accept-invite', '/login', '/logout']);
 
 export const handle: Handle = async ({ event, resolve }) => {
 	if (event.route.id === null) {

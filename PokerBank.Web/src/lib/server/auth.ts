@@ -46,7 +46,12 @@ export async function signIn(apiFetch: typeof fetch, cookies: Cookies, email: st
 		return false;
 	}
 
-	const setCookie = response.headers.get('set-cookie');
+	setAuthCookie(cookies, response.headers.get('set-cookie'));
+
+	return true;
+}
+
+export function setAuthCookie(cookies: Cookies, setCookie: string | null) {
 	const authCookie = readCookieValue(setCookie, authCookieName);
 
 	if (!authCookie) {
@@ -59,8 +64,6 @@ export async function signIn(apiFetch: typeof fetch, cookies: Cookies, email: st
 		sameSite: 'lax',
 		secure: false
 	});
-
-	return true;
 }
 
 export async function signOut(apiFetch: typeof fetch, cookies: Cookies, cookieHeader?: string | null) {

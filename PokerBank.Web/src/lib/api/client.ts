@@ -15,6 +15,8 @@ export type Payment = Schemas['PaymentResponse'];
 export type PaymentPage = Schemas['PagedResponseOfPaymentResponse'];
 export type CreateGameResponse = Schemas['CreateGameResponse'];
 export type InvitePlayerResponse = Schemas['InvitePlayerResponse'];
+export type AcceptPlayerInviteRequest = Schemas['AcceptPlayerInviteRequest'];
+export type AcceptPlayerInviteResponse = Schemas['AcceptPlayerInviteResponse'];
 export type CreatePlayerRequest = Schemas['CreatePlayerRequest'];
 export type UpdatePlayerRequest = Schemas['UpdatePlayerRequest'];
 export type RecordPaymentRequest = Schemas['RecordPaymentRequest'];
@@ -163,6 +165,13 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 				})
 			),
 
+		acceptPlayerInvite: (body: AcceptPlayerInviteRequest) =>
+			unwrapWithResponse<AcceptPlayerInviteResponse>(
+				client.POST('/invites/accept', {
+					body
+				})
+			),
+
 		recordPaymentMadeByPlayer: (playerId: string, body: RecordPaymentRequest) =>
 			unwrap<Payment>(
 				client.POST('/players/{playerId}/payments/made', {
@@ -198,6 +207,18 @@ async function unwrap<T>(
 	}
 
 	return data as T;
+}
+
+async function unwrapWithResponse<T>(
+	request: Promise<{ data?: T; error?: unknown; response: Response }>
+): Promise<{ data: T; response: Response }> {
+	const { data, error, response } = await request;
+
+	if (!response.ok || error !== undefined) {
+		throw new ApiError(readError(error, response), response.status);
+	}
+
+	return { data: data as T, response };
 }
 
 function readError(error: unknown, response: Response) {
