@@ -44,6 +44,7 @@ app.UseAuthorization();
 app.MapLogin();
 app.MapLogout();
 app.MapGetCurrentUser();
+app.MapAcceptPlayerInvite();
 
 var viewGroup = app.MapGroup("")
     .RequireAuthorization(AuthorizationPolicies.ViewGroup);

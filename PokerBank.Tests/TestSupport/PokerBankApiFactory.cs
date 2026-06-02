@@ -100,6 +100,9 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
         command.CommandText = """
             TRUNCATE TABLE "GameEntries", "Payments", "Games", "PlayerInvitations", "Players" RESTART IDENTITY CASCADE;
 
+            DELETE FROM "AspNetUsers"
+            WHERE "NormalizedEmail" IS NULL OR "NormalizedEmail" <> @normalizedEmail;
+
             UPDATE "GroupMemberships"
             SET "Role" = @ownerRole
             WHERE "PokerGroupId" = @defaultPokerGroupId
