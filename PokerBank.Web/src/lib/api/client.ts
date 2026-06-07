@@ -165,6 +165,13 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 				})
 			),
 
+		cancelPlayerInvite: (id: string) =>
+			unwrap<void>(
+				client.DELETE('/players/{id}/invite', {
+					params: { path: { id } }
+				})
+			),
+
 		acceptPlayerInvite: (body: AcceptPlayerInviteRequest) =>
 			unwrapWithResponse<AcceptPlayerInviteResponse>(
 				client.POST('/invites/accept', {

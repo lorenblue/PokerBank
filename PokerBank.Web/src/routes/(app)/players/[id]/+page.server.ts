@@ -53,6 +53,22 @@ export const actions: Actions = {
 		}
 	},
 
+	cancelInvite: async ({ fetch, params, request }) => {
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
+
+		try {
+			await api.cancelPlayerInvite(params.id);
+
+			return { canceledInvite: true };
+		} catch (caught) {
+			if (caught instanceof ApiError) {
+				return fail(caught.status, { error: caught.message });
+			}
+
+			throw caught;
+		}
+	},
+
 	createPayment: async ({ fetch, params, request }) => {
 		const data = await request.formData();
 		const payment = readPaymentFields(data);

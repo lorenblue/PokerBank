@@ -499,4 +499,62 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
         Assert.Single(factory.SentEmails);
     }
 
+    [Fact]
+    public async Task CancelPlayerInvite_RemovesPendingInvitation()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var player = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
+        await client.InvitePlayerAsync(player.Id);
+
+        var response = await client.DeleteAsync($"/players/{player.Id}/invite");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(0, await factory.CountPlayerInvitationsAsync(player.Id));
+    }
+
+    [Fact]
+    public async Task CancelPlayerInvite_ReturnsNotFound_WhenPlayerDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.DeleteAsync($"/players/{Guid.NewGuid()}/invite");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CancelPlayerInvite_ReturnsNotFound_WhenPendingInvitationDoesNotExist()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var player = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
+
+        var response = await client.DeleteAsync($"/players/{player.Id}/invite");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.Equal("Pending invitation was not found.", error?.Error);
+    }
+
+    [Fact]
+    public async Task CancelPlayerInvite_ReturnsNotFound_WhenPlayerIsInDifferentPokerGroup()
+    {
+        var otherGroupId = Guid.NewGuid();
+        await factory.CreatePokerGroupAsync(otherGroupId);
+
+        using var client = factory.CreateHttpsClient();
+        using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
+
+        var otherGroupPlayer = await otherGroupClient.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
+        await otherGroupClient.InvitePlayerAsync(otherGroupPlayer.Id);
+
+        var response = await client.DeleteAsync($"/players/{otherGroupPlayer.Id}/invite");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(1, await factory.CountPlayerInvitationsAsync(otherGroupPlayer.Id));
+    }
+
 }

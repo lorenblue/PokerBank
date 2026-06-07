@@ -9,7 +9,12 @@
 		form
 	}: {
 		data: PageData;
-		form: { error?: string; invitedEmailAddress?: string; success?: boolean } | null;
+		form: {
+			canceledInvite?: boolean;
+			error?: string;
+			invitedEmailAddress?: string;
+			success?: boolean;
+		} | null;
 	} = $props();
 
 	let isRecordPaymentOpen = $state(false);
@@ -105,16 +110,24 @@
 	</div>
 
 	<div class="row-actions">
-		<form method="POST" action="?/invitePlayer">
-			<button
-				type="submit"
-				disabled={!canInvitePlayer}
-				title={inviteDisabledReason ?? ''}
-				class="btn btn-secondary"
-			>
-				{inviteButtonLabel}
-			</button>
-		</form>
+		{#if data.player.pendingInvitation}
+			<form method="POST" action="?/cancelInvite">
+				<button type="submit" title={inviteDisabledReason ?? ''} class="btn btn-secondary">
+					Cancel invite
+				</button>
+			</form>
+		{:else}
+			<form method="POST" action="?/invitePlayer">
+				<button
+					type="submit"
+					disabled={!canInvitePlayer}
+					title={inviteDisabledReason ?? ''}
+					class="btn btn-secondary"
+				>
+					{inviteButtonLabel}
+				</button>
+			</form>
+		{/if}
 
 		<button
 			type="button"
@@ -131,6 +144,8 @@
 	<p class="alert alert-error">{form.error}</p>
 {:else if form?.invitedEmailAddress}
 	<p class="alert alert-success">Invitation sent to {form.invitedEmailAddress}.</p>
+{:else if form?.canceledInvite}
+	<p class="alert alert-success">Invitation cancelled.</p>
 {:else if form?.success}
 	<p class="alert alert-success">Payment recorded.</p>
 {/if}

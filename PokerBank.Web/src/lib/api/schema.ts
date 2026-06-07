@@ -395,7 +395,8 @@ export interface paths {
         put?: never;
         /** Invite a player. */
         post: operations["InvitePlayer"];
-        delete?: never;
+        /** Cancel a pending player invite. */
+        delete: operations["CancelPlayerInvite"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1729,6 +1730,35 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CancelPlayerInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
