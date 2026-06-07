@@ -585,6 +585,22 @@ export interface components {
             /** Format: double */
             totalCashOutAmount: number | string;
         };
+        GetPlayerPendingInvitationResponse: {
+            /** Format: uuid */
+            id: string;
+            emailAddress: string;
+            /** Format: date-time */
+            expiresAtUtc: string;
+        };
+        GetPlayerResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            emailAddress: null | string;
+            isActive: boolean;
+            hasUserAccount: boolean;
+            pendingInvitation: null | components["schemas"]["GetPlayerPendingInvitationResponse"];
+        };
         InvitePlayerResponse: {
             /** Format: uuid */
             id: string;
@@ -1584,7 +1600,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PlayerResponse"];
+                    "application/json": components["schemas"]["GetPlayerResponse"];
                 };
             };
             /** @description Not Found */

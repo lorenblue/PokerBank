@@ -2,6 +2,19 @@ namespace PokerBank.Tests.TestSupport;
 
 internal sealed record PlayerResponse(Guid Id, string Name, string? EmailAddress, bool IsActive);
 
+internal sealed record PlayerDetailsResponse(
+    Guid Id,
+    string Name,
+    string? EmailAddress,
+    bool IsActive,
+    bool HasUserAccount,
+    PendingInvitationResponse? PendingInvitation);
+
+internal sealed record PendingInvitationResponse(
+    Guid Id,
+    string EmailAddress,
+    DateTimeOffset ExpiresAtUtc);
+
 internal sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
 
 internal sealed record PaymentResponse(

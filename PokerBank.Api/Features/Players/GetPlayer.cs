@@ -16,7 +16,7 @@ public static class GetPlayer
         return app;
     }
 
-    private static async Task<Results<Ok<PlayerResponse>, NotFound<ErrorResponse>>> Handle(
+    private static async Task<Results<Ok<Response>, NotFound<ErrorResponse>>> Handle(
         Guid id,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
@@ -27,8 +27,46 @@ public static class GetPlayer
             .Where(player => player.Id == id && player.PokerGroupId == groupContext.Id)
             .SingleOrDefaultAsync(cancellationToken);
 
-        return player is null
-            ? TypedResults.NotFound(new ErrorResponse("Player was not found."))
-            : TypedResults.Ok(PlayerResponse.From(player));
+        if (player is null)
+        {
+            return TypedResults.NotFound(new ErrorResponse("Player was not found."));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        var pendingInvitation = await dbContext.PlayerInvitations
+            .AsNoTracking()
+            .Where(invitation =>
+                invitation.PokerGroupId == groupContext.Id &&
+                invitation.PlayerId == player.Id &&
+                invitation.AcceptedAtUtc == null &&
+                invitation.ExpiresAtUtc > now)
+            .OrderByDescending(invitation => invitation.CreatedAtUtc)
+            .Select(invitation => new PendingInvitationResponse(
+                invitation.Id,
+                invitation.EmailAddress,
+                invitation.ExpiresAtUtc))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return TypedResults.Ok(new Response(
+            player.Id,
+            player.Name,
+            player.EmailAddress,
+            player.IsActive,
+            player.UserId is not null,
+            pendingInvitation));
     }
+
+    private sealed record Response(
+        Guid Id,
+        string Name,
+        string? EmailAddress,
+        bool IsActive,
+        bool HasUserAccount,
+        PendingInvitationResponse? PendingInvitation);
+
+    private sealed record PendingInvitationResponse(
+        Guid Id,
+        string EmailAddress,
+        DateTimeOffset ExpiresAtUtc);
 }

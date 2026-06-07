@@ -208,6 +208,49 @@ public sealed class PlayersApiTests(PokerBankApiFactory factory) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task GetPlayer_ReturnsPendingInvitation_WhenPlayerHasPendingInvitation()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var createdPlayer = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
+        var invitation = await client.InvitePlayerAsync(createdPlayer.Id);
+
+        var response = await client.GetAsync($"/players/{createdPlayer.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var player = await response.Content.ReadFromJsonAsync<PlayerDetailsResponse>();
+
+        Assert.NotNull(player);
+        Assert.Equal(createdPlayer.Id, player.Id);
+        Assert.False(player.HasUserAccount);
+        Assert.NotNull(player.PendingInvitation);
+        Assert.Equal(invitation.Id, player.PendingInvitation.Id);
+        Assert.Equal("lorenzo@example.com", player.PendingInvitation.EmailAddress);
+        Assert.True(
+            (player.PendingInvitation.ExpiresAtUtc - invitation.ExpiresAtUtc).Duration() < TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task GetPlayer_ReturnsHasUserAccount_WhenPlayerIsLinkedToUser()
+    {
+        using var client = factory.CreateHttpsClient();
+
+        var createdPlayer = await client.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
+        await factory.LinkDefaultAdminToPlayerAsync(createdPlayer.Id);
+
+        var response = await client.GetAsync($"/players/{createdPlayer.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var player = await response.Content.ReadFromJsonAsync<PlayerDetailsResponse>();
+
+        Assert.NotNull(player);
+        Assert.True(player.HasUserAccount);
+        Assert.Null(player.PendingInvitation);
+    }
+
+    [Fact]
     public async Task GetPlayer_ReturnsNotFound_WhenPlayerDoesNotExist()
     {
         using var client = factory.CreateHttpsClient();

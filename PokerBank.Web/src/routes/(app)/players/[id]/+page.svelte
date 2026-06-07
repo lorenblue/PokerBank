@@ -14,7 +14,25 @@
 
 	let isRecordPaymentOpen = $state(false);
 
-	const canInvitePlayer = $derived(Boolean(data.player.isActive && data.player.emailAddress));
+	const inviteDisabledReason = $derived.by(() => {
+		if (!data.player.isActive) return 'Archived players cannot be invited.';
+		if (data.player.hasUserAccount) return 'Account linked';
+		if (data.player.pendingInvitation) {
+			return `Invite pending until ${formatDateTime(data.player.pendingInvitation.expiresAtUtc)}`;
+		}
+		if (!data.player.emailAddress) return 'Add an email address before inviting this player.';
+
+		return null;
+	});
+
+	const inviteButtonLabel = $derived.by(() => {
+		if (data.player.hasUserAccount) return 'Account linked';
+		if (data.player.pendingInvitation) return 'Invite pending';
+
+		return 'Invite player';
+	});
+
+	const canInvitePlayer = $derived(inviteDisabledReason === null);
 
 	function money(value: number | string) {
 		const amount = Number(value);
@@ -88,7 +106,14 @@
 
 	<div class="row-actions">
 		<form method="POST" action="?/invitePlayer">
-			<button type="submit" disabled={!canInvitePlayer} class="btn btn-secondary">Invite player</button>
+			<button
+				type="submit"
+				disabled={!canInvitePlayer}
+				title={inviteDisabledReason ?? ''}
+				class="btn btn-secondary"
+			>
+				{inviteButtonLabel}
+			</button>
 		</form>
 
 		<button
