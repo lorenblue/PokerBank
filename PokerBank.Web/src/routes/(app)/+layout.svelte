@@ -6,6 +6,7 @@
 
 	const navItems = $derived([
 		{ href: '/', label: data.isManager ? 'Dashboard' : 'My Summary' },
+		{ href: '/events', label: 'Events' },
 		{ href: '/games', label: data.isManager ? 'Games' : 'My Games' },
 		...(data.isManager ? [{ href: '/players', label: 'Players' }] : []),
 		{ href: '/payments', label: data.isManager ? 'Payments' : 'My Payments' }
