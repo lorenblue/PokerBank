@@ -33,6 +33,16 @@ public static class CancelEvent
             return TypedResults.NotFound(new ErrorResponse("Event was not found."));
         }
 
+        var linkedGameId = await dbContext.Games
+            .Where(game => game.PokerEventId == pokerEvent.Id && game.PokerGroupId == groupContext.Id)
+            .Select(game => (Guid?)game.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (linkedGameId is not null)
+        {
+            return TypedResults.Conflict(new ErrorResponse("Events with linked games cannot be cancelled."));
+        }
+
         var result = pokerEvent.Cancel(DateTimeOffset.UtcNow);
 
         if (result.IsFailed)
@@ -49,6 +59,7 @@ public static class CancelEvent
             pokerEvent.Status,
             pokerEvent.CreatedAtUtc,
             pokerEvent.CancelledAtUtc,
+            GameId: null,
             pokerEvent.Rsvps.Count(rsvp => rsvp.Status == Domain.RsvpStatus.Going),
             pokerEvent.Rsvps.Count(rsvp => rsvp.Status == Domain.RsvpStatus.Maybe),
             pokerEvent.Rsvps.Count(rsvp => rsvp.Status == Domain.RsvpStatus.NotGoing),

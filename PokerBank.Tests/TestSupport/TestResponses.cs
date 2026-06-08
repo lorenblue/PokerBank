@@ -28,6 +28,7 @@ internal sealed record EventResponse(
     string Status,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? CancelledAtUtc,
+    Guid? GameId,
     int GoingCount,
     int MaybeCount,
     int NotGoingCount,
@@ -40,6 +41,7 @@ internal sealed record EventDetailsResponse(
     string Status,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? CancelledAtUtc,
+    Guid? GameId,
     int GoingCount,
     int MaybeCount,
     int NotGoingCount,
@@ -53,6 +55,8 @@ internal sealed record EventRsvpResponse(
     DateTimeOffset RespondedAtUtc);
 
 internal sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
+
+internal sealed record StartEventGameResponse(Guid Id, Guid? PokerEventId, string Status, DateTime CreatedAtUtc);
 
 internal sealed record PaymentResponse(
     Guid Id,

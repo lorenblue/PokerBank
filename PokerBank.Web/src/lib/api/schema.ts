@@ -246,6 +246,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/events/{id}/game": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a game from an event. */
+        post: operations["StartEventGame"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{gameId}/buy-ins": {
         parameters: {
             query?: never;
@@ -606,6 +623,8 @@ export interface components {
             createdAtUtc: string;
             /** Format: date-time */
             cancelledAtUtc: null | string;
+            /** Format: uuid */
+            gameId: null | string;
             /** Format: int32 */
             goingCount: number | string;
             /** Format: int32 */
@@ -626,6 +645,8 @@ export interface components {
             createdAtUtc: string;
             /** Format: date-time */
             cancelledAtUtc: null | string;
+            /** Format: uuid */
+            gameId: null | string;
             /** Format: int32 */
             goingCount: number | string;
             /** Format: int32 */
@@ -838,6 +859,15 @@ export interface components {
         };
         SetMyEventRsvpRequest: {
             status: components["schemas"]["RsvpStatus"];
+        };
+        StartEventGameResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            pokerEventId: null | string;
+            status: components["schemas"]["GameStatus"];
+            /** Format: date-time */
+            createdAtUtc: string;
         };
         UpdateEventRequest: {
             title: null | string;
@@ -1450,6 +1480,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EventResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    StartEventGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StartEventGameResponse"];
                 };
             };
             /** @description Not Found */

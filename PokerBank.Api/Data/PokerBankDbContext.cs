@@ -220,6 +220,19 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
                 .HasForeignKey(g => g.PokerGroupId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            game.Property(g => g.PokerEventId);
+
+            game.HasOne<PokerEvent>()
+                .WithMany()
+                .HasForeignKey(g => g.PokerEventId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            game.HasIndex(g => g.PokerGroupId);
+
+            game.HasIndex(g => new { g.PokerGroupId, g.PokerEventId })
+                .IsUnique()
+                .HasFilter("\"PokerEventId\" IS NOT NULL");
+
             game.Property(g => g.CreatedAtUtc)
                 .IsRequired();
 

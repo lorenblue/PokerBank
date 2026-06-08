@@ -32,6 +32,7 @@ public sealed class EventsApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         AssertCloseTo(scheduledAtUtc, pokerEvent.ScheduledAtUtc);
         Assert.Equal("Scheduled", pokerEvent.Status);
         Assert.Null(pokerEvent.CancelledAtUtc);
+        Assert.Null(pokerEvent.GameId);
         Assert.Equal(0, pokerEvent.GoingCount);
         Assert.Equal(0, pokerEvent.MaybeCount);
         Assert.Equal(0, pokerEvent.NotGoingCount);
@@ -207,6 +208,113 @@ public sealed class EventsApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task StartEventGame_CreatesGameLinkedToEvent()
+    {
+        using var client = factory.CreateHttpsClient();
+        var pokerEvent = await client.CreateEventAsync(scheduledAtUtc: DateTimeOffset.UtcNow.AddMinutes(-1));
+
+        var game = await client.StartEventGameAsync(pokerEvent.Id);
+        var eventsResponse = await client.GetAsync("/events");
+
+        Assert.NotEqual(Guid.Empty, game.Id);
+        Assert.Equal(pokerEvent.Id, game.PokerEventId);
+        Assert.Equal("Open", game.Status);
+
+        var events = await eventsResponse.Content.ReadFromJsonAsync<EventResponse[]>();
+
+        Assert.NotNull(events);
+        var updatedEvent = Assert.Single(events);
+        Assert.Equal(game.Id, updatedEvent.GameId);
+    }
+
+    [Fact]
+    public async Task StartEventGame_ReturnsConflict_WhenEventHasNotStarted()
+    {
+        using var client = factory.CreateHttpsClient();
+        var pokerEvent = await client.CreateEventAsync(scheduledAtUtc: DateTimeOffset.UtcNow.AddDays(1));
+
+        var response = await client.PostAsync($"/events/{pokerEvent.Id}/game", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task StartEventGame_ReturnsConflict_WhenEventIsCancelled()
+    {
+        using var client = factory.CreateHttpsClient();
+        var pokerEvent = await client.CreateEventAsync();
+        await client.CancelEventAsync(pokerEvent.Id);
+
+        var response = await client.PostAsync($"/events/{pokerEvent.Id}/game", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task StartEventGame_ReturnsConflict_WhenEventAlreadyHasGame()
+    {
+        using var client = factory.CreateHttpsClient();
+        var pokerEvent = await client.CreateEventAsync(scheduledAtUtc: DateTimeOffset.UtcNow.AddMinutes(-1));
+        await client.StartEventGameAsync(pokerEvent.Id);
+
+        var response = await client.PostAsync($"/events/{pokerEvent.Id}/game", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task StartEventGame_ReturnsConflict_WhenAnotherGameIsOpen()
+    {
+        using var client = factory.CreateHttpsClient();
+        var pokerEvent = await client.CreateEventAsync(scheduledAtUtc: DateTimeOffset.UtcNow.AddMinutes(-1));
+        await client.CreateGameAsync();
+
+        var response = await client.PostAsync($"/events/{pokerEvent.Id}/game", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task StartEventGame_ReturnsNotFound_WhenEventIsInDifferentPokerGroup()
+    {
+        using var client = factory.CreateHttpsClient();
+        var otherGroupId = Guid.NewGuid();
+        await factory.CreatePokerGroupAsync(otherGroupId);
+        using var otherGroupClient = factory.CreateHttpsClient(otherGroupId);
+        var pokerEvent = await otherGroupClient.CreateEventAsync();
+
+        var response = await client.PostAsync($"/events/{pokerEvent.Id}/game", content: null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEvent_ReturnsConflict_WhenEventHasLinkedGame()
+    {
+        using var client = factory.CreateHttpsClient();
+        var pokerEvent = await client.CreateEventAsync(scheduledAtUtc: DateTimeOffset.UtcNow.AddMinutes(-1));
+        await client.StartEventGameAsync(pokerEvent.Id);
+
+        var response = await client.PutAsJsonAsync(
+            $"/events/{pokerEvent.Id}",
+            new { Title = "Saturday poker", ScheduledAtUtc = DateTimeOffset.UtcNow.AddDays(3) });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CancelEvent_ReturnsConflict_WhenEventHasLinkedGame()
+    {
+        using var client = factory.CreateHttpsClient();
+        var pokerEvent = await client.CreateEventAsync(scheduledAtUtc: DateTimeOffset.UtcNow.AddMinutes(-1));
+        await client.StartEventGameAsync(pokerEvent.Id);
+
+        var response = await client.PostAsync($"/events/{pokerEvent.Id}/cancel", content: null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CreateEvent_ReturnsForbidden_ForMember()
     {
         await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
@@ -248,6 +356,21 @@ public sealed class EventsApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         using var memberClient = factory.CreateHttpsClient();
 
         var response = await memberClient.PostAsync($"/events/{pokerEvent.Id}/cancel", content: null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task StartEventGame_ReturnsForbidden_ForMember()
+    {
+        using var ownerClient = factory.CreateHttpsClient();
+        var pokerEvent = await ownerClient.CreateEventAsync();
+
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var memberClient = factory.CreateHttpsClient();
+
+        var response = await memberClient.PostAsync($"/events/{pokerEvent.Id}/game", content: null);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }

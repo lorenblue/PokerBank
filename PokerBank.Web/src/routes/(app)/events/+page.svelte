@@ -51,6 +51,10 @@
 		return `Going ${event.goingCount} · Maybe ${event.maybeCount} · Not going ${event.notGoingCount}`;
 	}
 
+	function canStartGame(event: PokerEvent) {
+		return new Date(event.scheduledAtUtc).getTime() <= Date.now();
+	}
+
 	function closeCreateModal() {
 		isCreateOpen = false;
 	}
@@ -124,16 +128,29 @@
 
 						{#if data.isManager}
 							<div class="event-actions">
-								<form
-									method="POST"
-									action="?/cancelEvent"
-									onsubmit={(submitEvent) => {
-										if (!confirm('Cancel this event?')) submitEvent.preventDefault();
-									}}
-								>
-									<input type="hidden" name="eventId" value={event.id} />
-									<button type="submit" class="btn btn-subtle-danger">Cancel</button>
-								</form>
+								{#if event.gameId}
+									<a href={`/games/${event.gameId}`} class="btn btn-secondary">Open game</a>
+								{:else if canStartGame(event)}
+									<form method="POST" action="?/startGame">
+										<input type="hidden" name="eventId" value={event.id} />
+										<button type="submit" class="btn btn-primary">Start game</button>
+									</form>
+								{:else}
+									<button type="button" class="btn btn-secondary" disabled>Not started</button>
+								{/if}
+
+								{#if !event.gameId}
+									<form
+										method="POST"
+										action="?/cancelEvent"
+										onsubmit={(submitEvent) => {
+											if (!confirm('Cancel this event?')) submitEvent.preventDefault();
+										}}
+									>
+										<input type="hidden" name="eventId" value={event.id} />
+										<button type="submit" class="btn btn-subtle-danger">Cancel</button>
+									</form>
+								{/if}
 							</div>
 						{:else}
 							<div class="rsvp-actions" aria-label={`RSVP for ${event.title}`}>
@@ -192,6 +209,9 @@
 							<p class="row-meta">{formatDateTime(event.scheduledAtUtc)}</p>
 							<span class={`badge ${statusClass(event.status)}`}>{event.status}</span>
 						</div>
+						{#if event.gameId}
+							<a href={`/games/${event.gameId}`} class="btn btn-secondary">Open game</a>
+						{/if}
 					</div>
 				{/each}
 			</div>
@@ -246,6 +266,8 @@
 
 	.event-actions {
 		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 		justify-content: flex-end;
 	}
 

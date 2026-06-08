@@ -38,6 +38,10 @@ public static class ListEvents
                 pokerEvent.Status,
                 pokerEvent.CreatedAtUtc,
                 pokerEvent.CancelledAtUtc,
+                dbContext.Games
+                    .Where(game => game.PokerEventId == pokerEvent.Id && game.PokerGroupId == groupContext.Id)
+                    .Select(game => (Guid?)game.Id)
+                    .SingleOrDefault(),
                 pokerEvent.Rsvps.Count(rsvp => rsvp.Status == RsvpStatus.Going),
                 pokerEvent.Rsvps.Count(rsvp => rsvp.Status == RsvpStatus.Maybe),
                 pokerEvent.Rsvps.Count(rsvp => rsvp.Status == RsvpStatus.NotGoing),

@@ -18,6 +18,7 @@ export type PlayerDetails = Schemas['GetPlayerResponse'];
 export type Payment = Schemas['PaymentResponse'];
 export type PaymentPage = Schemas['PagedResponseOfPaymentResponse'];
 export type CreateGameResponse = Schemas['CreateGameResponse'];
+export type StartEventGameResponse = Schemas['StartEventGameResponse'];
 export type InvitePlayerResponse = Schemas['InvitePlayerResponse'];
 export type AcceptPlayerInviteRequest = Schemas['AcceptPlayerInviteRequest'];
 export type AcceptPlayerInviteResponse = Schemas['AcceptPlayerInviteResponse'];
@@ -109,6 +110,13 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 		cancelEvent: (id: string) =>
 			unwrap<PokerEvent>(
 				client.POST('/events/{id}/cancel', {
+					params: { path: { id } }
+				})
+			),
+
+		startEventGame: (id: string) =>
+			unwrap<StartEventGameResponse>(
+				client.POST('/events/{id}/game', {
 					params: { path: { id } }
 				})
 			),

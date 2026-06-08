@@ -21,13 +21,33 @@ public sealed class PokerGameTests
 
         Assert.NotEqual(Guid.Empty, game.Id);
         Assert.Equal(PokerGroupId, game.PokerGroupId);
+        Assert.Null(game.PokerEventId);
         Assert.NotEqual(default, game.CreatedAtUtc);
+    }
+
+    [Fact]
+    public void CreateForEvent_RecordsEventLink()
+    {
+        var pokerEventId = Guid.NewGuid();
+
+        var game = PokerGame.CreateForEvent(PokerGroupId, pokerEventId);
+
+        Assert.NotEqual(Guid.Empty, game.Id);
+        Assert.Equal(PokerGroupId, game.PokerGroupId);
+        Assert.Equal(pokerEventId, game.PokerEventId);
+        Assert.Equal(GameStatus.Open, game.Status);
     }
 
     [Fact]
     public void Create_RequiresPokerGroupId()
     {
         Assert.Throws<ArgumentException>(() => PokerGame.Create(Guid.Empty));
+    }
+
+    [Fact]
+    public void CreateForEvent_RequiresPokerEventId()
+    {
+        Assert.Throws<ArgumentException>(() => PokerGame.CreateForEvent(PokerGroupId, Guid.Empty));
     }
 
     [Fact]

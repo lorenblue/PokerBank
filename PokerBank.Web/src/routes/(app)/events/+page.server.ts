@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { ApiError } from '$lib/api/client';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
@@ -61,6 +61,29 @@ export const actions: Actions = {
 			await api.cancelEvent(eventId);
 
 			return { cancelled: true };
+		} catch (caught) {
+			if (caught instanceof ApiError) {
+				return fail(caught.status, { error: caught.message });
+			}
+
+			throw caught;
+		}
+	},
+
+	startGame: async ({ fetch, request }) => {
+		const data = await request.formData();
+		const eventId = data.get('eventId')?.toString();
+
+		if (!eventId) {
+			return fail(400, { error: 'Event is required.' });
+		}
+
+		const api = pokerBankApi(fetch, request.headers.get('cookie'));
+
+		try {
+			const game = await api.startEventGame(eventId);
+
+			redirect(303, `/games/${game.id}`);
 		} catch (caught) {
 			if (caught instanceof ApiError) {
 				return fail(caught.status, { error: caught.message });

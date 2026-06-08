@@ -66,6 +66,7 @@ manageGroup.MapCreateGame();
 manageGroup.MapCreateEvent();
 manageGroup.MapUpdateEvent();
 manageGroup.MapCancelEvent();
+manageGroup.MapStartEventGame();
 manageGroup.MapDeleteGame();
 manageGroup.MapAddBuyIn();
 manageGroup.MapAddCashOut();

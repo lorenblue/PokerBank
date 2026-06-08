@@ -43,6 +43,7 @@ public static class CreateEvent
                 pokerEvent.Status,
                 pokerEvent.CreatedAtUtc,
                 pokerEvent.CancelledAtUtc,
+                GameId: null,
                 GoingCount: 0,
                 MaybeCount: 0,
                 NotGoingCount: 0,

@@ -79,6 +79,14 @@ internal static class ApiTestClientExtensions
         return await ReadRequiredAsync<EventRsvpResponse>(response, "Set event RSVP response was empty.");
     }
 
+    public static async Task<StartEventGameResponse> StartEventGameAsync(this HttpClient client, Guid eventId)
+    {
+        var response = await client.PostAsync($"/events/{eventId}/game", content: null);
+        response.EnsureSuccessStatusCode();
+
+        return await ReadRequiredAsync<StartEventGameResponse>(response, "Start event game response was empty.");
+    }
+
     public static async Task<GameResponse> CreateGameAsync(this HttpClient client)
     {
         var response = await client.PostAsync("/games", content: null);

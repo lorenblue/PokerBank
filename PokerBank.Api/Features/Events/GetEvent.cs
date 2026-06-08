@@ -39,6 +39,10 @@ public static class GetEvent
                 pokerEvent.Status,
                 pokerEvent.CreatedAtUtc,
                 pokerEvent.CancelledAtUtc,
+                GameId = dbContext.Games
+                    .Where(game => game.PokerEventId == pokerEvent.Id && game.PokerGroupId == groupContext.Id)
+                    .Select(game => (Guid?)game.Id)
+                    .SingleOrDefault(),
                 GoingCount = pokerEvent.Rsvps.Count(rsvp => rsvp.Status == RsvpStatus.Going),
                 MaybeCount = pokerEvent.Rsvps.Count(rsvp => rsvp.Status == RsvpStatus.Maybe),
                 NotGoingCount = pokerEvent.Rsvps.Count(rsvp => rsvp.Status == RsvpStatus.NotGoing),
@@ -79,6 +83,7 @@ public static class GetEvent
             pokerEvent.Status,
             pokerEvent.CreatedAtUtc,
             pokerEvent.CancelledAtUtc,
+            pokerEvent.GameId,
             pokerEvent.GoingCount,
             pokerEvent.MaybeCount,
             pokerEvent.NotGoingCount,

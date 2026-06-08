@@ -9,6 +9,7 @@ public sealed record EventDetailsResponse(
     PokerEventStatus Status,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? CancelledAtUtc,
+    Guid? GameId,
     int GoingCount,
     int MaybeCount,
     int NotGoingCount,
