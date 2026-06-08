@@ -15,6 +15,12 @@ internal sealed record PendingInvitationResponse(
     string EmailAddress,
     DateTimeOffset ExpiresAtUtc);
 
+internal sealed record MyProfileResponse(
+    Guid Id,
+    string Name,
+    string? EmailAddress,
+    bool IsActive);
+
 internal sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
 
 internal sealed record PaymentResponse(

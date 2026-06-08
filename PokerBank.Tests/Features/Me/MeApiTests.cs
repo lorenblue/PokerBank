@@ -13,6 +13,43 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
+    public async Task GetMyProfile_ReturnsLinkedPlayerProfile()
+    {
+        using var ownerClient = factory.CreateHttpsClient();
+
+        var player = await ownerClient.CreatePlayerAsync("Lorenzo", "lorenzo@example.com");
+
+        await factory.LinkDefaultAdminToPlayerAsync(player.Id);
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var memberClient = factory.CreateHttpsClient();
+
+        var response = await memberClient.GetAsync("/me/profile");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var profile = await response.Content.ReadFromJsonAsync<MyProfileResponse>();
+
+        Assert.NotNull(profile);
+        Assert.Equal(player.Id, profile.Id);
+        Assert.Equal("Lorenzo", profile.Name);
+        Assert.Equal("lorenzo@example.com", profile.EmailAddress);
+        Assert.True(profile.IsActive);
+    }
+
+    [Fact]
+    public async Task GetMyProfile_ReturnsNotFound_WhenUserIsNotLinkedToPlayer()
+    {
+        await factory.SetDefaultAdminRoleAsync(GroupRole.Member);
+
+        using var client = factory.CreateHttpsClient();
+
+        var response = await client.GetAsync("/me/profile");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetMyBalance_ReturnsLinkedPlayerBalance()
     {
         using var ownerClient = factory.CreateHttpsClient();

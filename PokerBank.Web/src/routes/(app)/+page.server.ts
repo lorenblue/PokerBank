@@ -10,7 +10,8 @@ export const load: PageServerLoad = async ({ fetch, parent, request }) => {
 	const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 	if (!isManager) {
-		const [balance, games, payments] = await Promise.all([
+		const [profile, balance, games, payments] = await Promise.all([
+			api.getMyProfile(),
 			api.getMyBalance(),
 			api.getMyGames(),
 			api.getMyPayments()
@@ -18,6 +19,7 @@ export const load: PageServerLoad = async ({ fetch, parent, request }) => {
 
 		return {
 			view: 'member' as const,
+			profile,
 			balance,
 			games,
 			payments

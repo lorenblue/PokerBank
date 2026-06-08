@@ -9,6 +9,7 @@ export type GamePage = Schemas['PagedResponseOfListGamesResponse'];
 export type GameDetails = Schemas['GetGameResponse'];
 export type GameResult = Schemas['GameResultResponse'];
 export type MyGame = Schemas['GetMyGamesResponse'];
+export type MyProfile = Schemas['GetMyProfileResponse'];
 export type Player = Schemas['PlayerResponse'];
 export type PlayerDetails = Schemas['GetPlayerResponse'];
 export type Payment = Schemas['PaymentResponse'];
@@ -72,6 +73,8 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 			),
 
 		getMyGames: () => unwrap<MyGame[]>(client.GET('/me/games')),
+
+		getMyProfile: () => unwrap<MyProfile>(client.GET('/me/profile')),
 
 		createGame: () => unwrap<CreateGameResponse>(client.POST('/games')),
 

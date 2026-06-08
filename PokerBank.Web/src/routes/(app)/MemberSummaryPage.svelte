@@ -12,9 +12,10 @@
 		return data;
 	});
 
-	const balance = $derived(memberData.balance);
-	const games = $derived(memberData.games);
-	const payments = $derived(memberData.payments);
+const balance = $derived(memberData.balance);
+const games = $derived(memberData.games);
+const payments = $derived(memberData.payments);
+const profile = $derived(memberData.profile);
 
 	function money(value: number | string) {
 		const amount = Number(value);
@@ -67,6 +68,7 @@
 <section class="page-header">
 	<div>
 		<h1 class="page-title">My Summary</h1>
+		<p class="page-subtitle">{profile.name}{profile.emailAddress ? ` · ${profile.emailAddress}` : ''}</p>
 	</div>
 </section>
 

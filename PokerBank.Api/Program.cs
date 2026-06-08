@@ -52,6 +52,7 @@ var viewGroup = app.MapGroup("")
 viewGroup.MapGetMyBalance();
 viewGroup.MapGetMyPayments();
 viewGroup.MapGetMyGames();
+viewGroup.MapGetMyProfile();
 viewGroup.MapGetGame();
 
 var manageGroup = app.MapGroup("")
