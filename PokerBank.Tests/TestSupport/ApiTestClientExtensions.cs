@@ -29,6 +29,56 @@ internal static class ApiTestClientExtensions
         return await ReadRequiredAsync<InvitePlayerResponse>(response, "Invite player response was empty.");
     }
 
+    public static async Task<EventResponse> CreateEventAsync(
+        this HttpClient client,
+        string title = "Friday poker",
+        DateTimeOffset? scheduledAtUtc = null)
+    {
+        var response = await client.PostAsJsonAsync(
+            "/events",
+            new
+            {
+                Title = title,
+                ScheduledAtUtc = scheduledAtUtc ?? DateTimeOffset.UtcNow.AddDays(7)
+            });
+        response.EnsureSuccessStatusCode();
+
+        return await ReadRequiredAsync<EventResponse>(response, "Create event response was empty.");
+    }
+
+    public static async Task<EventResponse> UpdateEventAsync(
+        this HttpClient client,
+        Guid eventId,
+        string title,
+        DateTimeOffset scheduledAtUtc)
+    {
+        var response = await client.PutAsJsonAsync(
+            $"/events/{eventId}",
+            new { Title = title, ScheduledAtUtc = scheduledAtUtc });
+        response.EnsureSuccessStatusCode();
+
+        return await ReadRequiredAsync<EventResponse>(response, "Update event response was empty.");
+    }
+
+    public static async Task<EventResponse> CancelEventAsync(this HttpClient client, Guid eventId)
+    {
+        var response = await client.PostAsync($"/events/{eventId}/cancel", content: null);
+        response.EnsureSuccessStatusCode();
+
+        return await ReadRequiredAsync<EventResponse>(response, "Cancel event response was empty.");
+    }
+
+    public static async Task<EventRsvpResponse> SetEventRsvpAsync(
+        this HttpClient client,
+        Guid eventId,
+        string status)
+    {
+        var response = await client.PostAsJsonAsync($"/events/{eventId}/rsvp", new { Status = status });
+        response.EnsureSuccessStatusCode();
+
+        return await ReadRequiredAsync<EventRsvpResponse>(response, "Set event RSVP response was empty.");
+    }
+
     public static async Task<GameResponse> CreateGameAsync(this HttpClient client)
     {
         var response = await client.PostAsync("/games", content: null);

@@ -140,6 +140,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List events. */
+        get: operations["ListEvents"];
+        put?: never;
+        /** Create an event. */
+        post: operations["CreateEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an event. */
+        get: operations["GetEvent"];
+        /** Update an event. */
+        put: operations["UpdateEvent"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events/{id}/rsvp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set my event RSVP. */
+        post: operations["SetMyEventRsvp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{id}": {
         parameters: {
             query?: never;
@@ -170,6 +223,23 @@ export interface paths {
         put?: never;
         /** Create a game. */
         post: operations["CreateGame"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an event. */
+        post: operations["CancelEvent"];
         delete?: never;
         options?: never;
         head?: never;
@@ -506,6 +576,11 @@ export interface components {
             /** Format: date-time */
             createdAtUtc: string;
         };
+        CreateEventRequest: {
+            title: null | string;
+            /** Format: date-time */
+            scheduledAtUtc: string;
+        };
         CreateGameResponse: {
             /** Format: uuid */
             id: string;
@@ -519,6 +594,53 @@ export interface components {
         };
         ErrorResponse: {
             error: string;
+        };
+        EventDetailsResponse: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date-time */
+            scheduledAtUtc: string;
+            status: components["schemas"]["PokerEventStatus"];
+            /** Format: date-time */
+            createdAtUtc: string;
+            /** Format: date-time */
+            cancelledAtUtc: null | string;
+            /** Format: int32 */
+            goingCount: number | string;
+            /** Format: int32 */
+            maybeCount: number | string;
+            /** Format: int32 */
+            notGoingCount: number | string;
+            myRsvpStatus: null | components["schemas"]["RsvpStatus"];
+            rsvps: components["schemas"]["EventRsvpResponse"][];
+        };
+        EventResponse: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date-time */
+            scheduledAtUtc: string;
+            status: components["schemas"]["PokerEventStatus"];
+            /** Format: date-time */
+            createdAtUtc: string;
+            /** Format: date-time */
+            cancelledAtUtc: null | string;
+            /** Format: int32 */
+            goingCount: number | string;
+            /** Format: int32 */
+            maybeCount: number | string;
+            /** Format: int32 */
+            notGoingCount: number | string;
+            myRsvpStatus: null | components["schemas"]["RsvpStatus"];
+        };
+        EventRsvpResponse: {
+            /** Format: uuid */
+            playerId: string;
+            playerName: string;
+            status: components["schemas"]["RsvpStatus"];
+            /** Format: date-time */
+            respondedAtUtc: string;
         };
         /** @enum {unknown} */
         GameEntryType: "BuyIn" | "CashOut";
@@ -694,11 +816,15 @@ export interface components {
             emailAddress: null | string;
             isActive: boolean;
         };
+        /** @enum {unknown} */
+        PokerEventStatus: "Scheduled" | "Cancelled";
         RecordPaymentRequest: {
             /** Format: double */
             amount: number | string;
             method: components["schemas"]["PaymentMethod"];
         };
+        /** @enum {unknown} */
+        RsvpStatus: "Going" | "Maybe" | "NotGoing" | null;
         SendBalanceUpdatesResponse: {
             /** Format: int32 */
             sent: number | string;
@@ -709,6 +835,14 @@ export interface components {
             playerId: string;
             playerName: string;
             reason: string;
+        };
+        SetMyEventRsvpRequest: {
+            status: components["schemas"]["RsvpStatus"];
+        };
+        UpdateEventRequest: {
+            title: null | string;
+            /** Format: date-time */
+            scheduledAtUtc: string;
         };
         UpdateGameEntryRequest: {
             /** Format: double */
@@ -978,6 +1112,196 @@ export interface operations {
             };
         };
     };
+    ListEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventResponse"][];
+                };
+            };
+        };
+    };
+    CreateEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEventRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    GetEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDetailsResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    UpdateEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEventRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SetMyEventRsvp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetMyEventRsvpRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventRsvpResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     GetGame: {
         parameters: {
             query?: never;
@@ -1095,6 +1419,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreateGameResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CancelEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Conflict */

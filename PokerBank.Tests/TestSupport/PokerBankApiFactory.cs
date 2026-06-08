@@ -98,7 +98,7 @@ public sealed class PokerBankApiFactory : WebApplicationFactory<Program>
 
         await using var command = connection.CreateCommand();
         command.CommandText = """
-            TRUNCATE TABLE "GameEntries", "Payments", "Games", "PlayerInvitations", "Players" RESTART IDENTITY CASCADE;
+            TRUNCATE TABLE "GameEntries", "Payments", "Games", "EventRsvps", "Events", "PlayerInvitations", "Players" RESTART IDENTITY CASCADE;
 
             DELETE FROM "AspNetUsers"
             WHERE "NormalizedEmail" IS NULL OR "NormalizedEmail" <> @normalizedEmail;

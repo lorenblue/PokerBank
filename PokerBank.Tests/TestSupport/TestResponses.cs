@@ -21,6 +21,37 @@ internal sealed record MyProfileResponse(
     string? EmailAddress,
     bool IsActive);
 
+internal sealed record EventResponse(
+    Guid Id,
+    string Title,
+    DateTimeOffset ScheduledAtUtc,
+    string Status,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? CancelledAtUtc,
+    int GoingCount,
+    int MaybeCount,
+    int NotGoingCount,
+    string? MyRsvpStatus);
+
+internal sealed record EventDetailsResponse(
+    Guid Id,
+    string Title,
+    DateTimeOffset ScheduledAtUtc,
+    string Status,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? CancelledAtUtc,
+    int GoingCount,
+    int MaybeCount,
+    int NotGoingCount,
+    string? MyRsvpStatus,
+    EventRsvpResponse[] Rsvps);
+
+internal sealed record EventRsvpResponse(
+    Guid PlayerId,
+    string PlayerName,
+    string Status,
+    DateTimeOffset RespondedAtUtc);
+
 internal sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
 
 internal sealed record PaymentResponse(

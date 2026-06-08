@@ -8,6 +8,9 @@ export type GameSummary = Schemas['ListGamesResponse'];
 export type GamePage = Schemas['PagedResponseOfListGamesResponse'];
 export type GameDetails = Schemas['GetGameResponse'];
 export type GameResult = Schemas['GameResultResponse'];
+export type PokerEvent = Schemas['EventResponse'];
+export type PokerEventDetails = Schemas['EventDetailsResponse'];
+export type EventRsvp = Schemas['EventRsvpResponse'];
 export type MyGame = Schemas['GetMyGamesResponse'];
 export type MyProfile = Schemas['GetMyProfileResponse'];
 export type Player = Schemas['PlayerResponse'];
@@ -18,6 +21,9 @@ export type CreateGameResponse = Schemas['CreateGameResponse'];
 export type InvitePlayerResponse = Schemas['InvitePlayerResponse'];
 export type AcceptPlayerInviteRequest = Schemas['AcceptPlayerInviteRequest'];
 export type AcceptPlayerInviteResponse = Schemas['AcceptPlayerInviteResponse'];
+export type CreateEventRequest = Schemas['CreateEventRequest'];
+export type UpdateEventRequest = Schemas['UpdateEventRequest'];
+export type SetMyEventRsvpRequest = Schemas['SetMyEventRsvpRequest'];
 export type CreatePlayerRequest = Schemas['CreatePlayerRequest'];
 export type UpdatePlayerRequest = Schemas['UpdatePlayerRequest'];
 export type RecordPaymentRequest = Schemas['RecordPaymentRequest'];
@@ -75,6 +81,45 @@ export function createPokerBankApi(apiFetch: ApiFetch, baseUrl: string) {
 		getMyGames: () => unwrap<MyGame[]>(client.GET('/me/games')),
 
 		getMyProfile: () => unwrap<MyProfile>(client.GET('/me/profile')),
+
+		listEvents: () => unwrap<PokerEvent[]>(client.GET('/events')),
+
+		createEvent: (body: CreateEventRequest) =>
+			unwrap<PokerEvent>(
+				client.POST('/events', {
+					body
+				})
+			),
+
+		getEvent: (id: string) =>
+			unwrap<PokerEventDetails>(
+				client.GET('/events/{id}', {
+					params: { path: { id } }
+				})
+			),
+
+		updateEvent: (id: string, body: UpdateEventRequest) =>
+			unwrap<PokerEvent>(
+				client.PUT('/events/{id}', {
+					params: { path: { id } },
+					body
+				})
+			),
+
+		cancelEvent: (id: string) =>
+			unwrap<PokerEvent>(
+				client.POST('/events/{id}/cancel', {
+					params: { path: { id } }
+				})
+			),
+
+		setMyEventRsvp: (id: string, body: SetMyEventRsvpRequest) =>
+			unwrap<EventRsvp>(
+				client.POST('/events/{id}/rsvp', {
+					params: { path: { id } },
+					body
+				})
+			),
 
 		createGame: () => unwrap<CreateGameResponse>(client.POST('/games')),
 

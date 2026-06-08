@@ -4,6 +4,7 @@ using PokerBank.Api.Auth;
 using PokerBank.Api.Data;
 using PokerBank.Api.Features.Auth;
 using PokerBank.Api.Features.Balances;
+using PokerBank.Api.Features.Events;
 using PokerBank.Api.Features.GameResults;
 using PokerBank.Api.Features.Games;
 using PokerBank.Api.Features.Me;
@@ -53,12 +54,18 @@ viewGroup.MapGetMyBalance();
 viewGroup.MapGetMyPayments();
 viewGroup.MapGetMyGames();
 viewGroup.MapGetMyProfile();
+viewGroup.MapListEvents();
+viewGroup.MapGetEvent();
+viewGroup.MapSetMyEventRsvp();
 viewGroup.MapGetGame();
 
 var manageGroup = app.MapGroup("")
     .RequireAuthorization(AuthorizationPolicies.ManageGroup);
 
 manageGroup.MapCreateGame();
+manageGroup.MapCreateEvent();
+manageGroup.MapUpdateEvent();
+manageGroup.MapCancelEvent();
 manageGroup.MapDeleteGame();
 manageGroup.MapAddBuyIn();
 manageGroup.MapAddCashOut();

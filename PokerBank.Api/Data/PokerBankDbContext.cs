@@ -17,6 +17,10 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
 
     public DbSet<PlayerInvitation> PlayerInvitations => Set<PlayerInvitation>();
 
+    public DbSet<PokerEvent> Events => Set<PokerEvent>();
+
+    public DbSet<EventRsvp> EventRsvps => Set<EventRsvp>();
+
     public DbSet<PokerGame> Games => Set<PokerGame>();
 
     public DbSet<Payment> Payments => Set<Payment>();
@@ -136,6 +140,72 @@ public sealed class PokerBankDbContext(DbContextOptions<PokerBankDbContext> opti
                 .IsUnique();
 
             invitation.HasIndex(i => new { i.PokerGroupId, i.PlayerId });
+        });
+
+        modelBuilder.Entity<PokerEvent>(pokerEvent =>
+        {
+            pokerEvent.ToTable("Events");
+
+            pokerEvent.HasKey(e => e.Id);
+
+            pokerEvent.Property(e => e.PokerGroupId)
+                .IsRequired();
+
+            pokerEvent.HasOne<PokerGroup>()
+                .WithMany()
+                .HasForeignKey(e => e.PokerGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            pokerEvent.Property(e => e.Title)
+                .HasMaxLength(PokerEvent.MaxTitleLength)
+                .IsRequired();
+
+            pokerEvent.Property(e => e.ScheduledAtUtc)
+                .IsRequired();
+
+            pokerEvent.Property(e => e.Status)
+                .HasConversion<string>()
+                .IsRequired();
+
+            pokerEvent.Property(e => e.CreatedAtUtc)
+                .IsRequired();
+
+            pokerEvent.Property(e => e.CancelledAtUtc);
+
+            pokerEvent.HasMany(e => e.Rsvps)
+                .WithOne()
+                .HasForeignKey(rsvp => rsvp.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            pokerEvent.Navigation(e => e.Rsvps)
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+            pokerEvent.HasIndex(e => new { e.PokerGroupId, e.ScheduledAtUtc });
+        });
+
+        modelBuilder.Entity<EventRsvp>(rsvp =>
+        {
+            rsvp.ToTable("EventRsvps");
+
+            rsvp.HasKey(r => new { r.EventId, r.PlayerId });
+
+            rsvp.Property(r => r.EventId)
+                .IsRequired();
+
+            rsvp.Property(r => r.PlayerId)
+                .IsRequired();
+
+            rsvp.HasOne<Player>()
+                .WithMany()
+                .HasForeignKey(r => r.PlayerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            rsvp.Property(r => r.Status)
+                .HasConversion<string>()
+                .IsRequired();
+
+            rsvp.Property(r => r.RespondedAtUtc)
+                .IsRequired();
         });
 
         modelBuilder.Entity<PokerGame>(game =>
