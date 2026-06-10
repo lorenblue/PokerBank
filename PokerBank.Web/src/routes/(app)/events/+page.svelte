@@ -5,10 +5,8 @@
 	import type { PageData } from './$types';
 
 	type FormData = {
-		cancelled?: boolean;
 		created?: boolean;
 		error?: string;
-		rsvpStatus?: string;
 	};
 
 	let {
@@ -49,10 +47,6 @@
 
 	function eventCounts(event: PokerEvent) {
 		return `Going ${event.goingCount} · Maybe ${event.maybeCount} · Not going ${event.notGoingCount}`;
-	}
-
-	function canStartGame(event: PokerEvent) {
-		return new Date(event.scheduledAtUtc).getTime() <= Date.now();
 	}
 
 	function closeCreateModal() {
@@ -96,10 +90,6 @@
 	<p class="alert alert-error">{form.error}</p>
 {:else if form?.created}
 	<p class="alert alert-success">Event created.</p>
-{:else if form?.cancelled}
-	<p class="alert alert-success">Event cancelled.</p>
-{:else if form?.rsvpStatus}
-	<p class="alert alert-success">RSVP set to {rsvpLabel(form.rsvpStatus)}.</p>
 {/if}
 
 <section class="grid-two">
@@ -117,75 +107,20 @@
 					<div class="event-row">
 						<div class="event-main">
 							<div class="event-title-row">
-								<strong class="row-title">{event.title}</strong>
+								<a href={`/events/${event.id}`} class="row-title">{event.title}</a>
 								{#if !data.isManager}
 									<span class={`badge ${rsvpClass(event.myRsvpStatus)}`}>{rsvpLabel(event.myRsvpStatus)}</span>
+								{:else if event.gameId}
+									<span class="badge badge-open">Game open</span>
 								{/if}
 							</div>
 							<p class="row-meta">{formatDateTime(event.scheduledAtUtc)}</p>
 							<p class="row-meta">{eventCounts(event)}</p>
 						</div>
 
-						{#if data.isManager}
-							<div class="event-actions">
-								{#if event.gameId}
-									<a href={`/games/${event.gameId}`} class="btn btn-secondary">Open game</a>
-								{:else if canStartGame(event)}
-									<form method="POST" action="?/startGame">
-										<input type="hidden" name="eventId" value={event.id} />
-										<button type="submit" class="btn btn-primary">Start game</button>
-									</form>
-								{:else}
-									<button type="button" class="btn btn-secondary" disabled>Not started</button>
-								{/if}
-
-								{#if !event.gameId}
-									<form
-										method="POST"
-										action="?/cancelEvent"
-										onsubmit={(submitEvent) => {
-											if (!confirm('Cancel this event?')) submitEvent.preventDefault();
-										}}
-									>
-										<input type="hidden" name="eventId" value={event.id} />
-										<button type="submit" class="btn btn-subtle-danger">Cancel</button>
-									</form>
-								{/if}
-							</div>
-						{:else}
-							<div class="rsvp-actions" aria-label={`RSVP for ${event.title}`}>
-								<form method="POST" action="?/setRsvp">
-									<input type="hidden" name="eventId" value={event.id} />
-									<input type="hidden" name="status" value="Going" />
-									<button
-										type="submit"
-										class={`rsvp-button ${event.myRsvpStatus === 'Going' ? 'is-selected' : ''}`}
-									>
-										Going
-									</button>
-								</form>
-								<form method="POST" action="?/setRsvp">
-									<input type="hidden" name="eventId" value={event.id} />
-									<input type="hidden" name="status" value="Maybe" />
-									<button
-										type="submit"
-										class={`rsvp-button ${event.myRsvpStatus === 'Maybe' ? 'is-selected' : ''}`}
-									>
-										Maybe
-									</button>
-								</form>
-								<form method="POST" action="?/setRsvp">
-									<input type="hidden" name="eventId" value={event.id} />
-									<input type="hidden" name="status" value="NotGoing" />
-									<button
-										type="submit"
-										class={`rsvp-button ${event.myRsvpStatus === 'NotGoing' ? 'is-selected is-negative' : ''}`}
-									>
-										Not going
-									</button>
-								</form>
-							</div>
-						{/if}
+						<div class="event-actions">
+							<a href={`/events/${event.id}`} class="btn btn-secondary">View event</a>
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -205,13 +140,11 @@
 				{#each cancelledEvents as event}
 					<div class="data-row">
 						<div>
-							<strong class="row-title">{event.title}</strong>
+							<a href={`/events/${event.id}`} class="row-title">{event.title}</a>
 							<p class="row-meta">{formatDateTime(event.scheduledAtUtc)}</p>
 							<span class={`badge ${statusClass(event.status)}`}>{event.status}</span>
 						</div>
-						{#if event.gameId}
-							<a href={`/games/${event.gameId}`} class="btn btn-secondary">Open game</a>
-						{/if}
+						<a href={`/events/${event.id}`} class="btn btn-secondary">View event</a>
 					</div>
 				{/each}
 			</div>
@@ -271,57 +204,13 @@
 		justify-content: flex-end;
 	}
 
-	.rsvp-actions {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		overflow: hidden;
-		border: 1px solid var(--border-strong);
-		border-radius: 0.65rem;
-		background: var(--surface-muted);
-	}
-
-	.rsvp-actions form {
-		display: contents;
-	}
-
-	.rsvp-button {
-		min-height: 2.35rem;
-		border: 0;
-		border-right: 1px solid var(--border-strong);
-		background: transparent;
-		color: #334139;
-		font-weight: 900;
-	}
-
-	.rsvp-actions form:last-child .rsvp-button {
-		border-right: 0;
-	}
-
-	.rsvp-button:hover {
-		background: white;
-	}
-
-	.rsvp-button.is-selected {
-		background: var(--brand);
-		color: white;
-	}
-
-	.rsvp-button.is-selected.is-negative {
-		background: var(--danger);
-	}
-
 	@media (max-width: 900px) {
-		.rsvp-actions {
-			grid-template-columns: 1fr;
+		.event-actions {
+			justify-content: stretch;
 		}
 
-		.rsvp-button {
-			border-right: 0;
-			border-bottom: 1px solid var(--border-strong);
-		}
-
-		.rsvp-actions form:last-child .rsvp-button {
-			border-bottom: 0;
+		.event-actions .btn {
+			width: 100%;
 		}
 	}
 </style>
