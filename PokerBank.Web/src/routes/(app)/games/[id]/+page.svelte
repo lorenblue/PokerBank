@@ -88,6 +88,11 @@
 	<div>
 		<h1 class="page-title">{data.game.status}</h1>
 		<p class="page-subtitle">{formatDateTime(data.game.createdAtUtc)}</p>
+		{#if data.sourceEvent}
+			<p class="page-subtitle">
+				From <a href={`/events/${data.sourceEvent.id}`} class="section-link">{data.sourceEvent.title}</a>
+			</p>
+		{/if}
 	</div>
 
 	{#if isManager && isOpen}

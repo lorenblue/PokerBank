@@ -10,14 +10,17 @@ export const load: PageServerLoad = async ({ fetch, params, parent, request }) =
 
 	try {
 		const game = await api.getGame(params.id);
-		const players = isManager
-			? (await api.listPlayers()).filter((player) => player.isActive)
-			: [];
+		const [events, players] = await Promise.all([
+			api.listEvents(),
+			isManager ? api.listPlayers() : Promise.resolve([])
+		]);
+		const sourceEvent = events.find((event) => event.gameId === game.id) ?? null;
 
 		return {
 			game,
 			isManager,
-			players
+			players: players.filter((player) => player.isActive),
+			sourceEvent
 		};
 	} catch (caught) {
 		if (caught instanceof ApiError && (caught.status === 403 || caught.status === 404)) {

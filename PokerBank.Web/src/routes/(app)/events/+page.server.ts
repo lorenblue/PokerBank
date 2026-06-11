@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { ApiError } from '$lib/api/client';
 import { pokerBankApi } from '$lib/server/pokerbank';
 import type { Actions, PageServerLoad } from './$types';
@@ -35,9 +35,9 @@ export const actions: Actions = {
 		const api = pokerBankApi(fetch, request.headers.get('cookie'));
 
 		try {
-			await api.createEvent(event);
+			const createdEvent = await api.createEvent(event);
 
-			return { created: true };
+			redirect(303, `/events/${createdEvent.id}`);
 		} catch (caught) {
 			if (caught instanceof ApiError) {
 				return fail(caught.status, { error: caught.message });

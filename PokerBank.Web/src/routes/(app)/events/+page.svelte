@@ -5,7 +5,6 @@
 	import type { PageData } from './$types';
 
 	type FormData = {
-		created?: boolean;
 		error?: string;
 	};
 
@@ -88,8 +87,6 @@
 
 {#if form?.error}
 	<p class="alert alert-error">{form.error}</p>
-{:else if form?.created}
-	<p class="alert alert-success">Event created.</p>
 {/if}
 
 <section class="grid-two">
