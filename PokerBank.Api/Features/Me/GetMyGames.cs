@@ -78,7 +78,7 @@ public static class GetMyGames
     private sealed record Response(
         Guid Id,
         GameStatus Status,
-        DateTime PlayedAtUtc,
+        DateTimeOffset PlayedAtUtc,
         decimal MyBuyInAmount,
         decimal MyCashOutAmount,
         decimal MyNetAmount,

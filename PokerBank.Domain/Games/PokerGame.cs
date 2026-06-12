@@ -10,20 +10,20 @@ public sealed class PokerGame
     {
     }
 
-    public static PokerGame Create(Guid pokerGroupId) =>
-        new(Guid.NewGuid(), pokerGroupId, pokerEventId: null, DateTime.UtcNow, GameStatus.Open);
+    public static PokerGame Create(Guid pokerGroupId, DateTimeOffset createdAtUtc) =>
+        new(Guid.NewGuid(), pokerGroupId, pokerEventId: null, createdAtUtc, GameStatus.Open);
 
-    public static PokerGame CreateForEvent(Guid pokerGroupId, Guid pokerEventId)
+    public static PokerGame CreateForEvent(Guid pokerGroupId, Guid pokerEventId, DateTimeOffset createdAtUtc)
     {
         if (pokerEventId == Guid.Empty)
         {
             throw new ArgumentException("Poker event id is required.", nameof(pokerEventId));
         }
 
-        return new PokerGame(Guid.NewGuid(), pokerGroupId, pokerEventId, DateTime.UtcNow, GameStatus.Open);
+        return new PokerGame(Guid.NewGuid(), pokerGroupId, pokerEventId, createdAtUtc, GameStatus.Open);
     }
 
-    internal PokerGame(Guid id, Guid pokerGroupId, Guid? pokerEventId, DateTime createdAtUtc, GameStatus status)
+    internal PokerGame(Guid id, Guid pokerGroupId, Guid? pokerEventId, DateTimeOffset createdAtUtc, GameStatus status)
     {
         if (id == Guid.Empty)
         {
@@ -48,7 +48,7 @@ public sealed class PokerGame
         Id = id;
         PokerGroupId = pokerGroupId;
         PokerEventId = pokerEventId;
-        CreatedAtUtc = createdAtUtc;
+        CreatedAtUtc = createdAtUtc.ToUniversalTime();
         Status = status;
     }
 
@@ -58,7 +58,7 @@ public sealed class PokerGame
 
     public Guid? PokerEventId { get; private set; }
 
-    public DateTime CreatedAtUtc { get; private set; }
+    public DateTimeOffset CreatedAtUtc { get; private set; }
 
     public GameStatus Status { get; private set; }
 
@@ -68,9 +68,11 @@ public sealed class PokerGame
 
     public Money TotalCashOuts => SumEntries(GameEntryType.CashOut);
 
-    public Result<GameEntry> AddBuyIn(Guid playerId, Money amount) => AddEntry(playerId, amount, GameEntryType.BuyIn);
+    public Result<GameEntry> AddBuyIn(Guid playerId, Money amount, DateTimeOffset recordedAtUtc) =>
+        AddEntry(playerId, amount, GameEntryType.BuyIn, recordedAtUtc);
 
-    public Result<GameEntry> AddCashOut(Guid playerId, Money amount) => AddEntry(playerId, amount, GameEntryType.CashOut);
+    public Result<GameEntry> AddCashOut(Guid playerId, Money amount, DateTimeOffset recordedAtUtc) =>
+        AddEntry(playerId, amount, GameEntryType.CashOut, recordedAtUtc);
 
     public Result RemoveEntry(Guid entryId)
     {
@@ -154,7 +156,7 @@ public sealed class PokerGame
         return Result.Ok();
     }
 
-    private Result<GameEntry> AddEntry(Guid playerId, Money amount, GameEntryType type)
+    private Result<GameEntry> AddEntry(Guid playerId, Money amount, GameEntryType type, DateTimeOffset recordedAtUtc)
     {
         if (IsClosed())
         {
@@ -171,6 +173,11 @@ public sealed class PokerGame
             return Result.Fail<GameEntry>(PokerGameErrors.InvalidAmount());
         }
 
+        if (recordedAtUtc.ToUniversalTime() < CreatedAtUtc)
+        {
+            return Result.Fail<GameEntry>(PokerGameErrors.EntryRecordedBeforeGameCreated());
+        }
+
         if (type == GameEntryType.CashOut && !HasBuyIn(playerId))
         {
             return Result.Fail<GameEntry>(PokerGameErrors.PlayerHasNoBuyIns());
@@ -181,7 +188,7 @@ public sealed class PokerGame
             return Result.Fail<GameEntry>(PokerGameErrors.CashOutsExceedBuyIns());
         }
 
-        var entry = new GameEntry(playerId, amount, type);
+        var entry = new GameEntry(playerId, amount, type, recordedAtUtc);
         _entries.Add(entry);
 
         return Result.Ok(entry);

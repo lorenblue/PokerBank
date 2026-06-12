@@ -202,7 +202,7 @@ public sealed class GameResultsApiTests(PokerBankApiFactory factory) : IAsyncLif
         Assert.Equal(-60m, result.NetAmount);
     }
 
-    private static void AssertCloseTo(DateTime expected, DateTime actual)
+    private static void AssertCloseTo(DateTimeOffset expected, DateTimeOffset actual)
     {
         Assert.InRange((actual - expected).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
     }

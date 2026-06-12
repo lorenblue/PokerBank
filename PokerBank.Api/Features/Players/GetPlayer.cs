@@ -20,6 +20,7 @@ public static class GetPlayer
         Guid id,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var player = await dbContext.Players
@@ -32,7 +33,7 @@ public static class GetPlayer
             return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = timeProvider.GetUtcNow();
 
         var pendingInvitation = await dbContext.PlayerInvitations
             .AsNoTracking()

@@ -24,6 +24,7 @@ public static class AcceptPlayerInvite
         PokerBankDbContext dbContext,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.Password))
@@ -41,7 +42,7 @@ public static class AcceptPlayerInvite
             return TypedResults.NotFound(new ErrorResponse("Invitation was not found."));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = timeProvider.GetUtcNow();
         var acceptResult = invitation.Accept(now);
 
         if (acceptResult.IsFailed)

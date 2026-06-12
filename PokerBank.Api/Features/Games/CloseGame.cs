@@ -55,6 +55,6 @@ public static class CloseGame
         return TypedResults.Conflict(new ErrorResponse(message));
     }
 
-    private sealed record Response(Guid Id, GameStatus Status, DateTime CreatedAtUtc);
+    private sealed record Response(Guid Id, GameStatus Status, DateTimeOffset CreatedAtUtc);
 
 }

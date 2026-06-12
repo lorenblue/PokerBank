@@ -23,6 +23,7 @@ public static class AddCashOut
         Request request,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var game = await dbContext.Games
@@ -48,7 +49,7 @@ public static class AddCashOut
             return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
-        var result = game.AddCashOut(request.PlayerId, new Money(request.Amount));
+        var result = game.AddCashOut(request.PlayerId, new Money(request.Amount), timeProvider.GetUtcNow());
 
         if (result.IsFailed)
         {
@@ -75,7 +76,9 @@ public static class AddCashOut
         var error = result.Errors.OfType<PokerGameError>().FirstOrDefault();
         var message = error?.Message ?? result.Errors[0].Message;
 
-        if (error?.Code is PokerGameErrorCode.InvalidAmount or PokerGameErrorCode.InvalidPlayerId)
+        if (error?.Code is PokerGameErrorCode.InvalidAmount
+            or PokerGameErrorCode.InvalidPlayerId
+            or PokerGameErrorCode.EntryRecordedBeforeGameCreated)
         {
             return TypedResults.BadRequest(new ErrorResponse(message));
         }

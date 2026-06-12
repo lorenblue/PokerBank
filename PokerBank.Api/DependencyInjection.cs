@@ -23,6 +23,7 @@ public static class DependencyInjection
     {
         builder.Services.AddScoped<IPokerGroupContext, DefaultPokerGroupContext>();
         builder.Services.AddHttpContextAccessor();
+        builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddScoped<ICurrentPlayerProvider, CurrentPlayerProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, GroupRoleAuthorizationHandler>();
         builder.Services

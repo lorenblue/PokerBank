@@ -358,7 +358,7 @@ public sealed class MeApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         };
     }
 
-    private static void AssertCloseTo(DateTime expected, DateTime actual)
+    private static void AssertCloseTo(DateTimeOffset expected, DateTimeOffset actual)
     {
         Assert.InRange((actual - expected).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
     }

@@ -13,7 +13,8 @@ public sealed class Payment
         Guid playerId,
         Money amount,
         PaymentDirection direction,
-        PaymentMethod method)
+        PaymentMethod method,
+        DateTimeOffset recordedAtUtc)
     {
         if (pokerGroupId == Guid.Empty)
         {
@@ -47,7 +48,7 @@ public sealed class Payment
             amount,
             direction,
             method,
-            DateTimeOffset.UtcNow));
+            recordedAtUtc));
     }
 
     private Payment(

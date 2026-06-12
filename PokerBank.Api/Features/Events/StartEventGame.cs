@@ -21,6 +21,7 @@ public static class StartEventGame
         Guid id,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var pokerEvent = await dbContext.Events
@@ -55,7 +56,9 @@ public static class StartEventGame
             return TypedResults.Conflict(new ErrorResponse("A game already exists for this event."));
         }
 
-        if (pokerEvent.ScheduledAtUtc > DateTimeOffset.UtcNow)
+        var now = timeProvider.GetUtcNow();
+
+        if (pokerEvent.ScheduledAtUtc > now)
         {
             return TypedResults.Conflict(new ErrorResponse("Cannot start a game before the event's scheduled time."));
         }
@@ -69,7 +72,7 @@ public static class StartEventGame
             return TypedResults.Conflict(new ErrorResponse("An open game already exists."));
         }
 
-        var game = PokerGame.CreateForEvent(groupContext.Id, pokerEvent.Id);
+        var game = PokerGame.CreateForEvent(groupContext.Id, pokerEvent.Id, now);
 
         dbContext.Games.Add(game);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -79,5 +82,5 @@ public static class StartEventGame
             new Response(game.Id, game.PokerEventId, game.Status, game.CreatedAtUtc));
     }
 
-    private sealed record Response(Guid Id, Guid? PokerEventId, GameStatus Status, DateTime CreatedAtUtc);
+    private sealed record Response(Guid Id, Guid? PokerEventId, GameStatus Status, DateTimeOffset CreatedAtUtc);
 }

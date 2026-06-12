@@ -24,6 +24,7 @@ public static class SetMyEventRsvp
         ICurrentPlayerProvider currentPlayerProvider,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var currentPlayer = await currentPlayerProvider.GetAsync(cancellationToken);
@@ -44,7 +45,7 @@ public static class SetMyEventRsvp
             return TypedResults.NotFound(new ErrorResponse("Event was not found."));
         }
 
-        var result = pokerEvent.SetRsvp(currentPlayer.Id, request.Status, DateTimeOffset.UtcNow);
+        var result = pokerEvent.SetRsvp(currentPlayer.Id, request.Status, timeProvider.GetUtcNow());
 
         if (result.IsFailed)
         {

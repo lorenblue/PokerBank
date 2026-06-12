@@ -5,21 +5,21 @@ namespace PokerBank.Tests.Domain;
 public sealed class PokerEventTests
 {
     private static readonly Guid PokerGroupId = Guid.NewGuid();
+    private static readonly DateTimeOffset CreatedAtUtc = new(2026, 6, 11, 12, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset ScheduledAtUtc = CreatedAtUtc.AddDays(7);
 
     [Fact]
     public void Create_ReturnsScheduledEvent()
     {
-        var scheduledAtUtc = DateTimeOffset.UtcNow.AddDays(7);
-
-        var result = PokerEvent.Create(PokerGroupId, " Friday poker ", scheduledAtUtc);
+        var result = PokerEvent.Create(PokerGroupId, " Friday poker ", ScheduledAtUtc, CreatedAtUtc);
 
         Assert.True(result.IsSuccess);
         Assert.NotEqual(Guid.Empty, result.Value.Id);
         Assert.Equal(PokerGroupId, result.Value.PokerGroupId);
         Assert.Equal("Friday poker", result.Value.Title);
-        Assert.Equal(scheduledAtUtc.ToUniversalTime(), result.Value.ScheduledAtUtc);
+        Assert.Equal(ScheduledAtUtc.ToUniversalTime(), result.Value.ScheduledAtUtc);
         Assert.Equal(PokerEventStatus.Scheduled, result.Value.Status);
-        Assert.NotEqual(default, result.Value.CreatedAtUtc);
+        Assert.Equal(CreatedAtUtc.ToUniversalTime(), result.Value.CreatedAtUtc);
         Assert.Null(result.Value.CancelledAtUtc);
         Assert.Empty(result.Value.Rsvps);
     }
@@ -28,13 +28,13 @@ public sealed class PokerEventTests
     public void Create_RequiresPokerGroupId()
     {
         Assert.Throws<ArgumentException>(() =>
-            PokerEvent.Create(Guid.Empty, "Friday poker", DateTimeOffset.UtcNow.AddDays(7)));
+            PokerEvent.Create(Guid.Empty, "Friday poker", ScheduledAtUtc, CreatedAtUtc));
     }
 
     [Fact]
     public void Create_RequiresTitle()
     {
-        var result = PokerEvent.Create(PokerGroupId, " ", DateTimeOffset.UtcNow.AddDays(7));
+        var result = PokerEvent.Create(PokerGroupId, " ", ScheduledAtUtc, CreatedAtUtc);
 
         Assert.True(result.IsFailed);
         var error = Assert.Single(result.Errors.OfType<PokerEventError>());
@@ -44,7 +44,7 @@ public sealed class PokerEventTests
     [Fact]
     public void Create_RequiresTitleWithinMaximumLength()
     {
-        var result = PokerEvent.Create(PokerGroupId, new string('x', PokerEvent.MaxTitleLength + 1), DateTimeOffset.UtcNow.AddDays(7));
+        var result = PokerEvent.Create(PokerGroupId, new string('x', PokerEvent.MaxTitleLength + 1), ScheduledAtUtc, CreatedAtUtc);
 
         Assert.True(result.IsFailed);
         var error = Assert.Single(result.Errors.OfType<PokerEventError>());
@@ -54,7 +54,7 @@ public sealed class PokerEventTests
     [Fact]
     public void Create_RequiresScheduledTime()
     {
-        var result = PokerEvent.Create(PokerGroupId, "Friday poker", default);
+        var result = PokerEvent.Create(PokerGroupId, "Friday poker", default, CreatedAtUtc);
 
         Assert.True(result.IsFailed);
         var error = Assert.Single(result.Errors.OfType<PokerEventError>());
@@ -64,7 +64,7 @@ public sealed class PokerEventTests
     [Fact]
     public void UpdateDetails_UpdatesTitleAndScheduledTime()
     {
-        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", DateTimeOffset.UtcNow.AddDays(7)).Value;
+        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", ScheduledAtUtc, CreatedAtUtc).Value;
         var rescheduledAtUtc = DateTimeOffset.UtcNow.AddDays(14);
 
         var result = pokerEvent.UpdateDetails(" Saturday poker ", rescheduledAtUtc);
@@ -77,7 +77,7 @@ public sealed class PokerEventTests
     [Fact]
     public void Cancel_CancelsEvent()
     {
-        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", DateTimeOffset.UtcNow.AddDays(7)).Value;
+        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", ScheduledAtUtc, CreatedAtUtc).Value;
         var cancelledAtUtc = DateTimeOffset.UtcNow;
 
         var result = pokerEvent.Cancel(cancelledAtUtc);
@@ -90,7 +90,7 @@ public sealed class PokerEventTests
     [Fact]
     public void SetRsvp_CreatesRsvp()
     {
-        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", DateTimeOffset.UtcNow.AddDays(7)).Value;
+        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", ScheduledAtUtc, CreatedAtUtc).Value;
         var playerId = Guid.NewGuid();
         var respondedAtUtc = DateTimeOffset.UtcNow;
 
@@ -107,7 +107,7 @@ public sealed class PokerEventTests
     [Fact]
     public void SetRsvp_UpdatesExistingRsvpForPlayer()
     {
-        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", DateTimeOffset.UtcNow.AddDays(7)).Value;
+        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", ScheduledAtUtc, CreatedAtUtc).Value;
         var playerId = Guid.NewGuid();
         var first = pokerEvent.SetRsvp(playerId, RsvpStatus.Going, DateTimeOffset.UtcNow).Value;
 
@@ -122,7 +122,7 @@ public sealed class PokerEventTests
     [Fact]
     public void SetRsvp_RequiresValidPlayerId()
     {
-        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", DateTimeOffset.UtcNow.AddDays(7)).Value;
+        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", ScheduledAtUtc, CreatedAtUtc).Value;
 
         var result = pokerEvent.SetRsvp(Guid.Empty, RsvpStatus.Going, DateTimeOffset.UtcNow);
 
@@ -134,7 +134,7 @@ public sealed class PokerEventTests
     [Fact]
     public void SetRsvp_RequiresValidStatus()
     {
-        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", DateTimeOffset.UtcNow.AddDays(7)).Value;
+        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", ScheduledAtUtc, CreatedAtUtc).Value;
 
         var result = pokerEvent.SetRsvp(Guid.NewGuid(), (RsvpStatus)0, DateTimeOffset.UtcNow);
 
@@ -146,7 +146,7 @@ public sealed class PokerEventTests
     [Fact]
     public void CancelledEvent_CannotBeModified()
     {
-        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", DateTimeOffset.UtcNow.AddDays(7)).Value;
+        var pokerEvent = PokerEvent.Create(PokerGroupId, "Friday poker", ScheduledAtUtc, CreatedAtUtc).Value;
         Assert.True(pokerEvent.Cancel(DateTimeOffset.UtcNow).IsSuccess);
 
         var updateResult = pokerEvent.UpdateDetails("Saturday poker", DateTimeOffset.UtcNow.AddDays(14));

@@ -20,6 +20,7 @@ public static class CancelEvent
         Guid id,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var pokerEvent = await dbContext.Events
@@ -43,7 +44,7 @@ public static class CancelEvent
             return TypedResults.Conflict(new ErrorResponse("Events with linked games cannot be cancelled."));
         }
 
-        var result = pokerEvent.Cancel(DateTimeOffset.UtcNow);
+        var result = pokerEvent.Cancel(timeProvider.GetUtcNow());
 
         if (result.IsFailed)
         {

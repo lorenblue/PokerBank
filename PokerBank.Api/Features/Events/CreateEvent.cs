@@ -20,9 +20,14 @@ public static class CreateEvent
         Request request,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
-        var result = PokerEvent.Create(groupContext.Id, request.Title, request.ScheduledAtUtc);
+        var result = PokerEvent.Create(
+            groupContext.Id,
+            request.Title,
+            request.ScheduledAtUtc,
+            timeProvider.GetUtcNow());
 
         if (result.IsFailed)
         {

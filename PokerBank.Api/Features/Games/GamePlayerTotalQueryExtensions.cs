@@ -60,7 +60,7 @@ internal sealed class GamePlayerTotalProjection
 
     public Guid GameId { get; init; }
 
-    public DateTime PlayedAtUtc { get; init; }
+    public DateTimeOffset PlayedAtUtc { get; init; }
 
     public decimal BuyInAmount { get; init; }
 

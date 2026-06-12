@@ -20,6 +20,7 @@ public static class CancelPlayerInvite
         Guid id,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var playerExists = await dbContext.Players.AnyAsync(
@@ -31,7 +32,7 @@ public static class CancelPlayerInvite
             return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = timeProvider.GetUtcNow();
 
         var invitation = await dbContext.PlayerInvitations
             .Where(invitation =>

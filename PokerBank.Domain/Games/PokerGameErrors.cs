@@ -33,4 +33,8 @@ public static class PokerGameErrors
     public static PokerGameError EntryNotFound() => new(
         PokerGameErrorCode.EntryNotFound,
         "Game entry was not found.");
+
+    public static PokerGameError EntryRecordedBeforeGameCreated() => new(
+        PokerGameErrorCode.EntryRecordedBeforeGameCreated,
+        "Game entries cannot be recorded before the game was created.");
 }

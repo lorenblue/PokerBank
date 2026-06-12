@@ -4,7 +4,7 @@ public sealed record GameResultResponse(
     Guid PlayerId,
     string PlayerName,
     Guid GameId,
-    DateTime PlayedAtUtc,
+    DateTimeOffset PlayedAtUtc,
     decimal BuyInAmount,
     decimal CashOutAmount,
     decimal NetAmount)

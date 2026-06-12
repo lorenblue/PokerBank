@@ -12,8 +12,12 @@ public sealed class PokerEvent
     {
     }
 
-    public static Result<PokerEvent> Create(Guid pokerGroupId, string? title, DateTimeOffset scheduledAtUtc) =>
-        Create(Guid.NewGuid(), pokerGroupId, title, scheduledAtUtc, DateTimeOffset.UtcNow);
+    public static Result<PokerEvent> Create(
+        Guid pokerGroupId,
+        string? title,
+        DateTimeOffset scheduledAtUtc,
+        DateTimeOffset createdAtUtc) =>
+        Create(Guid.NewGuid(), pokerGroupId, title, scheduledAtUtc, createdAtUtc);
 
     internal static Result<PokerEvent> Create(
         Guid id,

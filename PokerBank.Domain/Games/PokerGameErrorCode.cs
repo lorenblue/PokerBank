@@ -9,5 +9,6 @@ public enum PokerGameErrorCode
     BuyInsMustEqualCashOuts = 5,
     PlayerHasNoBuyIns = 6,
     EntryNotFound = 7,
-    EmptyGame = 8
+    EmptyGame = 8,
+    EntryRecordedBeforeGameCreated = 9
 }

@@ -6,8 +6,8 @@ public sealed class GameEntry
     {
     }
 
-    internal GameEntry(Guid playerId, Money amount, GameEntryType type)
-        : this(Guid.NewGuid(), playerId, amount, type, DateTimeOffset.UtcNow)
+    internal GameEntry(Guid playerId, Money amount, GameEntryType type, DateTimeOffset recordedAtUtc)
+        : this(Guid.NewGuid(), playerId, amount, type, recordedAtUtc)
     {
     }
 

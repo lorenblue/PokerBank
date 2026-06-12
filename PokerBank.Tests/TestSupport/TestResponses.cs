@@ -54,9 +54,9 @@ internal sealed record EventRsvpResponse(
     string Status,
     DateTimeOffset RespondedAtUtc);
 
-internal sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
+internal sealed record GameResponse(Guid Id, string Status, DateTimeOffset CreatedAtUtc);
 
-internal sealed record StartEventGameResponse(Guid Id, Guid? PokerEventId, string Status, DateTime CreatedAtUtc);
+internal sealed record StartEventGameResponse(Guid Id, Guid? PokerEventId, string Status, DateTimeOffset CreatedAtUtc);
 
 internal sealed record PaymentResponse(
     Guid Id,
@@ -85,7 +85,7 @@ internal sealed record GameResultResponse(
     Guid PlayerId,
     string PlayerName,
     Guid GameId,
-    DateTime PlayedAtUtc,
+    DateTimeOffset PlayedAtUtc,
     decimal BuyInAmount,
     decimal CashOutAmount,
     decimal NetAmount);
@@ -93,7 +93,7 @@ internal sealed record GameResultResponse(
 internal sealed record MyGameResponse(
     Guid Id,
     string Status,
-    DateTime PlayedAtUtc,
+    DateTimeOffset PlayedAtUtc,
     decimal MyBuyInAmount,
     decimal MyCashOutAmount,
     decimal MyNetAmount,

@@ -27,6 +27,7 @@ public static class InvitePlayer
         PokerBankDbContext dbContext,
         IEmailSender emailSender,
         IConfiguration configuration,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var player = await dbContext.Players
@@ -54,7 +55,7 @@ public static class InvitePlayer
             return TypedResults.Conflict(new ErrorResponse("Player is already linked to a user account."));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = timeProvider.GetUtcNow();
 
         var hasPendingInvitation = await dbContext.PlayerInvitations.AnyAsync(
             invitation =>

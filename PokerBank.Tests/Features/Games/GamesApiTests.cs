@@ -1060,17 +1060,12 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
         return game ?? throw new InvalidOperationException("Close game response was empty.");
     }
 
-    private static void AssertCloseTo(DateTime expected, DateTime actual)
-    {
-        Assert.InRange((actual - expected).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
-    }
-
     private static void AssertCloseTo(DateTimeOffset expected, DateTimeOffset actual)
     {
         Assert.InRange((actual - expected).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
     }
 
-    private sealed record GameResponse(Guid Id, string Status, DateTime CreatedAtUtc);
+    private sealed record GameResponse(Guid Id, string Status, DateTimeOffset CreatedAtUtc);
 
     private sealed record ListGamesResponse(
         GameResponse[] Items,
@@ -1082,7 +1077,7 @@ public sealed class GamesApiTests(PokerBankApiFactory factory) : IAsyncLifetime
     private sealed record GameDetailsResponse(
         Guid Id,
         string Status,
-        DateTime CreatedAtUtc,
+        DateTimeOffset CreatedAtUtc,
         decimal TotalBuyInAmount,
         decimal TotalCashOutAmount,
         decimal RemainingCashOutAmount,

@@ -28,16 +28,18 @@ public static class RecordPayment
         Request request,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken) =>
-        Handle(playerId, PaymentDirection.MadeByPlayer, request, groupContext, dbContext, cancellationToken);
+        Handle(playerId, PaymentDirection.MadeByPlayer, request, groupContext, dbContext, timeProvider, cancellationToken);
 
     private static Task<Results<Created<PaymentResponse>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> HandleReceivedByPlayer(
         Guid playerId,
         Request request,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken) =>
-        Handle(playerId, PaymentDirection.ReceivedByPlayer, request, groupContext, dbContext, cancellationToken);
+        Handle(playerId, PaymentDirection.ReceivedByPlayer, request, groupContext, dbContext, timeProvider, cancellationToken);
 
     private static async Task<Results<Created<PaymentResponse>, BadRequest<ErrorResponse>, NotFound<ErrorResponse>>> Handle(
         Guid playerId,
@@ -45,6 +47,7 @@ public static class RecordPayment
         Request request,
         IPokerGroupContext groupContext,
         PokerBankDbContext dbContext,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var playerExists = await dbContext.Players.AnyAsync(
@@ -59,7 +62,13 @@ public static class RecordPayment
             return TypedResults.NotFound(new ErrorResponse("Player was not found."));
         }
 
-        var result = Payment.Create(groupContext.Id, playerId, new Money(request.Amount), direction, request.Method);
+        var result = Payment.Create(
+            groupContext.Id,
+            playerId,
+            new Money(request.Amount),
+            direction,
+            request.Method,
+            timeProvider.GetUtcNow());
 
         if (result.IsFailed)
         {
